@@ -1,65 +1,25 @@
-# Python и Django
-__pycache__/
-*.py[cod]
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
+# Environment
 .env
 *.env
-*.env.*
-.envrc
+!*.env.example
 
-# Django
-*.log
-*.pot
-*.pyc
-*.sqlite3
-db.sqlite3
-migrations/
-*.migrate
+# Docker
+infrastructure/postgres/
 
-# Firebase
-okututor-firebase-adminsdk.json
-okututor-f276b-firebase-adminsdk-fbsvc-a53a702b8f.json
-firebase-adminsdk.json
-*.json  #
-# Ignore Firebase service account
-okututor-f276b-firebase-adminsdk-fbsvc-a53a702b8f.json
-# Временные файлы и редакторы
-*.swp
-*~
-.DS_Store
-.vscode/
+# IDE
 .idea/
-*.sublime-project
-*.sublime-workspace
+.vscode/
+*.iml
 
-# Зависимости
-node_modules/
-dist/
-build/
+# Build
+backend/target/
+frontend/dist/
+frontend/node_modules/
 
-# Тесты и отчёты
-*.coverage
-coverage/
-htmlcov/
-.pytest_cache/
-.tox/
-.coverage.*
-*.cover
-*.xml
-*.lcov
+# Local scratch / archives
+/backend.zip
+/test_auth_servise/
 
-# Локальные настройки
-local_settings.py
-settings_local.py
-
-# Прочие
-*.bak
-*.gho
-*.orig
-*.tmp
-*.temp
+# OS
+.DS_Store
+Thumbs.db
