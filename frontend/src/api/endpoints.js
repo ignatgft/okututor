@@ -62,9 +62,12 @@ export const endpoints = {
     enroll: (courseId) => `/api/v1/courses/${courseId}/enroll`,
     myEnrollments: "/api/v1/students/me/enrollments",
     tutorRequests: "/api/v1/tutors/me/requests",
+    byId: (id) => `/api/v1/enrollments/${id}`,
     accept: (id) => `/api/v1/enrollments/${id}/accept`,
     acceptAndSchedule: (id) => `/api/v1/enrollments/${id}/accept-and-schedule`,
     reject: (id) => `/api/v1/enrollments/${id}/reject`,
+    requestInfo: (id) => `/api/v1/enrollments/${id}/request-info`,
+    provideInfo: (id) => `/api/v1/enrollments/${id}/provide-info`,
     cancel: (id) => `/api/v1/enrollments/${id}`,
     forCourse: (courseId) => `/api/v1/courses/${courseId}/enrollment`,
   },
@@ -77,12 +80,13 @@ export const endpoints = {
     start: (id) => `/api/v1/lessons/${id}/start`,
   },
   calendar: {
-    range: (from, to) => `/api/v1/calendar?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    range: (from, to, tz) => `/api/v1/calendar?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&tz=${encodeURIComponent(tz || "")}`,
   },
   messages: {
     conversations: "/api/v1/messages/conversations",
     conversation: (id) => `/api/v1/messages/conversations/${id}`,
     send: "/api/v1/messages",
+    attachments: "/api/v1/messages/attachments",
   },
   meetings: {
     token: (bookingId) => `/api/v1/bookings/${bookingId}/meeting/token`,

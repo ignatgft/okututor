@@ -9,6 +9,7 @@ import { useToast } from "./ui/Toast";
 import { Spinner, Skeleton, EmptyState, ErrorState } from "../components/ui/Primitives";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { tutorsApi } from "../api/tutors.api";
+import AvatarUploader from "./avatar/AvatarUploader";
 import { isStudent } from "../constants/roles";
 import { TUTOR_STATUS } from "../constants/enums";
 import { COURSE_SUBJECTS as SUBJECTS, TUTOR_LANGUAGES as LANGUAGES } from "../constants/course";
@@ -310,6 +311,18 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarSaved = (url) => {
+    const updated = { ...user, avatar: url };
+    setUser(updated);
+    setFormData((prev) => ({ ...prev, avatar: url }));
+  };
+
+  const handleAvatarRemoved = () => {
+    const updated = { ...user, avatar: "" };
+    setUser(updated);
+    setFormData((prev) => ({ ...prev, avatar: "" }));
+  };
+
   if (!user) return null;
 
   const renderCoursesSection = () => {
@@ -368,7 +381,7 @@ const Profile = () => {
   const renderTutorApplication = () => {
     if (tutorAppError) {
       return (
-        <div className="courses-section">
+        <div className="courses-section app-form-wrapper">
           <h2>{t("profile.become_tutor", "Become a tutor")}</h2>
           <ErrorState message={tutorAppError} onRetry={loadTutorApplication} />
         </div>
@@ -377,7 +390,7 @@ const Profile = () => {
 
     if (tutorAppLoading) {
       return (
-        <div className="courses-section">
+        <div className="courses-section app-form-wrapper">
           <h2>{t("profile.become_tutor", "Become a tutor")}</h2>
           <Spinner label={t("common.loading", "Loading...")} />
         </div>
@@ -386,7 +399,7 @@ const Profile = () => {
 
     if (tutorApp?.status === TUTOR_STATUS.PENDING) {
       return (
-        <div className="courses-section">
+        <div className="courses-section app-form-wrapper">
           <h2>{t("profile.become_tutor", "Become a tutor")}</h2>
           <EmptyState
             icon="⏳"
@@ -405,7 +418,7 @@ const Profile = () => {
 
     if (tutorApp?.status === TUTOR_STATUS.REJECTED) {
       return (
-        <form className="courses-section" onSubmit={submitTutorApplication}>
+        <form className="courses-section app-form-wrapper" onSubmit={submitTutorApplication}>
           <h2>{t("profile.become_tutor", "Become a tutor")}</h2>
           {tutorApp.rejection_reason && (
             <p className="rejection-reason">
@@ -419,7 +432,7 @@ const Profile = () => {
 
     if (tutorApp?.status === TUTOR_STATUS.APPROVED) {
       return (
-        <div className="courses-section">
+        <div className="courses-section app-form-wrapper">
           <h2>{t("profile.become_tutor", "Become a tutor")}</h2>
           <EmptyState
             icon="🎉"
@@ -436,7 +449,7 @@ const Profile = () => {
 
     // NOT_REQUESTED or no application -> show form
     return (
-      <form className="courses-section" onSubmit={submitTutorApplication}>
+      <form className="courses-section app-form-wrapper" onSubmit={submitTutorApplication}>
         <h2>{t("profile.become_tutor", "Become a tutor")}</h2>
         {renderAppForm()}
       </form>
@@ -530,15 +543,11 @@ const Profile = () => {
       <div className="profile-container">
         <div className="profile-sidebar">
           <div className="profile-avatar-section">
-            <img
-              src={
-                formData.avatar ||
-                user.avatar ||
-                user.photoURL ||
-                "https://via.placeholder.com/150"
-              }
-                alt={t("profile.avatar_alt", "User Avatar")}
-              className="profile-avatar"
+            <AvatarUploader
+              src={formData.avatar || user.avatar || user.photoURL || ""}
+              name={user.full_name || user.email}
+              onSaved={handleAvatarSaved}
+              onRemoved={handleAvatarRemoved}
             />
             <h2>{user.full_name}</h2>
             {user.role && (
@@ -648,13 +657,13 @@ const Profile = () => {
           <div className="profile-actions">
             {isEditing ? (
               <>
-                <button className="btn update-btn" onClick={handleEditProfile}>{t("profile.update")}</button>
-                <button className="btn cancel-btn" onClick={handleCancelEdit}>{t("profile.cancel")}</button>
+                <button className="btn btn-primary" onClick={handleEditProfile}>{t("profile.update")}</button>
+                <button className="btn btn-secondary" onClick={handleCancelEdit}>{t("profile.cancel")}</button>
               </>
             ) : (
               <>
-                <button className="btn edit-btn" onClick={handleEditProfile}>{t("profile.edit_profile")}</button>
-                <button className="btn logout-btn" onClick={() => setShowLogoutConfirm(true)}>{t("profile.logout")}</button>
+                <button className="btn btn-primary" onClick={handleEditProfile}>{t("profile.edit_profile")}</button>
+                <button className="btn btn-ghost" onClick={() => setShowLogoutConfirm(true)}>{t("profile.logout")}</button>
               </>
             )}
           </div>

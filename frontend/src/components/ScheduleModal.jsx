@@ -4,6 +4,8 @@ import { tutorsApi } from "../api/tutors.api";
 import { enrollmentsApi } from "../api/students.api";
 import { useToast } from "./ui/Toast";
 import SlotPicker from "./booking/SlotPicker";
+import CalendarPicker from "./ui/CalendarPicker";
+import { getUserTimezone } from "../utils/timezone";
 import "../styles/ScheduleModal.css";
 
 export default function ScheduleModal({ enrollment, onClose, onSuccess }) {
@@ -69,17 +71,8 @@ export default function ScheduleModal({ enrollment, onClose, onSuccess }) {
       setError(t("validation.required", "Field is required"));
       return;
     }
-    if (!date || !time) {
-      setError(t("validation.required", "Field is required"));
-      return;
-    }
     const start = new Date(`${date}T${time}`);
     if (Number.isNaN(start.getTime()) || start.getTime() <= Date.now()) {
-      setError(t("validation.required", "Field is required"));
-      return;
-    }
-    const end = new Date(start.getTime() + Number(duration) * 60000);
-    if (end.getTime() <= start.getTime()) {
       setError(t("validation.required", "Field is required"));
       return;
     }
@@ -90,6 +83,7 @@ export default function ScheduleModal({ enrollment, onClose, onSuccess }) {
         date,
         time,
         duration_minutes: Number(duration),
+        timezone: getUserTimezone(),
       });
       if (response.ok) {
         toast.success(t("success.action_completed", "Action completed"));
@@ -137,12 +131,11 @@ export default function ScheduleModal({ enrollment, onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="schedule-modal-form">
           <div className="schedule-modal-field">
             <label>{t("schedule_modal.date", "Date")}</label>
-            <input
-              type="date"
+            <CalendarPicker
               value={date}
-              min={today}
-              onChange={(e) => { setDate(e.target.value); setTime(""); }}
-              required
+              minDate={today}
+              onSelect={(d) => { setDate(d); setTime(""); }}
+              ariaLabel={t("schedule_modal.date", "Date")}
             />
           </div>
 
@@ -150,9 +143,11 @@ export default function ScheduleModal({ enrollment, onClose, onSuccess }) {
             <label>{t("schedule_modal.time", "Time")}</label>
             {availabilityError ? (
               <p className="schedule-modal-hint">{availabilityError}</p>
+            ) : !date ? (
+              <p className="schedule-modal-hint">{t("schedule_modal.pick_date_first", "Choose a date first")}</p>
             ) : (
               <SlotPicker
-                date={date ? new Date(`${date}T00:00:00`) : null}
+                date={new Date(`${date}T00:00:00`)}
                 availability={availability}
                 selected={time}
                 onSelect={setTime}
