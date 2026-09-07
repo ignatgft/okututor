@@ -25,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SearchController {
 
     private final CourseSearchService courseSearchService;
+    private final TutorSearchService tutorSearchService;
 
-    public SearchController(CourseSearchService courseSearchService) {
+    public SearchController(CourseSearchService courseSearchService, TutorSearchService tutorSearchService) {
         this.courseSearchService = courseSearchService;
+        this.tutorSearchService = tutorSearchService;
     }
 
     @GetMapping("/courses")
@@ -59,12 +61,21 @@ public class SearchController {
     }
 
     @GetMapping("/tutors")
-    public PageResponse<Map<String, Object>> searchTutors(
-            @RequestParam String q,
+    public PageResponse<com.okututor.backend.tutor.dto.TutorProfileResponse> searchTutors(
+            @RequestParam(required = false) @Size(max = 200) String q,
+            @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String city,
+            @RequestParam(name = "tutor_type", required = false) String tutorType,
+            @RequestParam(name = "price_from", required = false) BigDecimal priceFrom,
+            @RequestParam(name = "price_to", required = false) BigDecimal priceTo,
+            @RequestParam(required = false) Boolean online,
+            @RequestParam(required = false) Boolean offline,
+            @RequestParam(required = false) String language,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-
-        return PageResponse.empty();
+        // translate subject name? accept slug or name; we pass through to service which handles slug
+        var result = tutorSearchService.search(q, subject, city, tutorType, priceFrom, priceTo, online, offline, language, page, size);
+        return PageResponse.of(result);
     }
 
     /**

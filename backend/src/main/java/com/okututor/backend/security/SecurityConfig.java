@@ -32,7 +32,10 @@ public class SecurityConfig {
             "/api/v1/auth/reset-password",
             "/api/v1/auth/verify-email",
             "/api/v1/auth/resend-verification",
-            "/api/v1/auth/verify-reset-code"
+            "/api/v1/auth/verify-reset-code",
+            // вебхук LiveKit: аутентификация подписью JWT в самом запросе (см. LiveKitWebhookService)
+            "/api/v1/livekit/webhook",
+            "/api/v1/tutor-requests"
     };
 
     private static final String[] PUBLIC_GET = {
@@ -47,8 +50,14 @@ public class SecurityConfig {
             "/api/v1/files/**",
             "/api/v1/users/tutors",
             "/api/v1/courses/**",
-            "/api/v1/tutors/*",
-            "/api/v1/search/**"
+            "/api/v1/tutors/**",
+            "/api/v1/tutor-profiles/**",
+            "/api/v1/subjects/**",
+            "/api/v1/levels/**",
+            "/api/v1/cities/**",
+            "/api/v1/search/**",
+            "/api/v1/sitemap.xml",
+            "/api/v1/robots.txt"
     };
 
     @Bean
@@ -63,6 +72,7 @@ public class SecurityConfig {
                                           AppProperties properties,
                                           ClientRegistrationRepository clientRegistrationRepository,
                                           OAuthLoginSuccessHandler oAuthLoginSuccessHandler,
+                                          com.okututor.backend.observability.ObservabilityMetrics securityMetrics,
                                           @org.springframework.beans.factory.annotation.Value(
                                                   "${spring.security.oauth2.client.registration.google.client-id:}")
                                           String googleClientId) throws Exception {
@@ -75,12 +85,16 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, PUBLIC_GET).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
-                        .authenticationEntryPoint((request, response, ex) ->
-                                AuthErrorWriter.write(response, HttpStatus.UNAUTHORIZED,
-                                        "UNAUTHORIZED", "Your session has expired. Please sign in again."))
-                        .accessDeniedHandler((request, response, ex) ->
-                                AuthErrorWriter.write(response, HttpStatus.FORBIDDEN,
-                                        "FORBIDDEN", "You do not have permission for this action.")))
+                        .authenticationEntryPoint((request, response, ex) -> {
+                            securityMetrics.securityEvent("401");
+                            AuthErrorWriter.write(response, HttpStatus.UNAUTHORIZED,
+                                    "UNAUTHORIZED", "Your session has expired. Please sign in again.");
+                        })
+                        .accessDeniedHandler((request, response, ex) -> {
+                            securityMetrics.securityEvent("403");
+                            AuthErrorWriter.write(response, HttpStatus.FORBIDDEN,
+                                    "FORBIDDEN", "You do not have permission for this action.");
+                        }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         if (isGoogleConfigured(googleClientId)) {
@@ -103,6 +117,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(properties.getCors().getAllowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Time-Zone"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

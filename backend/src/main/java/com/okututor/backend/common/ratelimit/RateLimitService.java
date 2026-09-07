@@ -17,6 +17,7 @@ public class RateLimitService {
 
     private final RateLimiter delegate;
     private final AppProperties properties;
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
     private final Map<String, Deque<Instant>> localBuckets = new ConcurrentHashMap<>();
 
@@ -26,8 +27,10 @@ public class RateLimitService {
      * in-memory {@link LocalRateLimiter}.
      */
     @Autowired
-    public RateLimitService(Optional<RateLimiter> redisRateLimiter, AppProperties properties) {
+    public RateLimitService(Optional<RateLimiter> redisRateLimiter, AppProperties properties,
+                            com.okututor.backend.observability.ObservabilityMetrics metrics) {
         this.properties = properties;
+        this.metrics = metrics;
         this.delegate = properties.getRateLimit().isUseRedis()
                 ? redisRateLimiter.orElse(null)
                 : null;
@@ -53,12 +56,21 @@ public class RateLimitService {
         acquire("forgot:" + email.toLowerCase(), properties.getRateLimit().getForgotPasswordPerHour(), Duration.ofHours(1));
     }
 
+    public void checkTutorRequest(String ip) {
+        acquire("tutor-request:" + ip, 5, Duration.ofMinutes(1));
+    }
+
+    public void checkTutorProfileCreate(String userId) {
+        acquire("tutor-profile-create:" + userId, 5, Duration.ofHours(1));
+    }
+
     private void acquire(String key, int limit, Duration window) {
         if (!properties.getRateLimit().isEnabled()) {
             return;
         }
         RateLimiter limiter = delegate != null ? delegate : new LocalRateLimiter(localBuckets);
         if (!limiter.tryAcquire(key, limit, window)) {
+            metrics.securityEvent("rate_limit");
             throw ApiException.rateLimited("Too many requests. Please slow down.");
         }
     }
