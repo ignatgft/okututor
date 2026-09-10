@@ -1,0 +1,169 @@
+/* Marketplace adaptive — mobile-first, covers PgTutors / TutorCard / TutorProfile / BecomeTutor */
+
+/* ===== PgTutors listing layout ===== */
+.tutors-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 1440px;
+  margin: 16px auto;
+  padding: 0 var(--page-padding, 16px);
+}
+
+@media (min-width: 1024px) {
+  .tutors-layout {
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+  }
+}
+
+.tutors-filters-desktop {
+  display: none;
+}
+
+.tutors-mobile-filter-btn {
+  display: inline-flex;
+}
+
+@media (min-width: 1024px) {
+  .tutors-filters-desktop {
+    display: block;
+  }
+  .tutors-mobile-filter-btn {
+    display: none !important;
+  }
+}
+
+/* TutorCard — mobile stack */
+.tutor-card {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.tutor-card .tutor-card-avatar {
+  width: 56px;
+  height: 56px;
+}
+
+@media (min-width: 640px) {
+  .tutor-card {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .tutor-card .tutor-card-avatar {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+@media (min-width: 768px) {
+  .tutor-card .tutor-card-avatar {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* Tutor profile — stack on mobile */
+.tutor-profile-page .tutor-card-full {
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .tutor-profile-page .tutor-card-full {
+    flex-direction: row;
+  }
+}
+
+/* Search input — prevent iOS zoom, ensure 44px */
+@media (max-width: 639px) {
+  .search-page-container input,
+  .search-page-container select,
+  .search-page-container textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Marketplace hero already in HeroSection.css, but ensure container max-width on large */
+.marketplace-hero-form {
+  width: 100%;
+}
+
+/* BecomeTutor wizard — responsive */
+.wizard-progress {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 479px) {
+  .for-tutors-section .category-title,
+  .hero-section .hero-title {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+}
+
+/* Bottom nav safe-area + hide on detail handled in JS, but ensure padding */
+@media (max-width: 1023px) {
+  .search-page-container,
+  .tutor-profile-page,
+  .tutor-profile-container {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+}
+
+/* Tables — horizontal scroll on mobile (admin) */
+.table-wrapper {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Navbar language selector — ensure dropdown not clipped on mobile */
+@media (max-width: 1199px) {
+  .language-dropdown {
+    right: 8px;
+    min-width: 96px;
+  }
+}
+
+/* Ensure all images responsive */
+img, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure buttons have 44px touch target on mobile */
+@media (max-width: 639px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    min-height: 44px;
+  }
+}
+
+/* Marketplace search — sticky to header (mobile + desktop) */
+.marketplace-search-sticky {
+  position: sticky;
+  top: var(--header-height-tablet, 56px);
+  z-index: 15;
+  background: var(--color-bg, #F7F9FC);
+  backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid var(--color-border-light, #F0F2F5);
+  padding: 12px var(--page-padding, 16px);
+  margin: 0 calc(-1 * var(--page-padding, 16px));
+}
+
+@media (min-width: 1200px) {
+  .marketplace-search-sticky {
+    top: var(--header-height, 64px);
+  }
+}
+
+/* Desktop filters — sticky below search bar */
+.tutors-filters-desktop {
+  top: calc(var(--header-height-tablet, 56px) + 76px + 16px) !important;
+}
+
+@media (min-width: 1200px) {
+  .tutors-filters-desktop {
+    top: calc(var(--header-height, 64px) + 76px + 16px) !important;
+  }
+}

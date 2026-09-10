@@ -1,0 +1,18 @@
+# env
+.env
+.env.local
+
+# build
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/.expo/
+
+# ide
+.idea/
+.vscode/
+*.log
+
+# os
+.DS_Store
+Thumbs.db

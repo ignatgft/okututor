@@ -1,0 +1,122 @@
+/* Course create/edit — Figma clean form */
+.course-page {
+  max-width: 700px;
+}
+
+.course-form-container {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+}
+
+.course-form-container h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-6);
+}
+
+.form-section h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-5);
+}
+
+.course-page .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-5);
+}
+
+.course-page .form-field label {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.field-description {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: 0;
+  margin-top: 2px;
+}
+
+.multi-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.select-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 8px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+}
+
+.course-page .form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.course-page .form-actions button {
+  width: 100%;
+}
+
+.course-page .cancel-btn {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.course-page .create-btn {
+  background: var(--color-primary);
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .course-form-container {
+    padding: var(--space-6);
+  }
+
+  .course-page .form-actions {
+    flex-direction: row;
+  }
+
+  .course-page .form-actions button {
+    width: auto;
+  }
+
+  .multi-select {
+    gap: var(--space-2);
+  }
+
+  .select-item {
+    font-size: var(--font-size-sm);
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  .course-wizard,
+  .course-view,
+  .lesson-room {
+    padding: var(--space-3);
+  }
+  .wizard-steps {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .lesson-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
+  }
+}
