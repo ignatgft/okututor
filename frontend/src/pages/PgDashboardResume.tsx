@@ -17,6 +17,15 @@ function statusLabel(status: string, t: (k: string, fb: string) => string): stri
   return map[status] ?? status;
 }
 
+function InfoCard({ value, label }: { value: string; label: string }): JSX.Element {
+  return (
+    <div style={{ padding: 12, background: "var(--color-bg-secondary)", borderRadius: "var(--radius-lg)", textAlign: "center" }}>
+      <div style={{ fontSize: "var(--font-size-lg)", fontWeight: 700 }}>{value}</div>
+      <div style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>{label}</div>
+    </div>
+  );
+}
+
 export default function PgDashboardResume(): JSX.Element {
   const { t } = useTranslation();
   const setPageTitle = usePageTitle();

@@ -1295,6 +1295,7 @@
     "timezone_saved": "Часовой пояс сохранён"
   },
   "tutor": {
+    "resume": "Резюме",
     "create_course": "Создать курс",
     "application": "Заявка репетитора"
   },

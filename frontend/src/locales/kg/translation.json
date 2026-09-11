@@ -1226,8 +1226,9 @@
     "timezone_saved": "Убакыт алкагы сакталды"
   },
   "tutor": {
+    "resume": "Резюме",
     "create_course": "Курс түзүү",
-    "application": "Репетитордун өтүнмөсү"
+    "application": "Репетитор арызы"
   },
   "validation": {
     "invalid_email": "Туура эмес email",
