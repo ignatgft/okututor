@@ -52,10 +52,11 @@ function ChatHeader({ conversation, onBack }: { conversation: ChatConversation; 
   const avatarUrl = normalizeAvatar((conversation.counterpart_avatar as string | null) || (conversation.other_participant_avatar_url as string | null) || null);
   const slug = (conversation.counterpart_slug as string | null) || (conversation.tutorProfileSlug as string | null) || (conversation.other_participant_slug as string | null) || null;
   const profileId = (conversation.tutorProfileId as string | null) || null;
-  const targetPath = slug ? `/tutor/${slug}` : profileId ? `/tutor/${profileId}` : conversation.counterpart_id ? `/profile/${conversation.counterpart_id}` : null;
+  // Correct routes: /repetitor/:slug for slug, /tutor/:tutorId for id, never /profile/:id (404)
+  const targetPath = slug ? `/repetitor/${slug}` : profileId ? `/tutor/${profileId}` : conversation.counterpart_id ? `/tutor/${conversation.counterpart_id}` : null;
 
   const handleOpenProfile = () => {
-    if (targetPath) window.location.href = targetPath;
+    if (targetPath) window.location.assign(targetPath);
   };
 
   return (
