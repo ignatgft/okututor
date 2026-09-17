@@ -13,10 +13,10 @@ services:
     container_name: okututor-backend
     env_file: .env
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: dev,jsonlog
       OKUTUTOR_ENV: development
       # External services: Neon, R2, LiveKit Cloud, Resend — no local postgres/redis
-      # For prod: set SPRING_PROFILES_ACTIVE=prod and provide JWT_SECRET + https CORS
+      # jsonlog enables JSON logs for Loki (level/message/requestId)
       OTEL_TRACING_ENABLED: "false"
       OTEL_EXPORTER_OTLP_ENDPOINT: ""
     ports:

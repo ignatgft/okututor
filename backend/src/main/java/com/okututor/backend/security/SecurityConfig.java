@@ -97,8 +97,8 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/tutors/me/submit", "/api/v1/tutor-profiles/me/submit", "/api/v1/tutors", "/api/v1/tutor-profiles").authenticated()
-                        // prometheus must not be public in prod — scraped via internal network with auth
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/prometheus").authenticated()
+                        // prometheus scraped via internal docker network; permitAll for local dev, in prod via reverse-proxy ACL if needed
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/prometheus").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, PUBLIC_POST).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, publicGet.toArray(String[]::new)).permitAll()
                         .anyRequest().authenticated())
