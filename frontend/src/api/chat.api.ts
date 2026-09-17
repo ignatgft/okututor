@@ -70,17 +70,17 @@ export const chatApi = {
       const mapped = list.map((item) => {
         const r = item as unknown as Record<string, unknown>;
         return {
-          id: String(r["id"] ?? r["conversationId"] ?? ""),
-          // backend ChatConversationResponse: requestId, otherUserId, otherUserName, lastMessage, unreadCount etc
-          counterpart_name: (r["otherUserName"] as string | undefined) ?? (r["counterpart_name"] as string | undefined) ?? null,
-          counterpart_id: (r["otherUserId"] as string | undefined) ?? (r["counterpart_id"] as string | undefined) ?? undefined,
-          last_message: (r["lastMessage"] as string | undefined) ?? (r["last_message"] as string | undefined) ?? null,
-          last_message_at: (r["lastMessageAt"] as string | undefined) ?? (r["last_message_at"] as string | undefined) ?? null,
-          updated_at: (r["updatedAt"] as string | undefined) ?? (r["updated_at"] as string | undefined) ?? null,
-          created_at: (r["createdAt"] as string | undefined) ?? (r["created_at"] as string | undefined) ?? null,
-          unread_count: (r["unreadCount"] as number | undefined) ?? (r["unread_count"] as number | undefined) ?? 0,
-          requestId: r["requestId"] ?? r["request_id"],
           ...r,
+          id: String(r["id"] ?? r["conversationId"] ?? r["conversation_id"] ?? ""),
+          // backend ChatConversationResponse: otherParticipantName/otherParticipantId/lastMessage (snake_case via Jackson SNAKE_CASE)
+          counterpart_name: (r["other_participant_name"] as string | undefined) ?? (r["otherParticipantName"] as string | undefined) ?? (r["otherUserName"] as string | undefined) ?? (r["counterpart_name"] as string | undefined) ?? null,
+          counterpart_id: (r["other_participant_id"] as string | undefined) ?? (r["otherParticipantId"] as string | undefined) ?? (r["otherUserId"] as string | undefined) ?? (r["counterpart_id"] as string | undefined) ?? undefined,
+          last_message: (r["last_message"] as string | undefined) ?? (r["lastMessage"] as string | undefined) ?? null,
+          last_message_at: (r["last_message_at"] as string | undefined) ?? (r["lastMessageAt"] as string | undefined) ?? null,
+          updated_at: (r["updated_at"] as string | undefined) ?? (r["updatedAt"] as string | undefined) ?? null,
+          created_at: (r["created_at"] as string | undefined) ?? (r["createdAt"] as string | undefined) ?? null,
+          unread_count: (r["unread_count"] as number | undefined) ?? (r["unreadCount"] as number | undefined) ?? 0,
+          requestId: r["request_id"] ?? r["requestId"],
         } as unknown as ChatConversation;
       });
       return { response: res.response, data: mapped };
@@ -95,14 +95,14 @@ export const chatApi = {
       const r = res.data as unknown as Record<string, unknown>;
       if (r && typeof r === "object" && !Array.isArray(r) && r["id"]) {
         const mapped = {
-          id: String(r["id"]),
-          counterpart_name: (r["otherUserName"] as string | undefined) ?? (r["counterpart_name"] as string | undefined) ?? null,
-          counterpart_id: (r["otherUserId"] as string | undefined) ?? undefined,
-          last_message: (r["lastMessage"] as string | undefined) ?? null,
-          last_message_at: (r["lastMessageAt"] as string | undefined) ?? null,
-          updated_at: (r["updatedAt"] as string | undefined) ?? null,
-          unread_count: (r["unreadCount"] as number | undefined) ?? 0,
           ...r,
+          id: String(r["id"]),
+          counterpart_name: (r["other_participant_name"] as string | undefined) ?? (r["otherParticipantName"] as string | undefined) ?? (r["otherUserName"] as string | undefined) ?? (r["counterpart_name"] as string | undefined) ?? null,
+          counterpart_id: (r["other_participant_id"] as string | undefined) ?? (r["otherParticipantId"] as string | undefined) ?? (r["otherUserId"] as string | undefined) ?? undefined,
+          last_message: (r["last_message"] as string | undefined) ?? (r["lastMessage"] as string | undefined) ?? null,
+          last_message_at: (r["last_message_at"] as string | undefined) ?? (r["lastMessageAt"] as string | undefined) ?? null,
+          updated_at: (r["updated_at"] as string | undefined) ?? (r["updatedAt"] as string | undefined) ?? null,
+          unread_count: (r["unread_count"] as number | undefined) ?? (r["unreadCount"] as number | undefined) ?? 0,
         } as unknown as ChatConversation;
         return { response: res.response, data: mapped };
       }
@@ -121,16 +121,16 @@ export const chatApi = {
       const mapped = list.map((item) => {
         const r = item as unknown as Record<string, unknown>;
         return {
-          id: String(r["id"] ?? ""),
-          conversation_id: String(r["conversationId"] ?? r["conversation_id"] ?? conversationId),
-          sender_id: String(r["senderId"] ?? r["sender_id"] ?? ""),
-          body: String(r["text"] ?? r["body"] ?? ""),
-          text: String(r["text"] ?? r["body"] ?? ""),
-          created_at: (r["createdAt"] as string | undefined) ?? (r["created_at"] as string | undefined) ?? null,
-          createdAt: (r["createdAt"] as string | undefined) ?? null,
-          read_at: (r["readAt"] as string | undefined) ?? (r["read_at"] as string | undefined) ?? null,
-          sender_name: (r["senderName"] as string | undefined) ?? (r["sender_name"] as string | undefined) ?? null,
           ...r,
+          id: String(r["id"] ?? ""),
+          conversation_id: String(r["conversation_id"] ?? r["conversationId"] ?? conversationId),
+          sender_id: String(r["sender_id"] ?? r["senderId"] ?? ""),
+          body: String(r["body"] ?? r["text"] ?? ""),
+          text: String(r["body"] ?? r["text"] ?? ""),
+          created_at: (r["created_at"] as string | undefined) ?? (r["createdAt"] as string | undefined) ?? null,
+          createdAt: (r["created_at"] as string | undefined) ?? (r["createdAt"] as string | undefined) ?? null,
+          read_at: (r["read_at"] as string | undefined) ?? (r["readAt"] as string | undefined) ?? null,
+          sender_name: (r["sender_name"] as string | undefined) ?? (r["senderName"] as string | undefined) ?? null,
         } as unknown as ChatMessage;
       });
       // backend returns newest first (DESC), but UI expects chronological asc for display
@@ -152,13 +152,14 @@ export const chatApi = {
       .then((res) => {
         const r = res.data as unknown as Record<string, unknown>;
         const mapped = {
-          id: String(r["id"] ?? ""),
-          conversation_id: String(r["conversationId"] ?? conversationId),
-          sender_id: String(r["senderId"] ?? ""),
-          body: String(r["text"] ?? trimmed),
-          text: String(r["text"] ?? trimmed),
-          created_at: (r["createdAt"] as string | undefined) ?? new Date().toISOString(),
           ...r,
+          id: String(r["id"] ?? ""),
+          conversation_id: String(r["conversation_id"] ?? r["conversationId"] ?? conversationId),
+          sender_id: String(r["sender_id"] ?? r["senderId"] ?? ""),
+          body: String(r["body"] ?? r["text"] ?? trimmed),
+          text: String(r["body"] ?? r["text"] ?? trimmed),
+          created_at: (r["created_at"] as string | undefined) ?? (r["createdAt"] as string | undefined) ?? new Date().toISOString(),
+          sender_name: (r["sender_name"] as string | undefined) ?? (r["senderName"] as string | undefined) ?? null,
         } as unknown as ChatMessage;
         return { response: res.response, data: mapped };
       }) as Promise<HttpResult<ChatMessage>>;
