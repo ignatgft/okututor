@@ -86,7 +86,7 @@ public class SupportTicketCore {
         return trimmed.length() <= 120 ? trimmed : trimmed.substring(0, 117) + "...";
     }
 
-    /** формат сообщения повторяет mockData.js: id msg-…, ticket_id TK-n, client_status SENT. */
+    /** формат сообщения: id msg-…, ticket_id TK-n, client_status SENT. */
     public static SupportService.TicketMessageResponse toMessageResponse(SupportTicketMessage m,
                                                                          SupportTicket ticket) {
         User sender = m.getSender();

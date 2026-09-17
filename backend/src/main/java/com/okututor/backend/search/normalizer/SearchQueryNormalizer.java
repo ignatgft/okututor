@@ -1,7 +1,10 @@
 package com.okututor.backend.search.normalizer;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,7 +51,35 @@ public class SearchQueryNormalizer {
             tokens = tokens.subList(0, MAX_TOKEN_COUNT);
         }
 
-        List<String> expandedTokens = synonymExpander.expand(tokens, keyboardCorrected);
+        // межраскладка: если исходный запрос был латиницей (vantv), добавить транслит варианты
+        // чтобы "vantv" → "матем" нашёл "математика"
+        List<String> interLayoutTokens = new java.util.ArrayList<>();
+        if (hasLatin(rawQuery) && !hasCyrillic(rawQuery)) {
+            String translit = transliterateSimple(rawQuery.toLowerCase(Locale.ROOT));
+            if (!translit.equalsIgnoreCase(rawQuery)) {
+                interLayoutTokens.addAll(tokenize(translit));
+            }
+            String keyboardAlt = keyboardNormalizer.correctLayout(rawQuery.toLowerCase(Locale.ROOT));
+            if (!keyboardAlt.equalsIgnoreCase(rawQuery) && !keyboardAlt.equalsIgnoreCase(translit)) {
+                interLayoutTokens.addAll(tokenize(keyboardAlt));
+            }
+        }
+        // также для кириллицы добавить латиницу (матем → matem)
+        if (hasCyrillic(rawQuery) && !hasLatin(rawQuery)) {
+            // обратная транслитерация для поиска "матем" когда в БД есть "math"
+            String reverse = transliterateRuToEn(rawQuery.toLowerCase(Locale.ROOT));
+            if (!reverse.equalsIgnoreCase(rawQuery)) {
+                interLayoutTokens.addAll(tokenize(reverse));
+            }
+        }
+
+        List<String> allTokensForSyn = new java.util.ArrayList<>(tokens);
+        allTokensForSyn.addAll(interLayoutTokens);
+        List<String> expandedTokens = synonymExpander.expand(allTokensForSyn, keyboardCorrected);
+        // добавить межраскладные токены напрямую, чтобы FTS их тоже искал
+        for (String t : interLayoutTokens) {
+            if (!expandedTokens.contains(t)) expandedTokens.add(t);
+        }
 
         String ftsQuery = buildFtsQuery(tokens);
         String fuzzyQuery = buildFuzzyQuery(tokens);
@@ -98,6 +129,53 @@ public class SearchQueryNormalizer {
                 .filter(t -> t.length() >= MIN_FUZZY_LENGTH)
                 .map(t -> t + "%")
                 .toList(), " | ");
+    }
+
+    private boolean hasLatin(String s) {
+        if (s == null) return false;
+        return s.chars().anyMatch(c -> (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
+    }
+    private boolean hasCyrillic(String s) {
+        if (s == null) return false;
+        return s.chars().anyMatch(c -> c >= 0x0400 && c <= 0x04FF);
+    }
+    private String transliterateSimple(String s) {
+        // простая фонетическая: v->в, a->а, n->н, t->т и т.д. + клавиатурная
+        Map<Character, String> map = Map.ofEntries(
+            Map.entry('a',"а"), Map.entry('b',"б"), Map.entry('v',"в"), Map.entry('g',"г"), Map.entry('d',"д"),
+            Map.entry('e',"е"), Map.entry('z',"з"), Map.entry('i',"и"), Map.entry('y',"й"), Map.entry('k',"к"),
+            Map.entry('l',"л"), Map.entry('m',"м"), Map.entry('n',"н"), Map.entry('o',"о"), Map.entry('p',"п"),
+            Map.entry('r',"р"), Map.entry('s',"с"), Map.entry('t',"т"), Map.entry('u',"у"), Map.entry('f',"ф"),
+            Map.entry('h',"х"), Map.entry('c',"ц"), Map.entry('q',"к"), Map.entry('w',"в"), Map.entry('x',"х"),
+            Map.entry('A',"А"), Map.entry('B',"Б"), Map.entry('V',"В"), Map.entry('G',"Г"), Map.entry('D',"Д"),
+            Map.entry('E',"Е"), Map.entry('Z',"З"), Map.entry('I',"И"), Map.entry('Y',"Й"), Map.entry('K',"К"),
+            Map.entry('L',"Л"), Map.entry('M',"М"), Map.entry('N',"Н"), Map.entry('O',"О"), Map.entry('P',"П"),
+            Map.entry('R',"Р"), Map.entry('S',"С"), Map.entry('T',"Т"), Map.entry('U',"У"), Map.entry('F',"Ф"),
+            Map.entry('H',"Х"), Map.entry('C',"Ц")
+        );
+        StringBuilder sb = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            String repl = map.get(c);
+            sb.append(repl != null ? repl : String.valueOf(c));
+        }
+        return sb.toString();
+    }
+    private String transliterateRuToEn(String s) {
+        Map<Character, String> map = Map.ofEntries(
+            Map.entry('а',"a"), Map.entry('б',"b"), Map.entry('в',"v"), Map.entry('г',"g"), Map.entry('д',"d"),
+            Map.entry('е',"e"), Map.entry('ё',"yo"), Map.entry('ж',"zh"), Map.entry('з',"z"), Map.entry('и',"i"),
+            Map.entry('й',"y"), Map.entry('к',"k"), Map.entry('л',"l"), Map.entry('м',"m"), Map.entry('н',"n"),
+            Map.entry('о',"o"), Map.entry('п',"p"), Map.entry('р',"r"), Map.entry('с',"s"), Map.entry('т',"t"),
+            Map.entry('у',"u"), Map.entry('ф',"f"), Map.entry('х',"h"), Map.entry('ц',"c"), Map.entry('ч',"ch"),
+            Map.entry('ш',"sh"), Map.entry('щ',"sch"), Map.entry('ъ',"'"), Map.entry('ы',"y"), Map.entry('ь',"'"),
+            Map.entry('э',"e"), Map.entry('ю',"yu"), Map.entry('я',"ya")
+        );
+        StringBuilder sb = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            String repl = map.get(c);
+            sb.append(repl != null ? repl : String.valueOf(c));
+        }
+        return sb.toString();
     }
 
     /** Склеивает части, не превышая MAX_QUERY_LENGTH; одиночная длинная часть обрезается. */

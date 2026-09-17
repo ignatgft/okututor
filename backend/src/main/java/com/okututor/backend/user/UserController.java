@@ -82,12 +82,12 @@ public class UserController {
         return userService.toPublic(userService.requireById(id));
     }
 
-    /** публичный каталог репетиторов (фронт зовёт с auth=false). */
+    /** публичный каталог репетиторов (фронт зовёт с auth=false) — только публичные поля, без phone/email/blocked. */
     @GetMapping("/tutors")
-    public Page<UserResponse> tutors(@RequestParam(required = false) String q,
-                                     @RequestParam(defaultValue = "0") int page,
-                                     @RequestParam(defaultValue = "20") int size) {
-        return userService.tutors(q, page, size);
+    public Page<PublicUserResponse> tutors(@RequestParam(required = false) String q,
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "20") int size) {
+        return userService.tutorsPublic(q, page, size);
     }
 
     private static void requireAuth(UserPrincipal principal) {

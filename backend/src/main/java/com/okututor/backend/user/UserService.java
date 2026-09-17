@@ -69,6 +69,15 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public Page<PublicUserResponse> tutorsPublic(String q, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+        Page<User> result = (q == null || q.isBlank())
+                ? userRepository.findByRoleOrderByCreatedAtDesc(Role.TUTOR, pageable)
+                : userRepository.searchTutors(q.trim().toLowerCase(), pageable);
+        return result.map(userMapper::toPublicResponse);
+    }
+
+    @Transactional(readOnly = true)
     public PublicUserResponse toPublic(User user) {
         return userMapper.toPublicResponse(user);
     }

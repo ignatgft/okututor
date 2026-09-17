@@ -1,4 +1,5 @@
-# Environment
+# Environment — единый .env на сервис (2026-09-17): backend/.env, frontend/.env, monitoring/.env — в игноре, в git только .env.example
+# Ключи из удалённой metrics/.env.example перенесены в monitoring/.env.example, не удалены
 .env
 *.env
 !*.env.example
@@ -20,6 +21,25 @@ frontend/node_modules/
 /backend.zip
 /test_auth_servise/
 
+# Agent & AI
+.opencode/
+*.log
+.muse/
+cursor/
+
+# Favicons / uploads
+frontend/public/favicons/
+backend/data/
+
 # OS
 .DS_Store
 Thumbs.db
+
+# prod secrets (never commit)
+prod-config/*.prod
+prod-config/.env.*.prod
+ops/monitoring/grafana/data/
+ops/monitoring/prometheus/data/
+ops/monitoring/loki/data/
+ops/monitoring/tempo/data/
+

@@ -58,6 +58,18 @@ public class LocalObjectStorage implements ObjectStorage {
         }
     }
 
+    @Override
+    public java.io.InputStream openStream(String key) throws IOException {
+        return Files.newInputStream(resolve(key));
+    }
+
+    @Override
+    public long contentLength(String key) {
+        try {
+            return Files.size(resolve(key));
+        } catch (IOException e) { return -1; }
+    }
+
     private Path resolve(String key) {
         // path traversal guard: канонизируем и требуем остаться внутри baseDir
         Path resolved = baseDir.resolve(key).normalize();

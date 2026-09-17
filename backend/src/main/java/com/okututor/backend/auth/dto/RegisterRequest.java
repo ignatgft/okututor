@@ -11,18 +11,15 @@ public record RegisterRequest(
         @NotBlank @Size(min = 8, max = 128) String password,
         @NotBlank String repeat_password,
         @NotBlank @Size(max = 200) String full_name,
-        Role role
+        Role role,
+        Boolean termsAccepted,
+        Boolean privacyAccepted
 ) {
 
     public Role roleOrDefault() {
-        if (role == null) {
-            return Role.STUDENT;
-        }
-        // самостоятельно выбрать можно только STUDENT/TUTOR; остальное деградирует до STUDENT
-        return switch (role) {
-            case STUDENT, TUTOR -> role;
-            default -> Role.STUDENT;
-        };
+        // FEATURE FREEZE: registration never creates privileged role. Admin is created only via
+        // direct DB seed or PUT /admin/users/{id}/role by SUPER_ADMIN. Ignore client-supplied role.
+        return Role.USER;
     }
 
     public String normalizedName() {

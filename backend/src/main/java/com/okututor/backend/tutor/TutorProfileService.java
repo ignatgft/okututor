@@ -17,8 +17,13 @@ import com.okututor.backend.tutor.dto.TutorProfileUpdateRequest;
 import com.okututor.backend.user.User;
 import com.okututor.backend.user.UserRepository;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -38,6 +43,7 @@ public class TutorProfileService {
     private final ModerationActionRepository moderationRepository;
     private final UserRepository userRepository;
     private final AuditLogService auditLog;
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
     public TutorProfileService(TutorProfileRepository profileRepository,
                                SubjectRepository subjectRepository,
@@ -49,7 +55,8 @@ public class TutorProfileService {
                                TutorProfileLanguageRepository profileLanguageRepository,
                                ModerationActionRepository moderationRepository,
                                UserRepository userRepository,
-                               AuditLogService auditLog) {
+                               AuditLogService auditLog,
+                               com.okututor.backend.observability.ObservabilityMetrics metrics) {
         this.profileRepository = profileRepository;
         this.subjectRepository = subjectRepository;
         this.levelRepository = levelRepository;
@@ -61,13 +68,29 @@ public class TutorProfileService {
         this.moderationRepository = moderationRepository;
         this.userRepository = userRepository;
         this.auditLog = auditLog;
+        this.metrics = metrics;
     }
 
     @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     public TutorProfileResponse create(UUID userId, TutorProfileCreateRequest req) {
         User user = userRepository.findById(userId).orElseThrow(() -> ApiException.notFound("User not found"));
-        if (profileRepository.existsByUserId(userId)) {
-            throw ApiException.conflict("Tutor profile already exists for this user");
+        if (user.isBlocked()) {
+            throw ApiException.forbidden("Blocked users cannot create tutor profiles");
+        }
+        var existingOpt = profileRepository.findByUserId(userId);
+        if (existingOpt.isPresent()) {
+            var existing = existingOpt.get();
+            if (existing.getStatus() == TutorProfileStatus.DELETED || existing.getStatus() == TutorProfileStatus.ARCHIVED) {
+                // Hard delete the old soft-deleted profile to allow fresh creation
+                profileSubjectRepository.deleteByProfileId(existing.getId());
+                profileLevelRepository.deleteByProfileId(existing.getId());
+                profileLanguageRepository.deleteByProfileId(existing.getId());
+                profileRepository.delete(existing);
+                profileRepository.flush();
+            } else {
+                throw ApiException.conflict("Tutor profile already exists for this user");
+            }
         }
         validatePrices(req.priceFrom(), req.priceTo());
         City city = req.cityId() == null ? null : cityRepository.findById(req.cityId()).orElseThrow(() -> ApiException.validation("City not found"));
@@ -81,16 +104,16 @@ public class TutorProfileService {
 
         TutorProfile p = new TutorProfile();
         p.setUser(user);
-        p.setFirstName(req.firstName().trim());
-        p.setLastName(req.lastName() == null ? null : req.lastName().trim());
-        p.setTitle(req.title());
-        p.setShortDescription(req.shortDescription());
-        p.setAbout(req.about());
+        p.setFirstName(sanitize(req.firstName()).trim());
+        p.setLastName(req.lastName() == null ? null : sanitize(req.lastName()).trim());
+        p.setTitle(sanitize(req.title()));
+        p.setShortDescription(sanitize(req.shortDescription()));
+        p.setAbout(sanitize(req.about()));
         p.setTutorType(parseTutorType(req.tutorType()));
-        p.setEducation(req.education());
-        p.setUniversity(req.university());
-        p.setEducationDetails(req.educationDetails());
-        p.setExperienceYears(req.experienceYears());
+        p.setEducation(sanitize(req.education()));
+        p.setUniversity(sanitize(req.university()));
+        p.setEducationDetails(sanitize(req.educationDetails()));
+        p.setExperienceYears(clampExperience(req.experienceYears()));
         p.setPriceFrom(req.priceFrom());
         p.setPriceTo(req.priceTo());
         if (req.currency() != null) p.setCurrency(req.currency());
@@ -99,6 +122,10 @@ public class TutorProfileService {
         p.setCity(city);
         p.setDistrict(district);
         p.setPhone(req.phone());
+        if (req.photoUrl() != null) {
+            if (isGooglePhoto(req.photoUrl())) throw ApiException.validation("Google photo cannot be used");
+            p.setPhotoUrl(req.photoUrl());
+        }
         p.setStatus(TutorProfileStatus.DRAFT);
 
         // slug must be unique — generate after id? need id first
@@ -115,21 +142,65 @@ public class TutorProfileService {
         profileRepository.save(p);
 
         syncRelations(p, req.subjectIds(), req.levelIds(), req.languages());
+        metrics.tutorProfileCreated();
+        return toResponse(p, true);
+    }
+
+    @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    public void deleteByUserId(UUID userId) {
+        TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (p.getStatus() == TutorProfileStatus.DELETED) {
+            throw ApiException.notFound("Tutor profile not found");
+        }
+        p.softDelete();
+        profileRepository.save(p);
+        auditLog.log(new AuditEntry(userId, "RESUME_DELETED", "TUTOR_PROFILE", p.getId().toString(), p.getStatus().name()));
+    }
+
+    @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    public TutorProfileResponse archive(UUID userId) {
+        TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
+        try { p.archive(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
+        profileRepository.save(p);
+        auditLog.log(new AuditEntry(userId, "TUTOR_ARCHIVE", "TUTOR_PROFILE", p.getId().toString(), null));
         return toResponse(p, true);
     }
 
     @Transactional(readOnly = true)
     public TutorProfileResponse getByUserId(UUID userId, boolean includePhone) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
-        // need to fetch city/district lazily within tx
-        p.getCity(); // trigger? will be handled in mapper with fetch? we use repository with fetch for public, but for owner we need manual
+        if (p.getStatus() == TutorProfileStatus.DELETED) throw ApiException.notFound("Tutor profile not found");
         return toResponse(p, includePhone);
+    }
+
+    /**
+     * Owner preview: renders the resume exactly as it looks to end users (public form,
+     * phone hidden) regardless of moderation status. Only the owner may preview.
+     */
+    @Transactional(readOnly = true)
+    public TutorProfileResponse getPreviewPublic(UUID userId) {
+        TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (p.getStatus() == TutorProfileStatus.DELETED) throw ApiException.notFound("Tutor profile not found");
+        if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
+        return toResponse(p, false);
     }
 
     @Transactional(readOnly = true)
     public TutorProfileResponse getBySlugPublic(String slug) {
         TutorProfile p = profileRepository.findBySlugWithLocation(slug).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (p.getStatus() == TutorProfileStatus.EXPIRED) {
+            throw ApiException.notFound("Tutor profile not found");
+        }
         if (p.getStatus() != TutorProfileStatus.PUBLISHED) {
+            throw ApiException.notFound("Tutor profile not found");
+        }
+        if (p.getExpiresAt() != null && p.getExpiresAt().isBefore(java.time.Instant.now())) {
+            throw ApiException.notFound("Tutor profile not found");
+        }
+        if (p.getUser() != null && p.getUser().isBlocked()) {
             throw ApiException.notFound("Tutor profile not found");
         }
         List<Subject> subjects = profileSubjectRepository.findByProfileId(p.getId()).stream().map(TutorProfileSubject::getSubject).toList();
@@ -139,9 +210,11 @@ public class TutorProfileService {
         return TutorProfileMapper.toResponse(p, subjects, levels, langs, false);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     @Transactional
     public void incrementViews(UUID profileId) {
         profileRepository.incrementViews(profileId);
+        metrics.tutorProfileView();
     }
 
     @Transactional(readOnly = true)
@@ -151,22 +224,31 @@ public class TutorProfileService {
     }
 
     @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     public TutorProfileResponse update(UUID userId, TutorProfileUpdateRequest req) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
-        if (p.getStatus() != TutorProfileStatus.DRAFT && p.getStatus() != TutorProfileStatus.REJECTED) {
-            throw ApiException.conflict("Can edit only in DRAFT or REJECTED, current: " + p.getStatus());
+        if (p.getUser() != null && p.getUser().isBlocked()) {
+            throw ApiException.forbidden("Blocked users cannot edit tutor profiles");
         }
+        if (p.getStatus() == TutorProfileStatus.DELETED || p.getStatus() == TutorProfileStatus.ARCHIVED) {
+            throw ApiException.notFound("Tutor profile not found");
+        }
+        // Allow editing in any moderate state — PENDING_MODERATION stays pending,
+        // SUSPENDED stays suspended; only DELETED/ARCHIVED are blocked.
+        // No exception for PENDING_MODERATION / SUSPENDED to support "edit while on moderation".
+        boolean isActive = p.getStatus().isActive();
+        boolean needsRemoderation = isActive && isModerationRequired(req);
         validatePrices(req.priceFrom(), req.priceTo());
-        if (req.firstName() != null) p.setFirstName(req.firstName().trim());
-        if (req.lastName() != null) p.setLastName(req.lastName());
-        if (req.title() != null) p.setTitle(req.title());
-        if (req.shortDescription() != null) p.setShortDescription(req.shortDescription());
-        if (req.about() != null) p.setAbout(req.about());
+        if (req.firstName() != null) p.setFirstName(sanitize(req.firstName()).trim());
+        if (req.lastName() != null) p.setLastName(sanitize(req.lastName()));
+        if (req.title() != null) p.setTitle(sanitize(req.title()));
+        if (req.shortDescription() != null) p.setShortDescription(sanitize(req.shortDescription()));
+        if (req.about() != null) p.setAbout(sanitize(req.about()));
         if (req.tutorType() != null) p.setTutorType(parseTutorType(req.tutorType()));
-        if (req.education() != null) p.setEducation(req.education());
-        if (req.university() != null) p.setUniversity(req.university());
-        if (req.educationDetails() != null) p.setEducationDetails(req.educationDetails());
-        if (req.experienceYears() != null) p.setExperienceYears(req.experienceYears());
+        if (req.education() != null) p.setEducation(sanitize(req.education()));
+        if (req.university() != null) p.setUniversity(sanitize(req.university()));
+        if (req.educationDetails() != null) p.setEducationDetails(sanitize(req.educationDetails()));
+        if (req.experienceYears() != null) p.setExperienceYears(clampExperience(req.experienceYears()));
         if (req.priceFrom() != null) p.setPriceFrom(req.priceFrom());
         if (req.priceTo() != null) p.setPriceTo(req.priceTo());
         if (req.currency() != null) p.setCurrency(req.currency());
@@ -175,26 +257,65 @@ public class TutorProfileService {
         if (req.cityId() != null) {
             City city = cityRepository.findById(req.cityId()).orElseThrow(() -> ApiException.validation("City not found"));
             p.setCity(city);
+            // if district already set, validate it still belongs to new city
+            if (p.getDistrict() != null && !p.getDistrict().getCity().getId().equals(city.getId())) {
+                throw ApiException.validation("Existing district does not belong to new city");
+            }
         }
         if (req.districtId() != null) {
             District d = districtRepository.findById(req.districtId()).orElseThrow(() -> ApiException.validation("District not found"));
+            City effectiveCity = req.cityId() != null ? cityRepository.findById(req.cityId()).orElse(null) : p.getCity();
+            if (effectiveCity == null) {
+                throw ApiException.validation("City is required when district is specified");
+            }
+            if (!d.getCity().getId().equals(effectiveCity.getId())) {
+                throw ApiException.validation("District does not belong to city");
+            }
             p.setDistrict(d);
         }
-        // allow clearing city/district? if explicit null not sent we keep. If cityId is sent as null we keep old. To clear, frontend should send? keep simple.
         if (req.phone() != null) p.setPhone(req.phone());
+        if (req.photoUrl() != null) {
+            if (isGooglePhoto(req.photoUrl())) throw ApiException.validation("Google photo cannot be used");
+            p.setPhotoUrl(req.photoUrl());
+        }
+
+        // Handle moderation-sensitive changes for ACTIVE profiles
+        if (needsRemoderation) {
+            p.setStatus(TutorProfileStatus.PENDING_MODERATION);
+            auditLog.log(new AuditEntry(userId, "RESUME_PENDING_MODERATION", "TUTOR_PROFILE", p.getId().toString(), "MODERATION_REQUIRED_EDIT"));
+        } else if (p.getStatus() == TutorProfileStatus.REJECTED) {
+            // Editing a rejected resume moves it back to DRAFT for re-submission
+            p.setStatus(TutorProfileStatus.DRAFT);
+        }
 
         profileRepository.save(p);
 
         // sync relations only if provided (not null)
         if (req.subjectIds() != null || req.levelIds() != null || req.languages() != null) {
             syncRelations(p, req.subjectIds(), req.levelIds(), req.languages());
+            if (needsRemoderation) {
+                // Mark that relations changed and need moderation
+                auditLog.log(new AuditEntry(userId, "RESUME_RELATIONS_CHANGED", "TUTOR_PROFILE", p.getId().toString(), null));
+            }
         }
+        auditLog.log(new AuditEntry(userId, "RESUME_UPDATED", "TUTOR_PROFILE", p.getId().toString(), p.getStatus().name()));
         return toResponse(p, true);
     }
 
+    private boolean isModerationRequired(TutorProfileUpdateRequest req) {
+        // Significant changes that require re-moderation
+        return req.title() != null || req.shortDescription() != null || req.about() != null
+                || req.education() != null || req.university() != null || req.educationDetails() != null
+                || req.subjectIds() != null || req.levelIds() != null || req.tutorType() != null;
+    }
+
     @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     public TutorProfileResponse submit(UUID userId, UUID actorId) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (p.getUser() != null && p.getUser().isBlocked()) {
+            throw ApiException.forbidden("Blocked users cannot submit for moderation");
+        }
         try {
             p.submitForModeration();
         } catch (IllegalStateException e) {
@@ -203,20 +324,25 @@ public class TutorProfileService {
         profileRepository.save(p);
         moderationRepository.save(new ModerationAction(p, actorId == null ? null : refUser(actorId), ModerationAction.Action.SUBMIT, null));
         auditLog.log(new AuditEntry(actorId, "TUTOR_SUBMIT", "TUTOR_PROFILE", p.getId().toString(), p.getStatus().name()));
+        try { metrics.pendingModerationInc(); } catch (Exception ignored) {}
         return toResponse(p, true);
     }
 
     @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     public TutorProfileResponse approve(UUID profileId, UUID actorId) {
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         try { p.approve(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
         profileRepository.save(p);
         moderationRepository.save(new ModerationAction(p, refUser(actorId), ModerationAction.Action.APPROVE, null));
         auditLog.log(new AuditEntry(actorId, "TUTOR_APPROVE", "TUTOR_PROFILE", p.getId().toString(), null));
+        metrics.tutorProfilePublished();
+        try { metrics.pendingModerationDec(); } catch (Exception ignored) {}
         return toResponse(p, true);
     }
 
     @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     public TutorProfileResponse reject(UUID profileId, String reason, UUID actorId) {
         if (reason == null || reason.isBlank()) throw new com.okututor.backend.common.error.FieldValidationException(java.util.Map.of("reason", "reason is required"));
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
@@ -224,10 +350,12 @@ public class TutorProfileService {
         profileRepository.save(p);
         moderationRepository.save(new ModerationAction(p, refUser(actorId), ModerationAction.Action.REJECT, reason));
         auditLog.log(new AuditEntry(actorId, "TUTOR_REJECT", "TUTOR_PROFILE", p.getId().toString(), reason));
+        try { metrics.resumeRejected(); metrics.pendingModerationDec(); } catch (Exception ignored) {}
         return toResponse(p, true);
     }
 
     @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     public TutorProfileResponse suspend(UUID profileId, String reason, UUID actorId) {
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         try { p.suspend(reason); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
@@ -238,6 +366,7 @@ public class TutorProfileService {
     }
 
     @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
     public TutorProfileResponse restore(UUID profileId, UUID actorId) {
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         try { p.restore(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
@@ -247,41 +376,147 @@ public class TutorProfileService {
         return toResponse(p, true);
     }
 
-    @Transactional(readOnly = true)
-    public Page<TutorProfileResponse> adminList(String status, int page, int size) {
-        TutorProfileStatus s = null;
-        if (status != null && !status.isBlank()) {
-            try { s = TutorProfileStatus.valueOf(status.toUpperCase()); } catch (IllegalArgumentException e) { throw ApiException.validation("Unknown status: " + status); }
+    @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    public TutorProfileResponse hide(UUID userId) {
+        TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
+        try { p.hide(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
+        profileRepository.save(p);
+        auditLog.log(new AuditEntry(userId, "TUTOR_HIDE", "TUTOR_PROFILE", p.getId().toString(), null));
+        return toResponse(p, true);
+    }
+
+    @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    public TutorProfileResponse unhide(UUID userId) {
+        TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
+        try { p.unhide(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
+        profileRepository.save(p);
+        auditLog.log(new AuditEntry(userId, "TUTOR_UNHIDE", "TUTOR_PROFILE", p.getId().toString(), null));
+        return toResponse(p, true);
+    }
+
+    @Transactional
+    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    public TutorProfileResponse renew(UUID userId) {
+        TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
+        if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
+        if (p.getStatus() != TutorProfileStatus.PUBLISHED && p.getStatus() != TutorProfileStatus.EXPIRED && p.getStatus() != TutorProfileStatus.HIDDEN) {
+            throw ApiException.conflict("Can renew only PUBLISHED, EXPIRED or HIDDEN, current: " + p.getStatus());
         }
-        PageRequest pr = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
-        Page<TutorProfile> result = s == null ? profileRepository.findAll(pr) : profileRepository.findByStatusOrderByPublishedAtDesc(s, pr);
-        return result.map(p -> toResponse(p, true));
+        Instant now = Instant.now();
+        Instant graceWindow = now.plusSeconds(3L * 24 * 3600);
+        if (p.getExpiresAt() != null && p.getExpiresAt().isAfter(graceWindow)) {
+            throw ApiException.conflict("Renewal is available only after the current 30-day period has ended");
+        }
+        try { p.renew(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
+        profileRepository.save(p);
+        moderationRepository.save(new ModerationAction(p, refUser(userId), ModerationAction.Action.RESTORE, "RENEW 30d"));
+        auditLog.log(new AuditEntry(userId, "TUTOR_RENEW", "TUTOR_PROFILE", p.getId().toString(), p.getExpiresAt().toString()));
+        return toResponse(p, true);
+    }
+
+    @Transactional
+    public int expireOldProfiles() {
+        return profileRepository.expireOldProfiles();
     }
 
     @Transactional(readOnly = true)
-    public Page<TutorProfileResponse> publicListing(int page, int size, String tutorType, UUID cityId, UUID districtId, Boolean online, Boolean offline, BigDecimal priceFrom, BigDecimal priceTo) {
-        // simple path without search — uses findPublishedWithFilters if any filter present else findByStatus
+    public Page<TutorProfileResponse> adminList(String status, int page, int size) {
+        return adminList(status, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TutorProfileResponse> adminList(String status, String q, int page, int size) {
+        TutorProfileStatus s = null;
+        if (status != null && !status.isBlank()) {
+            String normalized = status.trim().toUpperCase();
+            if ("PENDING".equals(normalized)) normalized = TutorProfileStatus.PENDING_MODERATION.name();
+            else if ("APPROVED".equals(normalized)) normalized = TutorProfileStatus.PUBLISHED.name();
+            try { s = TutorProfileStatus.valueOf(normalized); } catch (IllegalArgumentException e) { throw ApiException.validation("Unknown status: " + status); }
+        }
         PageRequest pr = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+        String qTrim = (q == null || q.isBlank()) ? null : q.trim();
+        Page<TutorProfile> result = profileRepository.findByAdminFilter(s, qTrim, pr);
+        if (result.isEmpty()) return result.map(p -> toResponse(p, true));
+        List<UUID> ids = result.getContent().stream().map(TutorProfile::getId).toList();
+        var subjectMap = profileSubjectRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(s2 -> s2.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileSubject::getSubject, java.util.stream.Collectors.toList())));
+        var levelMap = profileLevelRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLevel::getLevel, java.util.stream.Collectors.toList())));
+        var langMap = profileLanguageRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLanguage::getLanguage, java.util.stream.Collectors.toList())));
+        var mapped = result.getContent().stream()
+                .map(p -> TutorProfileMapper.toResponse(p,
+                        subjectMap.getOrDefault(p.getId(), List.of()),
+                        levelMap.getOrDefault(p.getId(), List.of()),
+                        langMap.getOrDefault(p.getId(), List.of()),
+                        true))
+                .toList();
+        return new org.springframework.data.domain.PageImpl<>(mapped, pr, result.getTotalElements());
+    }
+
+    @Cacheable(value = "tutorPopular", key = "#limit", unless = "#result == null")
+    @Transactional(readOnly = true)
+    public List<TutorProfileResponse> getPopular(int limit) {
+        int capped = Math.min(Math.max(limit, 1), 20);
+        var pageable = PageRequest.of(0, capped);
+        var profiles = profileRepository.findPopular(pageable);
+        if (profiles.isEmpty()) return List.of();
+        List<UUID> ids = profiles.stream().map(TutorProfile::getId).toList();
+        var subjectMap = profileSubjectRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(s -> s.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileSubject::getSubject, java.util.stream.Collectors.toList())));
+        var levelMap = profileLevelRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLevel::getLevel, java.util.stream.Collectors.toList())));
+        var langMap = profileLanguageRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLanguage::getLanguage, java.util.stream.Collectors.toList())));
+        return profiles.stream()
+                .map(p -> TutorProfileMapper.toResponse(p,
+                        subjectMap.getOrDefault(p.getId(), List.of()),
+                        levelMap.getOrDefault(p.getId(), List.of()),
+                        langMap.getOrDefault(p.getId(), List.of()),
+                        false))
+                .toList();
+    }
+
+    @Cacheable(value = "tutorPublicList", key = "#page + '-' + #size + '-' + #tutorType + '-' + #cityId + '-' + #districtId + '-' + #online + '-' + #offline + '-' + #priceFrom + '-' + #priceTo", unless = "#result == null")
+    @Transactional(readOnly = true)
+    public Page<TutorProfileResponse> publicListing(int page, int size, String tutorType, UUID cityId, UUID districtId, Boolean online, Boolean offline, BigDecimal priceFrom, BigDecimal priceTo) {
+        PageRequest pr = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+        Page<TutorProfile> basePage;
         if (tutorType == null && cityId == null && districtId == null && online == null && offline == null && priceFrom == null && priceTo == null) {
-            Page<TutorProfile> base = profileRepository.findByStatusOrderByPublishedAtDesc(TutorProfileStatus.PUBLISHED, pr);
-            return base.map(p -> {
-                List<Subject> subs = profileSubjectRepository.findByProfileId(p.getId()).stream().map(TutorProfileSubject::getSubject).toList();
-                List<Level> levs = profileLevelRepository.findByProfileId(p.getId()).stream().map(TutorProfileLevel::getLevel).toList();
-                List<String> langs = profileLanguageRepository.findByProfileId(p.getId()).stream().map(TutorProfileLanguage::getLanguage).toList();
-                return TutorProfileMapper.toResponse(p, subs, levs, langs, false);
-            });
+            basePage = profileRepository.findPublishedExcludingBlocked(TutorProfileStatus.PUBLISHED, pr);
+        } else {
+            TutorType tt = null;
+            if (tutorType != null) {
+                try { tt = TutorType.valueOf(tutorType.toUpperCase()); } catch (IllegalArgumentException e) { throw ApiException.validation("Unknown tutor_type: " + tutorType); }
+            }
+            basePage = profileRepository.findPublishedWithFilters(tt, cityId, districtId, online, offline, priceFrom, priceTo, pr);
         }
-        TutorType tt = null;
-        if (tutorType != null) {
-            try { tt = TutorType.valueOf(tutorType.toUpperCase()); } catch (IllegalArgumentException e) { throw ApiException.validation("Unknown tutor_type: " + tutorType); }
+        // double-check blocked (defense in depth, though queries already filter)
+        var filteredContent = basePage.getContent().stream()
+                .filter(p -> p.getUser() == null || !p.getUser().isBlocked())
+                .toList();
+        if (filteredContent.isEmpty()) {
+            return new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList(), pr, basePage.getTotalElements());
         }
-        Page<TutorProfile> filtered = profileRepository.findPublishedWithFilters(tt, cityId, districtId, online, offline, priceFrom, priceTo, pr);
-        return filtered.map(p -> {
-            List<Subject> subs = profileSubjectRepository.findByProfileId(p.getId()).stream().map(TutorProfileSubject::getSubject).toList();
-            List<Level> levs = profileLevelRepository.findByProfileId(p.getId()).stream().map(TutorProfileLevel::getLevel).toList();
-            List<String> langs = profileLanguageRepository.findByProfileId(p.getId()).stream().map(TutorProfileLanguage::getLanguage).toList();
-            return TutorProfileMapper.toResponse(p, subs, levs, langs, false);
-        });
+        List<UUID> ids = filteredContent.stream().map(TutorProfile::getId).toList();
+        var subjectMap = profileSubjectRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(s -> s.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileSubject::getSubject, java.util.stream.Collectors.toList())));
+        var levelMap = profileLevelRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLevel::getLevel, java.util.stream.Collectors.toList())));
+        var langMap = profileLanguageRepository.findByProfileIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLanguage::getLanguage, java.util.stream.Collectors.toList())));
+        var responseList = filteredContent.stream()
+                .map(p -> TutorProfileMapper.toResponse(p,
+                        subjectMap.getOrDefault(p.getId(), List.of()),
+                        levelMap.getOrDefault(p.getId(), List.of()),
+                        langMap.getOrDefault(p.getId(), List.of()),
+                        false))
+                .toList();
+        return new org.springframework.data.domain.PageImpl<>(responseList, pr, basePage.getTotalElements());
     }
 
     // helpers
@@ -296,23 +531,40 @@ public class TutorProfileService {
     private void syncRelations(TutorProfile p, List<UUID> subjectIds, List<UUID> levelIds, List<String> languages) {
         if (subjectIds != null) {
             profileSubjectRepository.deleteByProfileId(p.getId());
-            for (UUID sid : subjectIds) {
-                Subject s = subjectRepository.findById(sid).orElseThrow(() -> ApiException.validation("Subject not found: " + sid));
-                profileSubjectRepository.save(new TutorProfileSubject(p, s));
+            if (!subjectIds.isEmpty()) {
+                var subjects = subjectRepository.findAllById(subjectIds);
+                if (subjects.size() != subjectIds.size()) {
+                    var found = subjects.stream().map(Subject::getId).collect(java.util.stream.Collectors.toSet());
+                    var missing = subjectIds.stream().filter(id -> !found.contains(id)).toList();
+                    throw ApiException.validation("Subjects not found: " + missing);
+                }
+                var toSave = subjects.stream().map(s -> new TutorProfileSubject(p, s)).toList();
+                profileSubjectRepository.saveAll(toSave);
             }
         }
         if (levelIds != null) {
             profileLevelRepository.deleteByProfileId(p.getId());
-            for (UUID lid : levelIds) {
-                Level l = levelRepository.findById(lid).orElseThrow(() -> ApiException.validation("Level not found: " + lid));
-                profileLevelRepository.save(new TutorProfileLevel(p, l));
+            if (!levelIds.isEmpty()) {
+                var levels = levelRepository.findAllById(levelIds);
+                if (levels.size() != levelIds.size()) {
+                    var found = levels.stream().map(Level::getId).collect(java.util.stream.Collectors.toSet());
+                    var missing = levelIds.stream().filter(id -> !found.contains(id)).toList();
+                    throw ApiException.validation("Levels not found: " + missing);
+                }
+                var toSave = levels.stream().map(l -> new TutorProfileLevel(p, l)).toList();
+                profileLevelRepository.saveAll(toSave);
             }
         }
         if (languages != null) {
             profileLanguageRepository.deleteByProfileId(p.getId());
-            for (String lang : languages) {
-                if (lang == null || lang.isBlank()) continue;
-                profileLanguageRepository.save(new TutorProfileLanguage(p, lang.trim()));
+            if (!languages.isEmpty()) {
+                var normalized = languages.stream()
+                        .filter(l -> l != null && !l.isBlank())
+                        .map(String::trim)
+                        .distinct()
+                        .toList();
+                var toSave = normalized.stream().map(lang -> new TutorProfileLanguage(p, lang)).toList();
+                profileLanguageRepository.saveAll(toSave);
             }
         }
     }
@@ -333,5 +585,24 @@ public class TutorProfileService {
         User u = new User();
         u.setId(id);
         return u;
+    }
+
+    private static boolean isGooglePhoto(String url) {
+        return com.okututor.backend.common.util.PhotoUrlUtils.isGooglePhoto(url);
+    }
+
+    private static String sanitize(String v) {
+        if (v == null) return null;
+        // strip all HTML tags — stored XSS defense (LegalService уже использует Jsoup, тут Safelist.none)
+        String cleaned = Jsoup.clean(v, "", Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false));
+        // Jsoup may add &amp; for & — unescape minimal (keep as text)
+        return cleaned == null ? v : cleaned.trim();
+    }
+
+    private static Integer clampExperience(Integer v) {
+        if (v == null) return null;
+        if (v < 0) return 0;
+        if (v > 80) return 80;
+        return v;
     }
 }

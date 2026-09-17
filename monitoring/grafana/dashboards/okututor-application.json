@@ -1,0 +1,93 @@
+{
+  "title": "OkuTutor — Application",
+  "uid": "okututor-application",
+  "tags": ["okututor", "application"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 101,
+      "type": "timeseries",
+      "title": "HTTP RPS by uri",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count[5m])) by (uri)", "refId": "A", "legendFormat": "{{uri}}" }],
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 102,
+      "type": "timeseries",
+      "title": "Latency p50/p95/p99",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) * 1000", "refId": "A", "legendFormat": "p50 ms" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) * 1000", "refId": "B", "legendFormat": "p95 ms" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) * 1000", "refId": "C", "legendFormat": "p99 ms" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "id": 103,
+      "type": "timeseries",
+      "title": "Error rate 4xx/5xx",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[5m]))", "refId": "A", "legendFormat": "4xx" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))", "refId": "B", "legendFormat": "5xx" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    },
+    {
+      "id": 104,
+      "type": "timeseries",
+      "title": "JVM Heap / Non-Heap",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "jvm_memory_used_bytes{area=\"heap\"}", "refId": "A", "legendFormat": "heap used" },
+        { "expr": "jvm_memory_max_bytes{area=\"heap\"}", "refId": "B", "legendFormat": "heap max" },
+        { "expr": "jvm_memory_used_bytes{area=\"nonheap\"}", "refId": "C", "legendFormat": "nonheap used" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+    },
+    {
+      "id": 105,
+      "type": "timeseries",
+      "title": "JVM Threads / Classes",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "jvm_threads_live_threads", "refId": "A", "legendFormat": "threads" },
+        { "expr": "jvm_classes_loaded_classes", "refId": "B", "legendFormat": "loaded classes" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+    },
+    {
+      "id": 106,
+      "type": "timeseries",
+      "title": "DB Pool",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "hikaricp_connections_active", "refId": "A", "legendFormat": "active" },
+        { "expr": "hikaricp_connections_idle", "refId": "B", "legendFormat": "idle" },
+        { "expr": "hikaricp_connections_pending", "refId": "C", "legendFormat": "pending" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 }
+    },
+    {
+      "id": 107,
+      "type": "timeseries",
+      "title": "AUTH throughput",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "increase(okututor_auth_login_success_total[5m])", "refId": "A", "legendFormat": "login success" },
+        { "expr": "increase(okututor_auth_login_failure_total[5m])", "refId": "B", "legendFormat": "login failure" },
+        { "expr": "increase(okututor_auth_refresh_failure_total[5m])", "refId": "C", "legendFormat": "refresh failure" },
+        { "expr": "increase(okututor_oauth_success_total[5m])", "refId": "D", "legendFormat": "oauth success" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 }
+    }
+  ]
+}

@@ -33,7 +33,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  flex: 1 1 0;
   height: 100%;
   background: none;
   border: none;
@@ -44,7 +44,7 @@
   gap: var(--space-1);
   border-radius: 0;
   min-height: var(--touch-target);
-  min-width: var(--touch-target);
+  min-width: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -91,6 +91,10 @@
   line-height: 1.2;
   text-align: center;
   color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Mobile only — show BottomNav */
@@ -99,6 +103,31 @@
     display: block;
     /* ensure it sits above everything */
     z-index: 100;
+  }
+  /* keep page content above the bar (safe-area aware) */
+  body {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
+  }
+  /* when dashboard layout is used, avoid double padding */
+  .dashboard-layout.has-bottom-nav .dashboard-main {
+    padding-bottom: 0;
+  }
+  /* 6 items (with Резюме) need tighter spacing */
+  .bottom-nav-item {
+    padding: 4px 0;
+    gap: 2px;
+  }
+  .bottom-nav-icon-wrap {
+    width: 40px;
+    height: 28px;
+  }
+  .bottom-nav-label {
+    font-size: 10px;
+    letter-spacing: -0.1px;
+  }
+  .bottom-nav-container {
+    padding: 0 2px;
+    gap: 1px;
   }
 }
 

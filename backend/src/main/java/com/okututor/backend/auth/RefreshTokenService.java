@@ -72,7 +72,12 @@ public class RefreshTokenService {
         Duration grace = Duration.ofSeconds(properties.getJwt().getRefreshGraceSeconds());
 
         if (stored.isExpired()) {
-            revokeFamily(stored.getFamilyId());
+            // Expired token is single-branch failure, do not kill sibling devices.
+            // revoke only this token branch to keep other families alive.
+            if (stored.getRevokedAt() == null) {
+                stored.setRevokedAt(now);
+                repository.save(stored);
+            }
             throw ApiException.unauthorized("Refresh token expired");
         }
 

@@ -12,18 +12,16 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     @Query(value = """
             select r from Review r
-            join fetch r.course
             join fetch r.student
-            where r.course.id = :courseId and r.hidden = false
+            where r.courseId = :courseId and r.hidden = false
             order by r.createdAt desc
             """,
-            countQuery = "select count(r) from Review r where r.course.id = :courseId and r.hidden = false")
+            countQuery = "select count(r) from Review r where r.courseId = :courseId and r.hidden = false")
     Page<Review> findByCourseIdAndHiddenFalseOrderByCreatedAtDesc(@Param("courseId") UUID courseId,
-                                                                  Pageable pageable);
+                                                                   Pageable pageable);
 
     @Query(value = """
             select r from Review r
-            join fetch r.course
             join fetch r.student
             order by r.createdAt desc
             """,
@@ -34,12 +32,6 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     Optional<Review> findByIdAndStudentId(UUID id, UUID studentId);
 
-    @Query("""
-            select count(b) > 0 from com.okututor.backend.booking.Booking b
-            where b.course.id = :courseId and b.student.id = :studentId and b.status = com.okututor.backend.booking.Booking.Status.COMPLETED
-            """)
-    boolean existsCompletedBooking(@Param("courseId") UUID courseId, @Param("studentId") UUID studentId);
-
     interface ReviewAggregate {
         Double getAvgRating();
         Long getCount();
@@ -47,16 +39,16 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     @Query("""
             select avg(r.rating) as avgRating, count(r) as count
-            from Review r where r.course.id = :courseId and r.hidden = false
+            from Review r where r.courseId = :courseId and r.hidden = false
             """)
     ReviewAggregate aggregateForCourse(@Param("courseId") UUID courseId);
 
-    /** средняя оценка, поставленная студентом (прогресс студента). */
+    /** средняя оценка, поставленная студентом. */
     @Query("select coalesce(avg(r.rating), 0.0) from Review r where r.student.id = :studentId")
     double averageRatingGiven(@Param("studentId") UUID studentId);
 
-    /** средняя оценка тьютора по отзывам на его курсы. */
-    @Query("select coalesce(avg(r.rating), 0.0) from Review r " +
-            "where r.course.teacher.id = :teacherId and r.hidden = false")
-    double averageRatingForTutor(@Param("teacherId") UUID teacherId);
+    // legacy: отзывы привязывались к Course.teacher; после удаления Course метод оставлен как no-op
+    default double averageRatingForTutor(UUID teacherId) {
+        return 0.0;
+    }
 }

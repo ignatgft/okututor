@@ -51,8 +51,9 @@ class ErrorBodyShapeTest {
     void setUp() {
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
+        com.okututor.backend.observability.ObservabilityMetrics metrics = org.mockito.Mockito.mock(com.okututor.backend.observability.ObservabilityMetrics.class);
         mvc = MockMvcBuilders.standaloneSetup(new DummyController())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(metrics))
                 .setValidator(validator)
                 .build();
     }

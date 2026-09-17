@@ -45,8 +45,8 @@
     "about_us": "Биз жөнүндө",
     "my_profile": "Менин профилим",
     "profile": "Менин профилим",
-    "dashboard": "Менин сабактарым",
-    "tutor_dashboard": "Мугалим панели",
+    "dashboard": "Башкы бет",
+    "tutor_dashboard": "Башкы бет",
     "admin": "Админ",
     "language": "Тил",
     "login": "Кирүү",
@@ -115,7 +115,8 @@
     "reject_reason_hint": "Өтүнмө ээсине себеп көрсөтүңүз...",
     "success": "Аракет аткарылды",
     "email": "Эл. почта",
-    "in_timezone": "({{tz}})"
+    "in_timezone": "({{tz}})",
+    "optional": "милдеттүү эмес"
   },
   "messages": {
     "no_conversations": "Сүйлөшүүлөр жок",
@@ -172,7 +173,8 @@
     "scheduleNotAvailable": "Тандалган убакыт жеткиликтүү эмес. Башкасын тандаңыз.",
     "lessonConflict": "Бул убакытка сабак пландалган.",
     "invalidTimezone": "Убакыт алкагы туура эмес.",
-    "invalidDate": "Дата же убакыт туура эмес."
+    "invalidDate": "Дата же убакыт туура эмес.",
+    "reload_hint": "Баракты жаңыртып, учурдагы статусту текшериңиз."
   },
   "schedule": {
     "view_day": "Күн",
@@ -199,7 +201,14 @@
     "join_lesson": "Сабакка кирүү",
     "events_on_day": "Бул күндөгү сабактар",
     "view": "Көрүнүш",
-    "slot_removed": "Жеткиликтүүлүк уячасы өчүрүлдү"
+    "slot_removed": "Жеткиликтүүлүк уячасы өчүрүлдү",
+    "proposal_accepted": "Жадыбал ырасталды",
+    "proposal_rejected": "Сунуш четке кагылды",
+    "counter_propose": "Башка убакыт сунуштоо",
+    "counter_title": "Башка убакыт сунуштаңыз",
+    "counter_send": "Сунушту жөнөтүү",
+    "counter_sent": "Каршы сунуш жөнөтүлдү",
+    "counter_message_placeholder": "Мисалы, кечинде ыңгайлуу"
   },
   "calendar": {
     "student": "Окуучу",
@@ -266,23 +275,27 @@
     "learning_and_teaching": "Окуу жана\nҮйрөтүү",
     "subscribe": "Жаңылыктарга жазылыңыз",
     "copyright": "Okututor. Бардык укуктар корголгон.",
-    "logo_alt": "Okututor логотиби"
+    "logo_alt": "Okututor логотиби",
+    "privacy": "Купуялык саясаты",
+    "terms": "Колдонуу шарттары",
+    "cookies": "Cookie саясаты"
   },
   "tutors": {
-    "subtitle": "Кантип мугалим болуу керек",
-    "title": "Дүйнө жүзүндөгү окуучуларга жардам берип, мугалим катары карьера түзүңүз.",
-    "create_button": "Курсту түзүү",
+    "subtitle": "Мугалимдер үчүн",
+    "title": "Студентсиңби? Предметти жакшы билесиңби — OkuTutor репетитору бол",
+    "hint": "Резюмеңди жарыялап, Бишкек, Ош жана онлайн биринчи окуучуларыңды тап.",
+    "create_button": "Резюмеңди жарыяла",
     "step1": {
-      "title": "Катталыңыз",
-      "description": "мугалим резюмеңизди түзүү үчүн"
+      "title": "Каттал",
+      "description": "бир мүнөттө аккаунт түз"
     },
     "step2": {
-      "title": "Курсту түзүңүз",
-      "description": "окутууну жана акча табууну баштоо үчүн"
+      "title": "Резюме жарыяла",
+      "description": "предметтер, деңгээлдер, баа жана формат — онлайн же офлайн"
     },
     "step3": {
-      "title": "Акча табууну баштаңыз",
-      "description": "окутуп, ийгиликтүү карьераңызды өнүктүрүңүз"
+      "title": "Окуучуларды тап",
+      "description": "кайрылууларга жооп берип, Кыргызстанда окутууну башта"
     },
     "image_alt": "Репетитор"
   },
@@ -532,8 +545,31 @@
     }
   },
   "dashboard": {
-    "title": "Менин сабактарым",
+    "title": "Менин кайрылууларым",
+    "overview": "Обзор",
+    "welcome": "Кош келиңиз",
     "greeting": "Салам, {{name}}",
+    "stats": "Статистика",
+    "my_requests": "Менин кайрылууларым",
+    "my_requests_count": "кайрылуу",
+    "unread": "Окула элек",
+    "resume_views": "Резюме көрүүлөр",
+    "resume_status": "Резюме статусу",
+    "no_resume": "Резюме жок",
+    "quick_actions": "Тез аракеттер",
+    "recent_requests": "Акыркы кайрылуулар",
+    "requests_count": "кайрылуу",
+    "requests_hint": "Кирген жана чыккан кайрылууларыңыз",
+    "requests_empty_hint": "Сиз кайрылуу жөнөткөндө же алганда, ал бул жерде пайда болот.",
+    "create_resume_title": "Резюмеңизди түзүңүз",
+    "create_resume_hint": "Өзүңүз жөнүндө маалымат жарыялап, кайрылууларды кабыл алыңыз.",
+    "has_resume_hint": "Сизде резюме бар. Мугалим издеп, кайрылууларды кабыл ала аласыз.",
+    "no_resume_hint": "Мугалим издесеңиз же өз резюмеңизди түзсөңүз болот.",
+    "search_hint": "Предмет жана шаар боюнча мугалим табуу",
+    "resume_published_hint": "Резюме окуучуларга көрүнүп турат",
+    "resume_draft_hint": "Резюме каралама. Модерацияга жөнөтүңүз.",
+    "resume_suspended_hint": "Резюме токтотулду",
+    "views": "көрүү",
     "upcoming_lesson": "Жакынкы сабак",
     "my_tutors": "Менин мугалимдерим",
     "lessons_count": "{{count}} сабак",
@@ -552,15 +588,35 @@
     "countdown_minutes": "{{minutes}} мүн {{seconds}} сек ичинде",
     "countdown_seconds": "{{seconds}} сек ичинде",
     "my_courses": "Менин курстарым",
-    "my_requests": "Менин өтүнмөлөрүм",
     "schedule_preview": "Расписание",
-    "open": "Ачуу"
+    "open": "Ачуу",
+    "resume_expired": "Резюме издөөдөн жашырылды",
+    "resume_expired_hint": "Профилиңиз сакталды — каалаган убакта кайра жарыялай аласыз.",
+    "renew_30": "30 күнгө узартуу",
+    "resume_expiring": "Резюме жакында издөөдөн жоголот",
+    "resume_hidden": "Резюме жашырылган",
+    "resume_hidden_hint": "Резюме издөөдө көрүнбөйт.",
+    "restore": "Калыбына келтирүү",
+    "resume_active": "Резюме активдүү",
+    "resume_draft": "Черновик",
+    "active_until": "Ачейин активдүү",
+    "renew_available_when_expired": "Узартуу мөөнөтү бүтүүдөн 3 күн мурун болот.",
+    "hide": "Жашыруу",
+    "no_expiry": "Мөөнөтсүз",
+    "expired_ago": "Мөөнөтү бүттү",
+    "until_expiry": "аягына чейин",
+    "expiring_soon": "Жакында бүтөт",
+    "expires_tomorrow": "Эртең бүтөт",
+    "published_at": "Жарыяланды",
+    "expires_at": "Бүтөт",
+    "preview_resume": "Алдын ала көрүү"
   },
   "tutor_dashboard": {
     "title": "Мугалим панели",
     "overview": "Обзор",
     "courses": "Курстар",
     "bookings": "Жазылуулар",
+    "requests": "Өтүнмөлөр",
     "total_courses": "Курстар",
     "pending_bookings": "Күтүлүүдө",
     "confirmed_bookings": "Тастыкталган",
@@ -672,12 +728,22 @@
     "cancel_title": "Сурамды жокко чыгарасызбы?",
     "cancel_message": "\"{{course}}\" курсуна берилген сурамыңыз кайтарылат.",
     "cancel_success": "Сурам жокко чыгарылды",
-    "no_pending": "Жооп күткөн сурам жок"
+    "no_pending": "Жооп күткөн сурам жок",
+    "tab_awaiting": "Ожидают",
+    "tab_action": "Нужно действие",
+    "tab_active": "Активные",
+    "tab_archive": "Архив",
+    "empty_tab": "Ничего в этой вкладке",
+    "empty_tab_hint": "Проверьте другие вкладки",
+    "view_proposal": "Смотреть предложение",
+    "view_schedule": "Моё расписание"
   },
   "lessons": {
     "title": "Сабактар",
     "empty": "Сабактар жок",
-    "join": "Катышуу"
+    "join": "Катышуу",
+    "one_off_badge": "Жолу-жолу",
+    "one_off_hint": "Жолу-жолу сабактар ( туруктуу расписаниесиз)"
   },
   "become_tutor": {
     "title": "Мугалим болуу",
@@ -757,15 +823,51 @@
     "types": {
       "COURSE_APPLICATION": "Курска өтүнмө",
       "APPLICATION_ACCEPTED": "Өтүнмө кабыл алынды",
-      "APPLICATION_REJECTED": "Өтүнмө четке кагылды",
+      "APPLICATION_REJECTED": "Өтүнмө чекке кагылды",
       "BOOKING_CONFIRMED": "Жазылуу ырасталды",
       "BOOKING_CANCELLED": "Жазылуу жокко чыгарылды",
+      "BOOKING_COMPLETED": "Жазылуу аякталды",
+      "LESSON_REMINDER": "Сабак тууралуу эскеритирүү",
+      "LESSON_CANCELLED": "Сабак жокко чыгарылды",
+      "NEW_MESSAGE": "Жаңы месеж",
+      "NEW_REVIEW": "Жаңы пикир",
+      "TUTOR_APPROVED": "Мугалим макулданды",
+      "TUTOR_REJECTED": "Мугалим чекке кагылды",
+      "COURSE_APPROVED": "Курс жарыялды",
+      "COURSE_REJECTED": "Курс чекке кагылды",
+      "APPLICATION_CANCELLED": "Өтүнмө жокко чыгарылды",
+      "SUPPORT": "Колдоо",
       "SYSTEM": "Системалык билдирүү"
+    },
+    "messages": {
+      "COURSE_APPLICATION": "{{studentName}} «{{courseTitle}}» курска өтүнмө жөнөтүшү",
+      "APPLICATION_ACCEPTED": "Сиздин «{{courseTitle}}» курска өтүнүңүз кабыл алынды",
+      "APPLICATION_REJECTED": "Сиздин «{{courseTitle}}» курска өтүнүңүз чекке кагылды",
+      "BOOKING_CONFIRMED": "«{{courseTitle}}» курска жазылуу ырасталды",
+      "BOOKING_CANCELLED": "«{{courseTitle}}» курска жазылуу жокко чыгарылды",
+      "BOOKING_COMPLETED": "«{{courseTitle}}» курска жазылуу аякталды",
+      "LESSON_REMINDER": "«{{courseTitle}}» сабагы {{tutorName}} билан 15 мүнөт ичинде башталат",
+      "LESSON_CANCELLED": "«{{courseTitle}}» сабагы {{tutorName}} билан жокко чыгарылды",
+      "NEW_MESSAGE": "{{senderName}}: {{preview}}",
+      "NEW_REVIEW": "«{{courseTitle}}» курсуна жаңы пикир ({{rating}}/5)",
+      "TUTOR_APPROVED": "Мугалим {{tutorName}} макулданды",
+      "TUTOR_REJECTED": "Мугалим {{tutorName}} чекке кагылды",
+      "COURSE_APPROVED": "«{{courseTitle}}» курсу жарыялды",
+      "COURSE_REJECTED": "«{{courseTitle}}» курсу чекке кагылды",
+      "APPLICATION_CANCELLED": "{{studentName}} «{{courseTitle}}» курска өтүнү жокко чыгарды",
+      "SUPPORT": "{{message}}",
+      "SYSTEM": "{{message}}"
     }
   },
   "admin": {
     "title": "Админ панели",
     "dashboard": "Дашборд",
+    "metrics": "Метрикалар",
+    "metrics.students": "Студенттер",
+    "metrics.tutors": "Тьюторлор",
+    "metrics.lessons": "Сабактар",
+    "metrics.active_users": "Активдүү (24с)",
+    "metrics.revenue": "Киреше",
     "users": "Колдонуучулар",
     "manage_users": "Колдонуучуларды башкаруу",
     "quick_actions": "Тез аракеттер",
@@ -826,7 +928,13 @@
     "published": "Жарыяланган",
     "rejected": "Четке кагылган",
     "application_detail": "Өтүнмөнүн маалыматы",
-    "chat_with_applicant": "Өтүнмө ээси менен кат алышуу"
+    "chat_with_applicant": "Өтүнмө ээси менен кат алышуу",
+    "tutors_subtitle": "Репетиторлукка катталуу өтүнүчтөрүн башкаруу",
+    "awaiting_response": "Жооп күтүүдө",
+    "suspended": "Токтотулду",
+    "draft": "Черновик",
+    "telegram": "Телеграм",
+    "legal": "Саясат"
   },
   "auditorium": {
     "title": "Видеожолугушуу",
@@ -1094,11 +1202,41 @@
     "passwords_no_match": "Сырсөздөр дал келбейт",
     "repeat_password": "Сырсөздү кайталаңыз"
   },
+  "marketplace": {
+    "hero_title": "Кыргызстандан мугалим тап",
+    "hero_subtitle": "Математика, англис тили, ЖРТ, Python — предметти жана шаарды тандап, бүгүн башта",
+    "subject_label": "Предмет",
+    "search_aria": "Мугалим издөө",
+    "find_tutor": "Мугалим табуу",
+    "become_tutor_cta": "Резюме жарыяла",
+    "become_hint": "Студентсиңби? Предметти жакшы билесиңби? Окуучу тап.",
+    "become_sales1": "Студентсиңби?",
+    "become_sales2": "Предметти жакшы билесиңби?",
+    "become_sales3": "Резюмеңди жарыялап, биринчи окуучуларыңды тап.",
+    "create_resume": "Резюме түзүү",
+    "list_title": "Кыргызстандагы мугалимдер",
+    "list_subtitle": "Предмет, шаар, формат жана мугалим түрү боюнча тап",
+    "search_placeholder": "математика, англ, питон, ЖРТ...",
+    "search_hint": "Колдоо: математика / питон / англ / ЖРТ",
+    "no_results_hint": "Предмет, шаар же форматты өзгөртүп көрүңүз.",
+    "tab_new": "Жаңы",
+    "tab_viewed": "Көрүлгөн",
+    "tab_in_progress": "Жумушта",
+    "tab_closed": "Жабылган",
+    "my_requests": "Менин кайрылууларым",
+    "contact_tutor": "Мугалим менен байланышуу",
+    "contact_hint": "Кайрылуулар аркылуу байланышкыла",
+    "subjects_hint": "Бардык предметтер каталогдон. Тизме API аркылуу башкарылат.",
+    "wizard_hint": "Кадамдар: негизги → предметтер → деңгээлдер → билим → тажрыйба → баа → формат → фото → алдын ала көрүү → модерация. Бир чоң форма эмес.",
+    "submit_moderation": "Модерацияга жөнөтүү",
+    "level": "Деңгээл",
+    "price": "Баа"
+  },
   "progress": {
-    "completed": "Аяктаган",
-    "course_progress": "Курстар боюнча прогресс",
-    "no_courses": "Азырынча курс прогресси жок",
-    "no_courses_hint": "Сабактарга жазылгандан кийин прогресс бул жерде пайда болот.",
+    "completed": "Аякталган",
+    "course_progress": "Курс боюнча прогресс",
+    "no_courses": "Курс боюнча прогресс жок",
+    "no_courses_hint": "Сабактарга жазылгандан кийин бул жерде прогресс пайда болот.",
     "total_bookings": "Жалпы сабактар",
     "upcoming": "Алдыдагы"
   },
@@ -1117,8 +1255,9 @@
     "timezone_saved": "Убакыт алкагы сакталды"
   },
   "tutor": {
+    "resume": "Резюме",
     "create_course": "Курс түзүү",
-    "application": "Репетитордун өтүнмөсү"
+    "application": "Репетитор арызы"
   },
   "validation": {
     "invalid_email": "Туура эмес email",
@@ -1231,7 +1370,32 @@
     "accept_schedule": "Графикти ырастоо",
     "propose_other": "Башка убакыт сунуштоо",
     "view_schedule": "Графикти көрүү",
-    "review_tutor": "\"{{name}}\" өтүнмөңүздү карап жатат"
+    "review_tutor": "\"{{name}}\" өтүнмөңүздү карап жатат",
+    "event_sent_tutor": "Студент отправил заявку",
+    "event_accepted_tutor": "Вы приняли заявку",
+    "event_schedule_proposed_tutor": "Вы предложили расписание",
+    "hint_pending": "Ожидает ответа тьютора",
+    "hint_needs_info": "Тьютор запросил доп. информацию",
+    "hint_accepted": "Заявка принята — ожидается расписание",
+    "hint_schedule_pending": "Расписание ожидает подтверждения",
+    "hint_schedule_proposed": "Тьютор предложил расписание",
+    "hint_scheduled": "Расписание подтверждено",
+    "hint_pending_tutor": "Новая заявка — требуется действие",
+    "hint_needs_info_tutor": "Ожидает ответа студента",
+    "hint_accepted_tutor": "Вы приняли — назначьте расписание",
+    "hint_schedule_pending_tutor": "Расписание ожидает",
+    "hint_schedule_proposed_tutor": "Вы предложили расписание — ждём студента",
+    "hint_scheduled_tutor": "Расписание подтверждено",
+    "hint_rejected": "Заявка отклонена",
+    "hint_terminal": "Заявка закрыта",
+    "awaiting_student_confirm": "Ожидает подтверждения студента",
+    "schedule_confirmed_title": "Расписание подтверждено",
+    "proposal_title": "Предложение расписания",
+    "add_to_calendar": "Добавить в календарь",
+    "ics_description": "Урок через Okututor",
+    "open_schedule": "Открыть расписание",
+    "view_proposal": "Смотреть предложение",
+    "reject_proposal": "Четке кагуу"
   },
   "tutor_request": {
     "title": "Өтүнмөлөр",
@@ -1254,8 +1418,12 @@
     "reject_placeholder": "Четке кагуу себебин жазыңыз",
     "reject_confirm": "Өтүнмөнү четке кагуу",
     "accepting": "Кабыл алынууда...",
-    "message_student": "Окуучуга жазуу",
-    "schedule_negotiate": "Графикти макулдашуу"
+    "message_student": "Написать студенту",
+    "schedule_negotiate": "Графикти макулдашуу",
+    "assign_schedule": "Назначить расписание",
+    "reschedule": "Изменить расписание",
+    "empty_tab": "Ничего в этой вкладке",
+    "empty_tab_hint": "Проверьте другие вкладки"
   },
   "schedule_agreement": {
     "title": "Графикти макулдашуу",
@@ -1341,7 +1509,9 @@
     "success": "График сунушталды. Башка тарап карап, ырастай алат.",
     "view_availability": "Жумалык жеткиликтүүлүктү көрсөтүү",
     "no_date": "тандала элек",
-    "no_slots_for_date": "Бул күнгө жеткиликтүү убакыт жок."
+    "no_slots_for_date": "Бул күнгө жеткиликтүү убакыт жок.",
+    "assign_immediately": "Assign immediately",
+    "propose_for_confirm": "Propose for confirmation"
   },
   "needs_info": {
     "request": "Маалымат суроо",
@@ -1353,5 +1523,12 @@
     "provide_label": "Жообуңуз",
     "provide_placeholder": "Тактоочу маалымат жазыңыз...",
     "provided": "Жооп жөнөтүлдү"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "empty": "Empty",
+    "empty_hint": "Tutors you favorite will appear here.",
+    "empty_hint2": "Tap ♡ on a tutor card to save.",
+    "find_tutors": "Find tutor"
   }
 }

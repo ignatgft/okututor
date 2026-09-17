@@ -16,14 +16,14 @@ app:
     allowed-origins: http://localhost:5173,http://localhost:3000
   frontend-url: http://localhost:5173
   jwt:
-    secret: dev-only-secret-change-me-0123456789abcdef0123456789abcdef
+    secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
     access-ttl-minutes: 15
     refresh-ttl-days: 30
     refresh-grace-seconds: 30
   livekit:
-    api-key: devkey
-    api-secret: devsecret-change-me-012345678901234
-    ws-url: wss://localhost:7880
+    api-key: ${LIVEKIT_API_KEY:devkey}
+    api-secret: ${LIVEKIT_API_SECRET:devsecret-change-me-012345678901234}
+    ws-url: ${LIVEKIT_WS_URL:ws://localhost:7880}
     token-ttl-minutes: 30
   mail:
     enabled: true
@@ -31,7 +31,7 @@ app:
     enabled: true
     use-redis: false
   seed:
-    enabled: true
+    enabled: ${APP_SEED_ENABLED:false}
   storage:
     local-dir: ./data/uploads
     public-base-url: /api/v1/files

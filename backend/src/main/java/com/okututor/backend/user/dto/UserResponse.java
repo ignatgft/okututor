@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * канонический payload пользователя (форма из mockData.js + поля профиля из UI):
+ * канонический payload пользователя:
  * { id, email, full_name, first_name, last_name, role, avatar, verified, created_at,
  *   bio, phone, location, experience_years, education }.
  */

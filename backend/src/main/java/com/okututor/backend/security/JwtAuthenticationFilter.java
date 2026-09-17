@@ -30,10 +30,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
+    public JwtAuthenticationFilter(JwtService jwtService,
+                                   UserRepository userRepository,
+                                   com.okututor.backend.observability.ObservabilityMetrics metrics) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.metrics = metrics;
     }
 
     @Override
@@ -55,6 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (IllegalArgumentException | JwtException ex) {
+                metrics.securityEvent("invalid_token");
                 log.debug("Rejected bearer token: {}", ex.getMessage());
             }
         }

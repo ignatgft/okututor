@@ -31,7 +31,9 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String requestId = request.getHeader(HEADER);
-        if (requestId == null || requestId.isBlank()) {
+        if (!isValidRequestId(requestId)) {
+            // невалидный/чужой id игнорируем: генерируем свой (защита от
+            // лог-инъекций и неограниченной cardinality во внешних системах)
             requestId = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         }
         MDC.put(MDC_KEY, requestId);
@@ -42,5 +44,13 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         } finally {
             MDC.remove(MDC_KEY);
         }
+    }
+
+    /** принимаем только [0-9a-zA-Z-]{8,64} — без пробелов/спецсимволов. */
+    private boolean isValidRequestId(String id) {
+        if (id == null || id.isBlank() || id.length() < 8 || id.length() > 64) {
+            return false;
+        }
+        return id.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '-');
     }
 }

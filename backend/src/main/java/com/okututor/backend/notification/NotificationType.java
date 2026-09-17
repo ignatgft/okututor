@@ -40,6 +40,11 @@ public final class NotificationType {
     public static final String LESSON_COMPLETED = "LESSON_COMPLETED";
     public static final String LESSON_REMINDER = "LESSON_REMINDER";
 
+    // ----- резюме lifecycle (Free MVP) -----
+    public static final String RESUME_EXPIRING_7 = "RESUME_EXPIRING_7";
+    public static final String RESUME_EXPIRING_1 = "RESUME_EXPIRING_1";
+    public static final String RESUME_EXPIRED = "RESUME_EXPIRED";
+
     // ----- системные -----
     public static final String MESSAGE = "MESSAGE";
     public static final String SYSTEM = "SYSTEM";

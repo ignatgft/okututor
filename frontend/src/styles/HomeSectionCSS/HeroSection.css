@@ -169,3 +169,28 @@
     display: none;
   }
 }
+
+/* Marketplace hero — mobile-first */
+.marketplace-hero-grid {
+  grid-template-columns: 1fr;
+}
+
+.marketplace-hero-form select {
+  font-size: 16px; /* prevent iOS zoom */
+}
+
+@media (min-width: 640px) {
+  .marketplace-hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 639px) {
+  .marketplace-hero-form {
+    padding: 10px;
+  }
+  .marketplace-hero-form select,
+  .marketplace-hero-form button {
+    min-height: 44px;
+  }
+}

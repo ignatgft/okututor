@@ -45,8 +45,8 @@
     "about_us": "О нас",
     "my_profile": "Мой профиль",
     "profile": "Мой профиль",
-    "dashboard": "Мои занятия",
-    "tutor_dashboard": "Панель преподавателя",
+    "dashboard": "Главная",
+    "tutor_dashboard": "Главная",
     "admin": "Админ",
     "language": "Язык",
     "login": "Войти",
@@ -114,8 +114,9 @@
     "next": "Далее",
     "pagination": "Пагинация",
     "reject_reason_hint": "Укажите причину для заявителя...",
-    "email": "Эл. почта",
-    "in_timezone": "({{tz}})"
+    "email": "Электронная почта",
+    "in_timezone": "({{tz}})",
+    "optional": "необязательно"
   },
   "messages": {
     "no_conversations": "Диалогов пока нет",
@@ -172,34 +173,18 @@
     "scheduleNotAvailable": "Выбранное время недоступно. Попробуйте другое.",
     "lessonConflict": "На это время уже запланировано занятие.",
     "invalidTimezone": "Некорректный часовой пояс.",
-    "invalidDate": "Некорректная дата или время."
+    "invalidDate": "Некорректная дата или время.",
+    "reload_hint": "Обновите страницу и проверьте текущий статус."
   },
   "schedule": {
-    "view_day": "День",
-    "view_week": "Неделя",
-    "view_month": "Месяц",
-    "pick_date": "Выберите дату",
-    "no_events": "На этот день занятий нет",
-    "availability": "Моя доступность",
-    "no_availability": "Пока нет слотов доступности",
-    "weekday": "День недели",
-    "day_mon": "Пн",
-    "day_tue": "Вт",
-    "day_wed": "Ср",
-    "day_thu": "Чт",
-    "day_fri": "Пт",
-    "day_sat": "Сб",
-    "day_sun": "Вс",
-    "minutes_short": "мин",
-    "delete_slot_message": "Ученики больше не увидят это время как доступное.",
-    "delete_slot_title": "Удалить слот?",
-    "today": "Сегодня",
-    "prev": "Назад",
-    "next": "Вперед",
-    "join_lesson": "Войти на урок",
-    "events_on_day": "Занятия на этот день",
-    "view": "Вид",
-    "slot_removed": "Слот доступности удален"
+    "action": {
+      "negotiation": "Согласовать расписание",
+      "reschedule_confirmation": "Подтвердить перенос",
+      "time_proposal": "Предложение времени",
+      "application_confirmation": "Подтвердить заявку",
+      "payment_required": "Требуется оплата",
+      "lesson_confirmation": "Подтвердить урок"
+    }
   },
   "calendar": {
     "student": "Ученик",
@@ -266,23 +251,27 @@
     "learning_and_teaching": "Обучение и\nПреподавание",
     "subscribe": "Подпишитесь, чтобы получать\nнаши новости",
     "copyright": "Okututor. Все права защищены.",
-    "logo_alt": "Логотип Okututor"
+    "logo_alt": "Логотип Okututor",
+    "privacy": "Политика конфиденциальности",
+    "terms": "Условия использования",
+    "cookies": "Политика cookies"
   },
   "tutors": {
-    "subtitle": "Как стать репетитором",
-    "title": "Помогайте учащимся по всему миру и стройте карьеру, обучая других.",
-    "create_button": "Создать курс",
+    "subtitle": "Для репетиторов",
+    "title": "Ты студент? Хорошо знаешь предмет — стань репетитором OkuTutor",
+    "hint": "Размести своё резюме и найди первых учеников в Бишкеке, Оше и онлайн.",
+    "create_button": "Разместить своё резюме",
     "step1": {
-      "title": "Зарегистрируйтесь",
-      "description": "чтобы создать своё резюме репетитора"
+      "title": "Зарегистрируйся",
+      "description": "создай аккаунт за минуту"
     },
     "step2": {
-      "title": "Создайте курс",
-      "description": "чтобы начать преподавание и зарабатывать"
+      "title": "Размести резюме",
+      "description": "укажи предметы, уровни, цену и формат — онлайн или офлайн"
     },
     "step3": {
-      "title": "Начните зарабатывать",
-      "description": "обучая и развивая свою карьеру"
+      "title": "Получай учеников",
+      "description": "отвечай на обращения и начни преподавать в Кыргызстане"
     },
     "image_alt": "Репетитор"
   },
@@ -378,6 +367,20 @@
       "weekdays": "Будние",
       "weekends": "Выходные",
       "specific": "Конкретные дни"
+    },
+    "months": {
+      "january": "Январь",
+      "february": "Февраль",
+      "march": "Март",
+      "april": "Апрель",
+      "may": "Май",
+      "june": "Июнь",
+      "july": "Июль",
+      "august": "Август",
+      "september": "Сентябрь",
+      "october": "Октябрь",
+      "november": "Ноябрь",
+      "december": "Декабрь"
     },
     "group": {
       "individual": "Индивидуально",
@@ -532,8 +535,31 @@
     }
   },
   "dashboard": {
-    "title": "Мои занятия",
+    "title": "Мои обращения",
+    "overview": "Обзор",
+    "welcome": "Добро пожаловать",
     "greeting": "Привет, {{name}}",
+    "stats": "Статистика",
+    "my_requests": "Мои обращения",
+    "my_requests_count": "обращений",
+    "unread": "Непрочитанные",
+    "resume_views": "Просмотры резюме",
+    "resume_status": "Статус резюме",
+    "no_resume": "Нет резюме",
+    "quick_actions": "Быстрые действия",
+    "recent_requests": "Последние обращения",
+    "requests_count": "обращений",
+    "requests_hint": "Ваши входящие и исходящие обращения",
+    "requests_empty_hint": "Когда вы отправите или получите обращение, оно появится здесь.",
+    "create_resume_title": "Создайте своё резюме",
+    "create_resume_hint": "Разместите информацию о себе и принимайте обращения.",
+    "has_resume_hint": "У вас есть резюме. Вы можете искать репетиторов и принимать обращения.",
+    "no_resume_hint": "Вы можете искать репетиторов или создать своё резюме.",
+    "search_hint": "Найти репетитора по предмету и городу",
+    "resume_published_hint": "Резюме видно ученикам",
+    "resume_draft_hint": "Резюме в черновике. Отправьте на модерацию.",
+    "resume_suspended_hint": "Резюме приостановлено",
+    "views": "просмотров",
     "upcoming_lesson": "Ближайший урок",
     "my_tutors": "Мои репетиторы",
     "lessons_count": "{{count}} занятий",
@@ -552,15 +578,35 @@
     "countdown_minutes": "через {{minutes}} мин {{seconds}} с",
     "countdown_seconds": "через {{seconds}} с",
     "my_courses": "Мои курсы",
-    "my_requests": "Мои заявки",
     "schedule_preview": "Расписание",
-    "open": "Открыть"
+    "open": "Открыть",
+    "resume_expired": "Резюме скрыто из поиска",
+    "resume_expired_hint": "Ваш профиль сохранён — вы можете снова опубликовать резюме в любой момент.",
+    "renew_30": "Продлить на 30 дней",
+    "resume_expiring": "Резюме скоро перестанет отображаться в поиске",
+    "resume_hidden": "Резюме скрыто",
+    "resume_hidden_hint": "Резюме не отображается в поиске.",
+    "restore": "Восстановить",
+    "resume_active": "Резюме активно",
+    "resume_draft": "Черновик",
+    "active_until": "Активно до",
+    "renew_available_when_expired": "Продление станет доступно за 3 дня до окончания.",
+    "hide": "Скрыть",
+    "no_expiry": "Без срока",
+    "expired_ago": "Истекло",
+    "until_expiry": "до окончания",
+    "expiring_soon": "Скоро истекает",
+    "expires_tomorrow": "Истекает завтра",
+    "published_at": "Опубликовано",
+    "expires_at": "Истекает",
+    "preview_resume": "Предпросмотр"
   },
   "tutor_dashboard": {
     "title": "Панель преподавателя",
     "overview": "Обзор",
     "courses": "Курсы",
     "bookings": "Записи",
+    "requests": "Заявки",
     "total_courses": "Курсы",
     "pending_bookings": "Ожидающие",
     "confirmed_bookings": "Подтверждённые",
@@ -619,14 +665,15 @@
     "join_as": "Я хочу зарегистрироваться как",
     "student": "Студент",
     "tutor": "Репетитор",
-    "continue_google": "Продолжить через Google"
+    "continue_google": "Продолжить через Google",
+    "unified_hint": "Один аккаунт — ищите репетиторов и создавайте своё резюме, когда захотите."
   },
   "oauth": {
     "signing_in": "Выполняется вход через Google...",
     "error": "Не удалось войти через Google. Попробуйте снова."
   },
   "auth": {
-    "or": "ИЛИ",
+    "or": "или",
     "no_account": "Нет аккаунта?",
     "have_account": "Уже есть аккаунт?",
     "forgot_password": "Забыли пароль?"
@@ -672,12 +719,22 @@
     "cancel_title": "Отменить заявку?",
     "cancel_message": "Ваша заявка на курс \"{{course}}\" будет отозвана.",
     "cancel_success": "Заявка отменена",
-    "no_pending": "Нет ожидающих заявок"
+    "no_pending": "Нет ожидающих заявок",
+    "tab_awaiting": "Ожидают",
+    "tab_action": "Нужно действие",
+    "tab_active": "Активные",
+    "tab_archive": "Архив",
+    "empty_tab": "Ничего в этой вкладке",
+    "empty_tab_hint": "Проверьте другие вкладки",
+    "view_proposal": "Смотреть предложение",
+    "view_schedule": "Моё расписание"
   },
   "lessons": {
     "title": "Занятия",
     "empty": "Занятий пока нет",
-    "join": "Присоединиться"
+    "join": "Присоединиться",
+    "one_off_badge": "Разовое",
+    "one_off_hint": "Разовые занятия (без регулярного расписания)"
   },
   "become_tutor": {
     "title": "Стать репетитором",
@@ -760,12 +817,48 @@
       "APPLICATION_REJECTED": "Заявка отклонена",
       "BOOKING_CONFIRMED": "Запись подтверждена",
       "BOOKING_CANCELLED": "Запись отменена",
+      "BOOKING_COMPLETED": "Запись завершена",
+      "LESSON_REMINDER": "Напоминание об уроке",
+      "LESSON_CANCELLED": "Урок отменен",
+      "NEW_MESSAGE": "Новое сообщение",
+      "NEW_REVIEW": "Новый отзыв",
+      "TUTOR_APPROVED": "Репетитор одобрен",
+      "TUTOR_REJECTED": "Репетитор отклонен",
+      "COURSE_APPROVED": "Курс опубликован",
+      "COURSE_REJECTED": "Курс отклонен",
+      "APPLICATION_CANCELLED": "Заявка отменена",
+      "SUPPORT": "Поддержка",
       "SYSTEM": "Системное уведомление"
+    },
+    "messages": {
+      "COURSE_APPLICATION": "{{studentName}} подал заявку на курс «{{courseTitle}}»",
+      "APPLICATION_ACCEPTED": "Ваша заявка на курс «{{courseTitle}}» одобрена",
+      "APPLICATION_REJECTED": "Ваша заявка на курс «{{courseTitle}}» отклонена",
+      "BOOKING_CONFIRMED": "Запись на «{{courseTitle}}» подтверждена",
+      "BOOKING_CANCELLED": "Запись на «{{courseTitle}}» отменена",
+      "BOOKING_COMPLETED": "Запись на «{{courseTitle}}» завершена",
+      "LESSON_REMINDER": "Через 15 минут начнется урок «{{courseTitle}}» с {{tutorName}}",
+      "LESSON_CANCELLED": "Урок «{{courseTitle}}» с {{tutorName}} отменен",
+      "NEW_MESSAGE": "{{senderName}}: {{preview}}",
+      "NEW_REVIEW": "Новый отзыв на курс «{{courseTitle}}» ({{rating}}/5)",
+      "TUTOR_APPROVED": "Репетитор {{tutorName}} одобрен",
+      "TUTOR_REJECTED": "Заявка репетитора {{tutorName}} отклонена",
+      "COURSE_APPROVED": "Курс «{{courseTitle}}» опубликован",
+      "COURSE_REJECTED": "Курс «{{courseTitle}}» отклонен",
+      "APPLICATION_CANCELLED": "{{studentName}} отменил заявку на курс «{{courseTitle}}»",
+      "SUPPORT": "{{message}}",
+      "SYSTEM": "{{message}}"
     }
   },
   "admin": {
     "title": "Панель администратора",
     "dashboard": "Дашборд",
+    "metrics": "Метрики",
+    "metrics.students": "Студенты",
+    "metrics.tutors": "Тьюторы",
+    "metrics.lessons": "Занятия",
+    "metrics.active_users": "Активные (24ч)",
+    "metrics.revenue": "Выручка",
     "users": "Пользователи",
     "manage_users": "Управление пользователями",
     "quick_actions": "Быстрые действия",
@@ -783,6 +876,10 @@
     "verify": "Подтвердить",
     "change_role": "Изменить роль",
     "tutor_applications": "Заявки репетиторов",
+    "tutors_subtitle": "Управление заявками на регистрацию репетиторов",
+    "awaiting_response": "Ожидает ответа",
+    "suspended": "Приостановлено",
+    "draft": "Черновик",
     "course_moderation": "Модерация курсов",
     "reviews_moderation": "Отзывы",
     "reports": "Жалобы",
@@ -829,7 +926,9 @@
     "support": "Поддержка",
     "support_hint": "Управление обращениями",
     "application_detail": "Детали заявки",
-    "chat_with_applicant": "Чат с заявителем"
+    "chat_with_applicant": "Чат с заявителем",
+    "telegram": "Телеграм",
+    "legal": "Политики и Cookies"
   },
   "auditorium": {
     "title": "Видеовстреча",
@@ -1097,6 +1196,36 @@
     "passwords_no_match": "Пароли не совпадают",
     "repeat_password": "Повторите пароль"
   },
+  "marketplace": {
+    "hero_title": "Найдите репетитора в Кыргызстане",
+    "hero_subtitle": "Математика, английский, ОРТ, Python — выберите предмет и город, начните уже сегодня",
+    "subject_label": "Предмет",
+    "search_aria": "Поиск репетитора",
+    "find_tutor": "Найти репетитора",
+    "become_tutor_cta": "Разместить своё резюме",
+    "become_hint": "Ты студент? Хорошо знаешь предмет? Найди учеников.",
+    "become_sales1": "Ты студент?",
+    "become_sales2": "Хорошо знаешь предмет?",
+    "become_sales3": "Размести своё резюме и найди первых учеников.",
+    "create_resume": "Создать резюме",
+    "list_title": "Репетиторы в Кыргызстане",
+    "list_subtitle": "Найдите преподавателя по предмету, городу, формату и типу репетитора",
+    "search_placeholder": "математика, англ, питон, ОРТ...",
+    "search_hint": "Поддержка: математика / матем / питон / python / англ / ОРТ",
+    "no_results_hint": "Попробуйте изменить предмет, город или формат.",
+    "tab_new": "Новые",
+    "tab_viewed": "Просмотренные",
+    "tab_in_progress": "В работе",
+    "tab_closed": "Закрытые",
+    "my_requests": "Мои обращения",
+    "contact_tutor": "Связаться с репетитором",
+    "contact_hint": "Свяжитесь с репетитором через заявки",
+    "subjects_hint": "Все предметы — из каталога. Список управляется через API.",
+    "wizard_hint": "Шаги: основная → предметы → уровни → образование → опыт → цена → формат → фото → предпросмотр → модерация. Не одна огромная форма.",
+    "submit_moderation": "Отправить на модерацию",
+    "level": "Уровень",
+    "price": "Цена"
+  },
   "progress": {
     "completed": "Завершено",
     "course_progress": "Прогресс по курсам",
@@ -1120,6 +1249,7 @@
     "timezone_saved": "Часовой пояс сохранён"
   },
   "tutor": {
+    "resume": "Резюме",
     "create_course": "Создать курс",
     "application": "Заявка репетитора"
   },
@@ -1159,7 +1289,21 @@
     "IN_PROGRESS": "В процессе",
     "DRAFT": "Черновик",
     "PUBLISHED": "Опубликовано",
-    "ARCHIVED": "В архиве"
+    "ARCHIVED": "В архиве",
+    "APPLICATION": "Заявка",
+    "SCHEDULE_NEGOTIATION": "Согласование",
+    "PENDING_CONFIRMATION": "Ожидает подтверждения",
+    "APPROVED": "Одобрено",
+    "CLOSED": "Закрыто",
+    "LOW": "Низкий",
+    "HIGH": "Высокий",
+    "URGENT": "Срочный",
+    "NORMAL": "Обычный",
+    "OPEN": "Открыто",
+    "IN_REVIEW": "На рассмотрении",
+    "WAITING_FOR_USER": "Ожидает пользователя",
+    "WAITING_FOR_SUPPORT": "Ожидает поддержку",
+    "RESOLVED": "Решено"
   },
   "enrollment_status": {
     "not_requested": "Отправить заявку",
@@ -1234,7 +1378,32 @@
     "accept_schedule": "Подтвердить расписание",
     "propose_other": "Предложить другое время",
     "view_schedule": "Смотреть расписание",
-    "review_tutor": "«{{name}}» рассматривает вашу заявку"
+    "review_tutor": "«{{name}}» рассматривает вашу заявку",
+    "event_sent_tutor": "Студент отправил заявку",
+    "event_accepted_tutor": "Вы приняли заявку",
+    "event_schedule_proposed_tutor": "Вы предложили расписание",
+    "hint_pending": "Ожидает ответа тьютора",
+    "hint_needs_info": "Тьютор запросил доп. информацию",
+    "hint_accepted": "Заявка принята — ожидается расписание",
+    "hint_schedule_pending": "Расписание ожидает подтверждения",
+    "hint_schedule_proposed": "Тьютор предложил расписание",
+    "hint_scheduled": "Расписание подтверждено",
+    "hint_pending_tutor": "Новая заявка — требуется действие",
+    "hint_needs_info_tutor": "Ожидает ответа студента",
+    "hint_accepted_tutor": "Вы приняли — назначьте расписание",
+    "hint_schedule_pending_tutor": "Расписание ожидает",
+    "hint_schedule_proposed_tutor": "Вы предложили расписание — ждём студента",
+    "hint_scheduled_tutor": "Расписание подтверждено",
+    "hint_rejected": "Заявка отклонена",
+    "hint_terminal": "Заявка закрыта",
+    "awaiting_student_confirm": "Ожидает подтверждения студента",
+    "schedule_confirmed_title": "Расписание подтверждено",
+    "proposal_title": "Предложение расписания",
+    "add_to_calendar": "Добавить в календарь",
+    "ics_description": "Урок через Okututor",
+    "open_schedule": "Открыть расписание",
+    "view_proposal": "Смотреть предложение",
+    "reject_proposal": "Отклонить"
   },
   "tutor_request": {
     "title": "Заявки",
@@ -1257,8 +1426,12 @@
     "reject_placeholder": "Укажите причину отклонения",
     "reject_confirm": "Отклонить заявку",
     "accepting": "Принятие...",
-    "message_student": "Написать ученику",
-    "schedule_negotiate": "Согласовать расписание"
+    "message_student": "Написать студенту",
+    "schedule_negotiate": "Согласовать расписание",
+    "assign_schedule": "Назначить расписание",
+    "reschedule": "Изменить расписание",
+    "empty_tab": "Ничего в этой вкладке",
+    "empty_tab_hint": "Проверьте другие вкладки"
   },
   "schedule_agreement": {
     "title": "Согласование расписания",
@@ -1298,6 +1471,14 @@
     "lesson_few": "{{count}} занятия",
     "lesson_many": "{{count}} занятий",
     "lesson_other": "{{count}} lessons",
+    "lesson_count_one": "{{count}} занятие",
+    "lesson_count_few": "{{count}} занятия",
+    "lesson_count_many": "{{count}} занятий",
+    "lesson_count_other": "{{count}} lessons",
+    "lesson_genitive_one": "{{count}} занятие",
+    "lesson_genitive_few": "{{count}} занятия",
+    "lesson_genitive_many": "{{count}} занятий",
+    "lesson_genitive_other": "{{count}} lessons",
     "request_one": "{{count}} заявка",
     "request_few": "{{count}} заявки",
     "request_many": "{{count}} заявок",
@@ -1313,7 +1494,22 @@
     "review_one": "{{count}} отзыв",
     "review_few": "{{count}} отзыва",
     "review_many": "{{count}} отзывов",
-    "review_other": "{{count}} reviews"
+    "review_other": "{{count}} reviews",
+    "day_one": "{{count}} день",
+    "day_few": "{{count}} дня",
+    "day_many": "{{count}} дней",
+    "day_other": "{{count}} days",
+    "hour": "{{count}} ч",
+    "minute": "{{count}} мин",
+    "second": "{{count}} с",
+    "course_selected": "{{count}} выбран",
+    "course_selected_few": "{{count}} выбрано",
+    "course_selected_many": "{{count}} выбрано",
+    "course_selected_other": "{{count}} courses",
+    "status_selected": "{{count}} выбран",
+    "status_selected_few": "{{count}} выбрано",
+    "status_selected_many": "{{count}} выбрано",
+    "status_selected_other": "{{count}} statuses"
   },
   "location": {
     "place": "Место",
@@ -1344,7 +1540,9 @@
     "success": "Расписание предложено. Другая сторона может просмотреть и подтвердить его.",
     "view_availability": "Показать недельную доступность",
     "no_date": "не выбран",
-    "no_slots_for_date": "На эту дату нет доступных слотов."
+    "no_slots_for_date": "На эту дату нет доступных слотов.",
+    "assign_immediately": "Назначить сразу",
+    "propose_for_confirm": "Предложить на подтверждение"
   },
   "needs_info": {
     "request": "Запросить информацию",
@@ -1356,5 +1554,12 @@
     "provide_label": "Ваш ответ",
     "provide_placeholder": "Напишите уточняющую информацию...",
     "provided": "Ответ отправлен"
+  },
+  "favorites": {
+    "title": "Избранное",
+    "empty": "Пока пусто",
+    "empty_hint": "Здесь появятся репетиторы, которых вы добавили в избранное.",
+    "empty_hint2": "Нажмите ♡ на карточке репетитора, чтобы сохранить.",
+    "find_tutors": "Найти репетитора"
   }
 }

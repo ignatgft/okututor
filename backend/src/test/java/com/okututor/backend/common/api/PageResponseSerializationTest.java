@@ -11,7 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * фронт читает ключи пагинации как total_elements/total_pages (mockData.js).
+ * фронт читает ключи пагинации как total_elements/total_pages.
  * зеркалит глобальную стратегию SNAKE_CASE из JacksonConfig.
  */
 class PageResponseSerializationTest {

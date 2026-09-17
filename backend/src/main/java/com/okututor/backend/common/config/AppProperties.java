@@ -15,11 +15,17 @@ public class AppProperties {
     private Storage storage = new Storage();
     private Media media = new Media();
     private Lesson lesson = new Lesson();
+    private Legacy legacy = new Legacy();
+    private Tg tg = new Tg();
+    private boolean apiDocsEnabled = true;
+    private java.util.List<String> trustedProxies = java.util.List.of();
 
     public Cors getCors() { return cors; }
     public void setCors(Cors cors) { this.cors = cors; }
     public String getFrontendUrl() { return frontendUrl; }
     public void setFrontendUrl(String frontendUrl) { this.frontendUrl = frontendUrl; }
+    public java.util.List<String> getTrustedProxies() { return trustedProxies; }
+    public void setTrustedProxies(java.util.List<String> trustedProxies) { this.trustedProxies = trustedProxies; }
     public Jwt getJwt() { return jwt; }
     public void setJwt(Jwt jwt) { this.jwt = jwt; }
     public Livekit getLivekit() { return livekit; }
@@ -36,6 +42,13 @@ public class AppProperties {
     public void setMedia(Media media) { this.media = media; }
     public Lesson getLesson() { return lesson; }
     public void setLesson(Lesson lesson) { this.lesson = lesson; }
+    public Legacy getLegacy() { return legacy; }
+    public void setLegacy(Legacy legacy) { this.legacy = legacy; }
+    public Tg getTg() { return tg; }
+    public void setTg(Tg tg) { this.tg = tg; }
+    /** false = скрыть Swagger UI и OpenAPI docs даже в dev/локальных окружениях (prod: обязательно false). */
+    public boolean isApiDocsEnabled() { return apiDocsEnabled; }
+    public void setApiDocsEnabled(boolean apiDocsEnabled) { this.apiDocsEnabled = apiDocsEnabled; }
 
     public static class Cors {
         private java.util.List<String> allowedOrigins = java.util.List.of("http://localhost:5173");
@@ -107,7 +120,7 @@ public class AppProperties {
     }
 
     public static class Seed {
-        private boolean enabled = true;
+        private boolean enabled = false;
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean enabled) { this.enabled = enabled; }
     }
@@ -211,18 +224,46 @@ public class AppProperties {
         public void setR2(R2 r2) { this.r2 = r2; }
     }
 
+    public static class Legacy {
+        private boolean enabled = true;
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    }
+
+    public static class Tg {
+        private String botToken;
+        private boolean enabled = false;
+        private String adminChatId;
+        public String getBotToken() { return botToken; }
+        public void setBotToken(String botToken) { this.botToken = botToken; }
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public String getAdminChatId() { return adminChatId; }
+        public void setAdminChatId(String v) { adminChatId = v; }
+    }
+
     /** окно входа в видеоурок относительно расписания брони (UTC). */
     public static class Lesson {
         private int joinMinutesBefore = 15;
         private int joinMinutesAfter = 60;
+        private int cancelHoursBefore = 8;
+        private int rescheduleHoursBefore = 8;
+        private int noShowWaitMinutes = 15;
         public int getJoinMinutesBefore() { return joinMinutesBefore; }
         public void setJoinMinutesBefore(int v) { this.joinMinutesBefore = v; }
         public int getJoinMinutesAfter() { return joinMinutesAfter; }
         public void setJoinMinutesAfter(int v) { this.joinMinutesAfter = v; }
+        public int getCancelHoursBefore() { return cancelHoursBefore; }
+        public void setCancelHoursBefore(int v) { this.cancelHoursBefore = v; }
+        public int getRescheduleHoursBefore() { return rescheduleHoursBefore; }
+        public void setRescheduleHoursBefore(int v) { this.rescheduleHoursBefore = v; }
+        public int getNoShowWaitMinutes() { return noShowWaitMinutes; }
+        public void setNoShowWaitMinutes(int v) { this.noShowWaitMinutes = v; }
     }
 
     public static class R2 {
         private String accountId;
+        private String endpoint;
         private String accessKeyId;
         private String secretAccessKey;
         private String bucket;
@@ -230,6 +271,8 @@ public class AppProperties {
         private String publicBaseUrl;
         public String getAccountId() { return accountId; }
         public void setAccountId(String accountId) { this.accountId = accountId; }
+        public String getEndpoint() { return endpoint; }
+        public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
         public String getAccessKeyId() { return accessKeyId; }
         public void setAccessKeyId(String accessKeyId) { this.accessKeyId = accessKeyId; }
         public String getSecretAccessKey() { return secretAccessKey; }

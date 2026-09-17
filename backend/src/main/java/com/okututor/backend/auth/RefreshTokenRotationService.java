@@ -18,19 +18,32 @@ public class RefreshTokenRotationService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
     public RefreshTokenRotationService(JwtService jwtService,
                                        RefreshTokenService refreshTokenService,
-                                       UserMapper userMapper) {
+                                       UserMapper userMapper,
+                                       com.okututor.backend.observability.ObservabilityMetrics metrics) {
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.userMapper = userMapper;
+        this.metrics = metrics;
     }
 
     @Transactional
     public AuthTokensResponse refresh(String refreshToken, SessionInfo session) {
-        RefreshTokenService.RotationResult rotation = refreshTokenService.rotate(refreshToken, session);
-        return buildTokenPair(rotation.user(), session);
+        try {
+            RefreshTokenService.RotationResult rotation = refreshTokenService.rotate(refreshToken, session);
+            if (rotation.user().isBlocked()) {
+                metrics.authRefreshFailed();
+                throw com.okututor.backend.common.error.ApiException.forbidden("Account is blocked. Contact support.");
+            }
+            metrics.authRefreshSuccess();
+            return buildTokenPair(rotation.user(), session);
+        } catch (RuntimeException e) {
+            metrics.authRefreshFailed();
+            throw e;
+        }
     }
 
     @Transactional

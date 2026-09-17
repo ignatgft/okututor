@@ -27,10 +27,27 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
+
+    public GlobalExceptionHandler(com.okututor.backend.observability.ObservabilityMetrics metrics) {
+        this.metrics = metrics;
+    }
+
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiError> handleApiException(ApiException ex) {
+        // low-cardinality tag: use error code group, not per-endpoint
+        String tag = ex.getCode() == null ? "api" : ex.getCode().toLowerCase().replaceAll("[^a-z0-9_]", "_");
+        if (tag.length() > 20) tag = tag.substring(0, 20);
+        metrics.error(tag);
         return ResponseEntity.status(ex.getStatus())
                 .body(ApiError.of(ex.getStatus().value(), ex.getCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleMaxUploadSize(org.springframework.web.multipart.MaxUploadSizeExceededException ex) {
+        metrics.error("upload_too_large");
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiError.of(413, ErrorCodes.VALIDATION_ERROR, "File too large. Max 10MB for attachments, 5MB for avatar."));
     }
 
     @ExceptionHandler(FieldValidationException.class)
@@ -76,6 +93,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
+        metrics.error("authentication");
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiError.of(403, ErrorCodes.FORBIDDEN, "You do not have permission for this action"));
     }
@@ -92,9 +110,18 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(404, ErrorCodes.NOT_FOUND, "The requested resource was not found"));
     }
 
+    // Client closed connection (browser navigated away, polling abort) — не спамим ERROR
+    @ExceptionHandler({org.apache.catalina.connector.ClientAbortException.class,
+                       org.springframework.web.context.request.async.AsyncRequestNotUsableException.class})
+    public ResponseEntity<Void> handleClientAbort(Exception ex) {
+        log.debug("Client abort: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
         ApiError body = ApiError.of(500, ErrorCodes.INTERNAL_ERROR, "Server error. Please try again later.");
+        metrics.error("database");
         log.error("Unhandled exception traceId={}: {}", body.traceId(), ex.getMessage(), ex);
         return ResponseEntity.internalServerError().body(body);
     }

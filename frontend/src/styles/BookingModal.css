@@ -7,7 +7,6 @@
   justify-content: center;
   z-index: var(--z-modal);
   padding: var(--space-md, 16px);
-  backdrop-filter: blur(2px);
 }
 
 .booking-modal-box {

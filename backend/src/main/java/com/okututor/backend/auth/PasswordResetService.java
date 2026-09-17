@@ -56,9 +56,7 @@ public class PasswordResetService {
 
     @Transactional
     public StatusResponse resetPassword(String email, String code, String newPassword) {
-        if (newPassword == null || newPassword.length() < 8) {
-            throw new FieldValidationException(Map.of("password", "Password must be at least 8 characters"));
-        }
+        AuthService.validatePassword(newPassword);
         String normalized = normalizeEmail(email);
         emailCodeService.verify(normalized, EmailCodePurpose.PASSWORD_RESET, code);
         User user = userRepository.findByEmail(normalized)

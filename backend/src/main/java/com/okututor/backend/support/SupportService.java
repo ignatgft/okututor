@@ -39,7 +39,7 @@ public class SupportService {
 
     public record AuthorRef(String id, String name, String email) {}
 
-    /** формат сообщения повторяет mockData.js: id msg-…, ticket_id TK-n, client_status SENT. */
+    /** формат сообщения: id msg-…, ticket_id TK-n, client_status SENT. */
     public record TicketMessageResponse(
             String id,
             String ticket_id,

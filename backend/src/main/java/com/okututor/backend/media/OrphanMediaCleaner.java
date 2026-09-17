@@ -33,15 +33,27 @@ public class OrphanMediaCleaner {
     @Scheduled(cron = "${app.media.orphan-cleanup-cron:0 0 4 * * *}")
     public void cleanup() {
         Instant threshold = Instant.now().minus(properties.getMedia().getOrphanGrace());
+        // Original orphans: no owner, no course
         var orphans = mediaObjects.findByOwnerIsNullAndCourseIdIsNullAndCreatedAtBefore(threshold);
-        log.info("media: orphan cleanup found {} candidates older than {}", orphans.size(), threshold);
-        for (MediaObject orphan : orphans) {
+        // Also handle leaked avatars where owner exists but avatarUrl no longer points to object
+        var avatarOrphans = mediaObjects.findByOwnerIsNotNullAndCreatedAtBefore(threshold);
+        var allOrphans = new java.util.ArrayList<MediaObject>(orphans);
+        for (var m : avatarOrphans) {
+            if (m.getOwner() != null && m.getOwner().getAvatarUrl() != null && !m.getOwner().getAvatarUrl().equals(m.getPublicUrl())) {
+                // Owner's avatar no longer points to this object -> orphan
+                if (!allOrphans.contains(m)) allOrphans.add(m);
+            }
+        }
+        log.info("media: orphan cleanup found {} candidates older than {} ({} pure orphans, {} leaked avatars)", allOrphans.size(), threshold, orphans.size(), allOrphans.size() - orphans.size());
+        for (MediaObject orphan : allOrphans) {
             try {
                 storage.delete(orphan.getObjectKey());
             } catch (RuntimeException e) {
                 log.warn("media: orphan {} already absent from storage: {}", orphan.getObjectKey(), e.getMessage());
             }
-            mediaObjects.delete(orphan);
+        }
+        if (!allOrphans.isEmpty()) {
+            mediaObjects.deleteAllInBatch(allOrphans);
         }
     }
 }

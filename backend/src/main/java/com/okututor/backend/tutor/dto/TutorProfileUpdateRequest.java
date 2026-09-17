@@ -26,5 +26,6 @@ public record TutorProfileUpdateRequest(
         @Size(max = 40) String phone,
         List<UUID> subjectIds,
         List<UUID> levelIds,
-        List<String> languages
+        List<String> languages,
+        @Size(max = 2000) String photoUrl
 ) {}

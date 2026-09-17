@@ -46,7 +46,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Role role = Role.STUDENT;
+    private Role role = Role.USER;
 
     @Column(nullable = false)
     private boolean verified = false;
@@ -95,7 +95,14 @@ public class User {
     public String getFullName() {
         String joined = ((firstName == null ? "" : firstName.trim()) + " "
                 + (lastName == null ? "" : lastName.trim())).trim();
-        return joined.isEmpty() ? email.substring(0, email.indexOf('@')) : joined;
+        if (!joined.isEmpty()) {
+            return joined;
+        }
+        if (email == null || email.isBlank()) {
+            return "";
+        }
+        int at = email.indexOf('@');
+        return at > 0 ? email.substring(0, at) : email;
     }
 
     public static String[] splitFullName(String fullName) {

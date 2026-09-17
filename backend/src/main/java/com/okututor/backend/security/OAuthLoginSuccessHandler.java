@@ -18,8 +18,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * после успешного входа через Google редиректит на
- * {FRONTEND_URL}/oauth/callback?access_token=..&refresh_token=..
- * (контракт через query string, который ждёт PgOAuthCallback; задокументирован в OpenAPI).
+ * {FRONTEND_URL}/oauth/callback?code=.. (one-time code, TTL 2m).
+ * Фронт обменивает code на токены через POST /api/v1/auth/oauth/exchange.
+ * Легаси query access_token/refresh_token убран — утечка через Referer/логи (C2).
  */
 @Component
 public class OAuthLoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -28,36 +29,44 @@ public class OAuthLoginSuccessHandler extends SimpleUrlAuthenticationSuccessHand
 
     private final AuthService authService;
     private final GoogleProvisioner provisioner;
+    private final OAuthCodeStore codeStore;
     private final com.okututor.backend.common.config.AppProperties properties;
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
     public OAuthLoginSuccessHandler(AuthService authService,
-                                    GoogleProvisioner provisioner,
-                                    com.okututor.backend.common.config.AppProperties properties) {
+                                     GoogleProvisioner provisioner,
+                                     OAuthCodeStore codeStore,
+                                     com.okututor.backend.common.config.AppProperties properties,
+                                     com.okututor.backend.observability.ObservabilityMetrics metrics) {
         this.authService = authService;
         this.provisioner = provisioner;
+        this.codeStore = codeStore;
         this.properties = properties;
+        this.metrics = metrics;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
+                                         HttpServletResponse response,
+                                         Authentication authentication) throws IOException {
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
             // эскалация ролей через ?role= запрещена: OAuth всегда выдаёт STUDENT
             User user = provisioner.provision(token.getPrincipal());
 
             AuthTokensResponse tokens = authService.buildTokenPair(user);
+            String code = codeStore.create(tokens);
             String redirectUrl = UriComponentsBuilder.fromHttpUrl(properties.getFrontendUrl())
                     .path("/oauth/callback")
-                    .queryParam("access_token", tokens.access_token())
-                    .queryParam("refresh_token", tokens.refresh_token())
+                    .queryParam("code", code)
                     .build()
                     .encode()
                     .toUriString();
+            try { metrics.oauthSuccess(); } catch (Exception ignored) {}
             getRedirectStrategy().sendRedirect(request, response, redirectUrl);
         } catch (Exception ex) {
             log.error("OAuth login failed", ex);
+            try { metrics.oauthFailure(); } catch (Exception ignored) {}
             redirectError(response);
         }
     }

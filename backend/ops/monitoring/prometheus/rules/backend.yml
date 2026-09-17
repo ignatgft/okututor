@@ -1,0 +1,40 @@
+groups:
+  - name: backend
+    interval: 15s
+    rules:
+      - alert: BackendDown
+        expr: up{job="okututor-backend"} == 0
+        for: 1m
+        labels: { severity: critical, service: backend }
+        annotations:
+          summary: "Backend down"
+          description: "Backend {{ $labels.instance }} down for >1m"
+
+      - alert: High5xxRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 5m
+        labels: { severity: critical }
+        annotations: { summary: "HTTP 5xx >5% (critical if >10%)" }
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "p95 >1s" }
+
+      - alert: High4xxRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"4.."}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) > 0.2
+        for: 5m
+        labels: { severity: warning }
+
+      - alert: JWTHeapHigh
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "JVM heap >85%" }
+
+      - alert: HikariPoolExhaustion
+        expr: hikaricp_connections_active / hikaricp_connections_max > 0.85
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "Hikari pool >85% ({{ $value }})" }

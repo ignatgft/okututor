@@ -45,8 +45,8 @@
     "about_us": "About Us",
     "my_profile": "My Profile",
     "profile": "My Profile",
-    "dashboard": "Dashboard",
-    "tutor_dashboard": "Tutor Dashboard",
+    "dashboard": "Home",
+    "tutor_dashboard": "Home",
     "admin": "Admin",
     "language": "Language",
     "login": "Log in",
@@ -116,7 +116,8 @@
     "scheduleNotAvailable": "The selected time is not available. Try another one.",
     "lessonConflict": "A lesson is already scheduled for this time.",
     "invalidTimezone": "Invalid timezone.",
-    "invalidDate": "Invalid date or time."
+    "invalidDate": "Invalid date or time.",
+    "reload_hint": "Please refresh the page and check the current status."
   },
   "common": {
     "loading": "Loading...",
@@ -147,7 +148,8 @@
     "next": "Next",
     "reject_reason_hint": "Provide a reason for the applicant...",
     "email": "Email",
-    "in_timezone": "({{tz}})"
+    "in_timezone": "({{tz}})",
+    "optional": "optional"
   },
   "messages": {
     "no_conversations": "No conversations yet",
@@ -205,7 +207,14 @@
     "join_lesson": "Join lesson",
     "events_on_day": "Lessons on this day",
     "view": "View",
-    "slot_removed": "Availability slot removed"
+    "slot_removed": "Availability slot removed",
+    "proposal_accepted": "Schedule confirmed",
+    "proposal_rejected": "Proposal rejected",
+    "counter_propose": "Propose another time",
+    "counter_title": "Suggest another time",
+    "counter_send": "Send proposal",
+    "counter_sent": "Counter-proposal sent",
+    "counter_message_placeholder": "e.g. Evening works better for me"
   },
   "calendar": {
     "student": "Student",
@@ -272,23 +281,27 @@
     "learning_and_teaching": "Learning &\nTeaching",
     "subscribe": "Subscribe to get our\nNewsletter",
     "copyright": "Okututor. All rights reserved.",
-    "logo_alt": "Okututor Logo"
+    "logo_alt": "Okututor Logo",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy"
   },
   "tutors": {
-    "subtitle": "How to become a Tutor",
-    "title": "Empower learners worldwide and build your career teaching.",
-    "create_button": "Create your Course",
+    "subtitle": "For tutors",
+    "title": "Student? Know your subject — become an OkuTutor and find students",
+    "hint": "Publish your resume and find your first students in Bishkek, Osh and online.",
+    "create_button": "Publish your profile",
     "step1": {
       "title": "Sign up",
-      "description": "to create your tutor resume"
+      "description": "create an account in a minute"
     },
     "step2": {
-      "title": "Create your Course",
-      "description": "to start teaching & earning"
+      "title": "Publish your resume",
+      "description": "subjects, levels, price and format — online or offline"
     },
     "step3": {
-      "title": "Start earning",
-      "description": "by teaching and developing your successful careers"
+      "title": "Get students",
+      "description": "reply to requests and start teaching in Kyrgyzstan"
     },
     "image_alt": "Tutor"
   },
@@ -544,8 +557,31 @@
     }
   },
   "dashboard": {
-    "title": "My Dashboard",
+    "title": "My Requests",
+    "overview": "Overview",
+    "welcome": "Welcome",
     "greeting": "Hello, {{name}}",
+    "stats": "Statistics",
+    "my_requests": "My requests",
+    "my_requests_count": "requests",
+    "unread": "Unread",
+    "resume_views": "Resume views",
+    "resume_status": "Resume status",
+    "no_resume": "No resume",
+    "quick_actions": "Quick actions",
+    "recent_requests": "Recent requests",
+    "requests_count": "requests",
+    "requests_hint": "Your incoming and outgoing requests",
+    "requests_empty_hint": "When you send or receive a request, it will appear here.",
+    "create_resume_title": "Create your resume",
+    "create_resume_hint": "Add information about yourself and receive requests.",
+    "has_resume_hint": "You have a resume. You can search for tutors and receive requests.",
+    "no_resume_hint": "You can search for tutors or create your resume.",
+    "search_hint": "Find a tutor by subject and city",
+    "resume_published_hint": "Resume is visible to students",
+    "resume_draft_hint": "Resume is a draft. Submit for moderation.",
+    "resume_suspended_hint": "Resume is suspended",
+    "views": "views",
     "upcoming_lesson": "Upcoming lesson",
     "my_tutors": "My tutors",
     "lessons_count": "{{count}} lessons",
@@ -565,15 +601,35 @@
     "countdown_minutes": "in {{minutes}}m {{seconds}}s",
     "countdown_seconds": "in {{seconds}}s",
     "my_courses": "My courses",
-    "my_requests": "My requests",
     "schedule_preview": "Schedule",
-    "open": "Open"
+    "open": "Open",
+    "resume_expired": "Resume is no longer visible in search",
+    "resume_expired_hint": "Your profile is saved — you can republish anytime.",
+    "renew_30": "Renew for 30 days",
+    "resume_expiring": "Resume will soon stop appearing in search",
+    "resume_hidden": "Resume hidden",
+    "resume_hidden_hint": "Resume is not visible in search.",
+    "restore": "Restore",
+    "resume_active": "Resume active",
+    "resume_draft": "Draft",
+    "active_until": "Active until",
+    "renew_available_when_expired": "Renewal will be available 3 days before expiry.",
+    "hide": "Hide",
+    "no_expiry": "No expiry",
+    "expired_ago": "Expired",
+    "until_expiry": "until expiry",
+    "expiring_soon": "Expiring soon",
+    "expires_tomorrow": "Expires tomorrow",
+    "published_at": "Published",
+    "expires_at": "Expires",
+    "preview_resume": "Preview"
   },
   "tutor_dashboard": {
     "title": "Tutor Dashboard",
     "overview": "Overview",
     "courses": "Courses",
     "bookings": "Bookings",
+    "requests": "Requests",
     "total_courses": "Courses",
     "pending_bookings": "Pending Bookings",
     "confirmed_bookings": "Confirmed",
@@ -679,12 +735,22 @@
     "cancel_title": "Cancel request?",
     "cancel_message": "Your request to join \"{{course}}\" will be withdrawn.",
     "cancel_success": "Request cancelled",
-    "no_pending": "No pending requests"
+    "no_pending": "No pending requests",
+    "tab_awaiting": "Awaiting",
+    "tab_action": "Action needed",
+    "tab_active": "Active",
+    "tab_archive": "Archive",
+    "empty_tab": "Nothing in this tab",
+    "empty_tab_hint": "Check other tabs — you have requests elsewhere.",
+    "view_proposal": "View proposal",
+    "view_schedule": "My schedule"
   },
   "lessons": {
     "title": "Lessons",
     "empty": "No lessons yet",
-    "join": "Join"
+    "join": "Join",
+    "one_off_badge": "One-off",
+    "one_off_hint": "One-off lessons (no recurring schedule)"
   },
   "become_tutor": {
     "title": "Become a tutor",
@@ -767,12 +833,48 @@
       "APPLICATION_REJECTED": "Application rejected",
       "BOOKING_CONFIRMED": "Booking confirmed",
       "BOOKING_CANCELLED": "Booking cancelled",
+      "BOOKING_COMPLETED": "Booking completed",
+      "LESSON_REMINDER": "Lesson reminder",
+      "LESSON_CANCELLED": "Lesson cancelled",
+      "NEW_MESSAGE": "New message",
+      "NEW_REVIEW": "New review",
+      "TUTOR_APPROVED": "Tutor approved",
+      "TUTOR_REJECTED": "Tutor rejected",
+      "COURSE_APPROVED": "Course approved",
+      "COURSE_REJECTED": "Course rejected",
+      "APPLICATION_CANCELLED": "Application cancelled",
+      "SUPPORT": "Support",
       "SYSTEM": "System notification"
+    },
+    "messages": {
+      "COURSE_APPLICATION": "{{studentName}} applied to course «{{courseTitle}}»",
+      "APPLICATION_ACCEPTED": "Your application to «{{courseTitle}}» was accepted",
+      "APPLICATION_REJECTED": "Your application to «{{courseTitle}}» was rejected",
+      "BOOKING_CONFIRMED": "Booking for «{{courseTitle}}» confirmed",
+      "BOOKING_CANCELLED": "Booking for «{{courseTitle}}» cancelled",
+      "BOOKING_COMPLETED": "Booking for «{{courseTitle}}» completed",
+      "LESSON_REMINDER": "Lesson «{{courseTitle}}» with {{tutorName}} starts in 15 minutes",
+      "LESSON_CANCELLED": "Lesson «{{courseTitle}}» with {{tutorName}} cancelled",
+      "NEW_MESSAGE": "{{senderName}}: {{preview}}",
+      "NEW_REVIEW": "New review for «{{courseTitle}}» ({{rating}}/5)",
+      "TUTOR_APPROVED": "Tutor {{tutorName}} approved",
+      "TUTOR_REJECTED": "Tutor {{tutorName}} rejected",
+      "COURSE_APPROVED": "Course «{{courseTitle}}» published",
+      "COURSE_REJECTED": "Course «{{courseTitle}}» rejected",
+      "APPLICATION_CANCELLED": "{{studentName}} cancelled application to «{{courseTitle}}»",
+      "SUPPORT": "{{message}}",
+      "SYSTEM": "{{message}}"
     }
   },
   "admin": {
     "title": "Admin Panel",
     "dashboard": "Dashboard",
+    "metrics": "Metrics",
+    "metrics.students": "Students",
+    "metrics.tutors": "Tutors",
+    "metrics.lessons": "Lessons",
+    "metrics.active_users": "Active (24h)",
+    "metrics.revenue": "Revenue",
     "users": "Users",
     "manage_users": "Manage users",
     "quick_actions": "Quick actions",
@@ -790,6 +892,10 @@
     "verify": "Verify",
     "change_role": "Change Role",
     "tutor_applications": "Tutor applications",
+    "tutors_subtitle": "Manage tutor registration requests",
+    "awaiting_response": "Awaiting response",
+    "suspended": "Suspended",
+    "draft": "Draft",
     "course_moderation": "Course moderation",
     "reviews_moderation": "Reviews",
     "reports": "Reports",
@@ -835,7 +941,9 @@
     "role_admin": "ADMIN",
     "support": "Support",
     "application_detail": "Application details",
-    "chat_with_applicant": "Chat with applicant"
+    "chat_with_applicant": "Chat with applicant",
+    "telegram": "Telegram",
+    "legal": "Legal & Privacy"
   },
   "auditorium": {
     "title": "Video Meeting",
@@ -1134,6 +1242,36 @@
     "passwords_no_match": "Passwords do not match",
     "repeat_password": "Confirm password"
   },
+  "marketplace": {
+    "hero_title": "Find a tutor in Kyrgyzstan",
+    "hero_subtitle": "Mathematics, English, ORT, Python — choose subject and city, start today",
+    "subject_label": "Subject",
+    "search_aria": "Search tutor",
+    "find_tutor": "Find tutor",
+    "become_tutor_cta": "Publish your profile",
+    "become_hint": "Are you a student? Know your subject? Find students.",
+    "become_sales1": "Are you a student?",
+    "become_sales2": "Know your subject well?",
+    "become_sales3": "Publish your resume and find your first students.",
+    "create_resume": "Create resume",
+    "list_title": "Tutors in Kyrgyzstan",
+    "list_subtitle": "Find a teacher by subject, city, format and tutor type",
+    "search_placeholder": "math, english, python, ORT...",
+    "search_hint": "Support: math / python / english / ORT",
+    "no_results_hint": "Try changing subject, city or format.",
+    "tab_new": "New",
+    "tab_viewed": "Viewed",
+    "tab_in_progress": "In progress",
+    "tab_closed": "Closed",
+    "my_requests": "My requests",
+    "contact_tutor": "Contact tutor",
+    "contact_hint": "Contact the tutor via requests",
+    "subjects_hint": "All subjects from catalog. List managed via API.",
+    "wizard_hint": "Steps: basic → subjects → levels → education → experience → price → format → photo → preview → moderation. Not one huge form.",
+    "submit_moderation": "Submit for moderation",
+    "level": "Level",
+    "price": "Price"
+  },
   "progress": {
     "completed": "Completed",
     "course_progress": "Course progress",
@@ -1157,6 +1295,7 @@
     "timezone_saved": "Timezone saved"
   },
   "tutor": {
+    "resume": "Resume",
     "create_course": "Create course",
     "application": "Tutor application"
   },
@@ -1196,7 +1335,18 @@
     "IN_PROGRESS": "In progress",
     "DRAFT": "Draft",
     "PUBLISHED": "Published",
-    "ARCHIVED": "Archived"
+    "ARCHIVED": "Archived",
+    "APPROVED": "Approved",
+    "CLOSED": "Closed",
+    "LOW": "Low",
+    "HIGH": "High",
+    "URGENT": "Urgent",
+    "NORMAL": "Normal",
+    "OPEN": "Open",
+    "IN_REVIEW": "Under review",
+    "WAITING_FOR_USER": "Waiting for user",
+    "WAITING_FOR_SUPPORT": "Waiting for support",
+    "RESOLVED": "Resolved"
   },
   "enrollment_status": {
     "not_requested": "Send a request",
@@ -1242,6 +1392,7 @@
     "error_format": "Choose a study format",
     "error_frequency": "Choose how often",
     "error_duration": "Choose a lesson duration",
+    "error_time_range": "Start time must be before end time",
     "days_monday": "Mo",
     "days_tuesday": "Tu",
     "days_wednesday": "We",
@@ -1271,7 +1422,32 @@
     "accept_schedule": "Confirm schedule",
     "propose_other": "Propose another time",
     "view_schedule": "View schedule",
-    "review_tutor": "\"{{name}}\" is reviewing your application"
+    "review_tutor": "\"{{name}}\" is reviewing your application",
+    "event_sent_tutor": "Student sent the application",
+    "event_accepted_tutor": "You accepted the application",
+    "event_schedule_proposed_tutor": "You proposed a schedule",
+    "hint_pending": "Waiting for tutor response",
+    "hint_needs_info": "Tutor asked for more info",
+    "hint_accepted": "Tutor accepted — awaiting schedule",
+    "hint_schedule_pending": "Schedule awaiting confirmation",
+    "hint_schedule_proposed": "Tutor proposed a schedule",
+    "hint_scheduled": "Schedule confirmed — check your lessons",
+    "hint_pending_tutor": "New application — take action",
+    "hint_needs_info_tutor": "Waiting for student response",
+    "hint_accepted_tutor": "You accepted — assign schedule",
+    "hint_schedule_pending_tutor": "Schedule pending",
+    "hint_schedule_proposed_tutor": "You proposed a schedule — awaiting student",
+    "hint_scheduled_tutor": "Schedule confirmed",
+    "hint_rejected": "Application rejected",
+    "hint_terminal": "This application is closed.",
+    "awaiting_student_confirm": "Awaiting student confirmation",
+    "schedule_confirmed_title": "Schedule confirmed",
+    "proposal_title": "Schedule proposal",
+    "add_to_calendar": "Add to calendar",
+    "ics_description": "Lesson via Okututor",
+    "open_schedule": "Open schedule",
+    "view_proposal": "View proposal",
+    "reject_proposal": "Reject"
   },
   "tutor_request": {
     "title": "Applications",
@@ -1295,7 +1471,11 @@
     "reject_confirm": "Reject application",
     "accepting": "Accepting...",
     "message_student": "Message student",
-    "schedule_negotiate": "Negotiate schedule"
+    "schedule_negotiate": "Negotiate schedule",
+    "assign_schedule": "Assign schedule",
+    "reschedule": "Change schedule",
+    "empty_tab": "Nothing in this tab",
+    "empty_tab_hint": "Check other tabs"
   },
   "schedule_agreement": {
     "title": "Schedule agreement",
@@ -1371,7 +1551,9 @@
     "success": "The schedule has been proposed. The other party can review and confirm it.",
     "view_availability": "View weekly availability",
     "no_date": "not chosen yet",
-    "no_slots_for_date": "No available slots for this date."
+    "no_slots_for_date": "No available slots for this date.",
+    "assign_immediately": "Assign immediately",
+    "propose_for_confirm": "Propose for confirmation"
   },
   "needs_info": {
     "request": "Request more info",
@@ -1383,5 +1565,12 @@
     "provide_label": "Your answer",
     "provide_placeholder": "Provide clarifying information...",
     "provided": "Answer sent"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "empty": "Empty",
+    "empty_hint": "Tutors you favorite will appear here.",
+    "empty_hint2": "Tap ♡ on a tutor card to save.",
+    "find_tutors": "Find tutor"
   }
 }

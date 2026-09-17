@@ -23,11 +23,15 @@ public class ProdEnvValidator implements EnvironmentPostProcessor, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(ProdEnvValidator.class);
 
-    /** известные dev-значения, которые запрещены в production. */
     private static final List<String> FORBIDDEN_JWT_SECRETS = List.of(
             "dev-only-secret-change-me-0123456789abcdef0123456789abcdef",
+            "devsecret-change-me-012345678901234",
+            "placeholder-google-client-id",
+            "placeholder-google-client-secret",
             "change-me-in-staging-and-prod-0123456789abcdef",
-            "CHANGE_ME_TO_LONG_RANDOM_SECRET");
+            "CHANGE_ME_TO_LONG_RANDOM_SECRET",
+            "devkey",
+            "test-secret-do-not-use-in-production-0123456789abcdef");
 
     private static final int MIN_JWT_SECRET_LENGTH = 32;
 
@@ -39,42 +43,68 @@ public class ProdEnvValidator implements EnvironmentPostProcessor, Ordered {
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
-        if (!environment.matchesProfiles("prod")) {
+        if (environment.matchesProfiles("test")) {
             return;
         }
+        boolean isProd = environment.matchesProfiles("prod");
 
         List<String> problems = new ArrayList<>();
 
-        require(environment, problems,
-                "DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD",
-                "FRONTEND_URL", "APP_CORS_ORIGINS", "MAIL_FROM");
+        if (isProd) {
+            require(environment, problems,
+                    "DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD",
+                    "FRONTEND_URL", "APP_CORS_ORIGINS", "MAIL_FROM");
 
-        String jwt = environment.getProperty("app.jwt.secret", "");
-        if (jwt.isBlank()) {
-            problems.add("JWT_SECRET is required in production");
-        } else {
-            // значение секрета не логируем — только длину
-            if (jwt.length() < MIN_JWT_SECRET_LENGTH) {
-                problems.add("JWT_SECRET must be at least %d characters (got %d)"
-                        .formatted(MIN_JWT_SECRET_LENGTH, jwt.length()));
+            String cors = environment.getProperty("APP_CORS_ORIGINS", "");
+            if (cors.contains("*")) {
+                problems.add("APP_CORS_ORIGINS must not contain wildcard '*' in production — enumerate explicit origins");
             }
-            if (FORBIDDEN_JWT_SECRETS.contains(jwt)) {
-                problems.add("JWT_SECRET equals a known dev default - generate a fresh random secret");
+            if (cors.contains("http://")) {
+                problems.add("APP_CORS_ORIGINS must use https in production (found http://)");
+            }
+            String frontend = environment.getProperty("FRONTEND_URL", "");
+            if (frontend.startsWith("http://")) {
+                problems.add("FRONTEND_URL must use https in production");
+            }
+
+            String jwt = environment.getProperty("app.jwt.secret", "");
+            if (jwt.isBlank()) {
+                problems.add("JWT_SECRET is required in production");
+            } else {
+                if (jwt.length() < MIN_JWT_SECRET_LENGTH) {
+                    problems.add("JWT_SECRET must be at least %d characters (got %d)"
+                            .formatted(MIN_JWT_SECRET_LENGTH, jwt.length()));
+                }
+                if (FORBIDDEN_JWT_SECRETS.contains(jwt)) {
+                    problems.add("JWT_SECRET equals a known dev/test default - generate a fresh random secret");
+                }
             }
         }
 
-        if (environment.getProperty("LIVEKIT_API_KEY", "").isBlank()) {
-            log.warn("PROD: LIVEKIT_API_KEY/LIVEKIT_API_SECRET not set - lesson meetings will fail at runtime");
+        String livekitKey = environment.getProperty("LIVEKIT_API_KEY", "");
+        String livekitSecret = environment.getProperty("LIVEKIT_API_SECRET", "");
+        if (isProd) {
+            if (livekitKey.isBlank() || livekitSecret.isBlank()) {
+                log.warn("PROD: LIVEKIT_API_KEY/LIVEKIT_API_SECRET not set - lesson meetings will fail at runtime");
+            } else if (livekitSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32) {
+                problems.add("LIVEKIT_API_SECRET must be at least 32 bytes in production (got %d)"
+                        .formatted(livekitSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length));
+            }
+            if (livekitKey.isBlank() && !livekitSecret.isBlank()
+                    || !livekitKey.isBlank() && livekitSecret.isBlank()) {
+                problems.add("LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set together in production");
+            }
         }
 
         if (!problems.isEmpty()) {
-            String message = "Production environment validation failed:\n  - "
-                    + String.join("\n  - ", problems)
+            String header = isProd ? "Production environment validation failed:\n  - "
+                    : "Environment validation failed:\n  - ";
+            String message = header + String.join("\n  - ", problems)
                     + "\nSet variables via server environment (never commit .env).";
             log.error(message);
             throw new IllegalStateException(message);
         }
-        log.info("PROD environment validation passed");
+        if (isProd) log.info("PROD environment validation passed");
     }
 
     private static void require(Environment env, List<String> problems, String... keys) {

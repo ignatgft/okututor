@@ -1,7 +1,5 @@
 package com.okututor.backend.review;
 
-import com.okututor.backend.booking.Booking;
-import com.okututor.backend.course.Course;
 import com.okututor.backend.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +7,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -23,17 +20,17 @@ public class Review {
     @Id
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+    // legacy course_id kept as plain UUID — Course entity removed
+    @Column(name = "course_id", nullable = false)
+    private UUID courseId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booking_id")
-    private Booking booking;
+    // legacy booking_id kept as plain UUID — Booking entity removed
+    @Column(name = "booking_id")
+    private UUID bookingId;
 
     @Column(nullable = false)
     private int rating;
@@ -65,12 +62,12 @@ public class Review {
     }
 
     public UUID getId() { return id; }
-    public Course getCourse() { return course; }
-    public void setCourse(Course course) { this.course = course; }
+    public UUID getCourseId() { return courseId; }
+    public void setCourseId(UUID courseId) { this.courseId = courseId; }
     public User getStudent() { return student; }
     public void setStudent(User student) { this.student = student; }
-    public Booking getBooking() { return booking; }
-    public void setBooking(Booking booking) { this.booking = booking; }
+    public UUID getBookingId() { return bookingId; }
+    public void setBookingId(UUID bookingId) { this.bookingId = bookingId; }
     public int getRating() { return rating; }
     public void setRating(int rating) { this.rating = rating; }
     public String getComment() { return comment; }

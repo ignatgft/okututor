@@ -15,7 +15,12 @@ spring:
     username: ${DB_USER:okututor}
     password: ${DB_PASSWORD:okututor}
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 2000
+      idle-timeout: 300000
+      max-lifetime: 600000
+      leak-detection-threshold: 10000
 
   jpa:
     hibernate:
@@ -24,6 +29,12 @@ spring:
     properties:
       hibernate:
         jdbc.time_zone: UTC
+        jdbc.batch_size: 25
+        order_inserts: true
+        order_updates: true
+        jdbc.fetch_size: 100
+        query.in_clause_parameter_padding: true
+        query.plan_cache_max_size: 4096
 
   flyway:
     enabled: true
@@ -37,6 +48,11 @@ spring:
       # пусто = без авторизации (локальный Redis); в prod задаётся REDIS_PASSWORD
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          max-wait: 1000ms
 
   servlet:
     multipart:
@@ -60,10 +76,9 @@ spring:
       client:
         registration:
           google:
-            # placeholders enable local startup without real credentials;
-            # set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET to activate Google sign-in
-            client-id: ${GOOGLE_CLIENT_ID:placeholder-google-client-id}
-            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder-google-client-secret}
+            # Google OAuth активируется только если заданы GOOGLE_CLIENT_ID/SECRET (см. SecurityConfig)
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
             # должен ТОЧНО совпадать с одним из Authorized redirect URIs в Google Console
             redirect-uri: ${GOOGLE_REDIRECT_URI:{baseUrl}/login/oauth2/code/google}
             scope: openid,profile,email
@@ -75,16 +90,34 @@ server:
   port: ${SERVER_PORT:8080}
   # корректное завершение in-flight запросов при деплое
   shutdown: graceful
+  forward-headers-strategy: native
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info,prometheus,metrics
   endpoint:
     health:
       probes:
         enabled: true
+      # не раскрываем детали компонентов health наружу
+      show-details: never
+  # Redis для rate-limit ОПЦИОНАЛЕН (use-redis=false => in-memory LocalRateLimiter),
+  # поэтому недоступность Redis не должна ронять health/liveness/readiness (pod restart)
+  health:
+    redis:
+      enabled: ${MANAGEMENT_HEALTH_REDIS_ENABLED:false}
+  # общие tags для всех метрик Prometheus (низкая cardinality)
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${OKUTUTOR_ENV:dev}
+  # foundation distributed tracing: контекст создается, экспорт выключен по умолчанию
+  tracing:
+    enabled: ${OKUTUTOR_TRACING_ENABLED:false}
+    sampling:
+      probability: ${OKUTUTOR_TRACING_SAMPLING:0.1}
 
 springdoc:
   api-docs.path: /v3/api-docs
@@ -93,9 +126,12 @@ springdoc:
 app:
   cors:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost}
+  trusted-proxies: ${APP_TRUSTED_PROXIES:}
+  # Swagger UI / OpenAPI docs: только dev. В prod ОБЯЗАТЕЛЬНО APP_API_DOCS_ENABLED=false
+  api-docs-enabled: ${APP_API_DOCS_ENABLED:true}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   jwt:
-    # значение только для dev; ОБЯЗАТЕЛЬНО переопределить в staging/production через JWT_SECRET
+    # dev fallback — ОБЯЗАТЕЛЬНО переопределить в prod через JWT_SECRET (проверяет ProdEnvValidator)
     secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
     access-ttl-minutes: 15
     refresh-ttl-days: 30
@@ -103,7 +139,7 @@ app:
   livekit:
     api-key: ${LIVEKIT_API_KEY:devkey}
     api-secret: ${LIVEKIT_API_SECRET:devsecret-change-me-012345678901234}
-    ws-url: ${LIVEKIT_WS_URL:wss://localhost:7880}
+    ws-url: ${LIVEKIT_WS_URL:ws://localhost:7880}
     token-ttl-minutes: 30
   mail:
     enabled: ${APP_MAIL_ENABLED:false}
@@ -117,7 +153,10 @@ app:
     resend-per-minute: 1
     forgot-password-per-hour: 10
   seed:
-    enabled: ${APP_SEED_ENABLED:true}
+    enabled: ${APP_SEED_ENABLED:false}
+    marketplace: ${APP_SEED_MARKETPLACE:false}
+  legacy:
+    enabled: ${APP_LEGACY_ENABLED:true}
   storage:
     local-dir: ${APP_STORAGE_DIR:./data/uploads}
     public-base-url: ${APP_STORAGE_PUBLIC_BASE:/api/v1/files}
@@ -148,6 +187,7 @@ app:
     orphan-cleanup-enabled: ${MEDIA_ORPHAN_CLEANUP_ENABLED:false}
     orphan-grace: ${MEDIA_ORPHAN_GRACE_HOURS:24}h
     r2:
+      endpoint: ${R2_ENDPOINT:}
       account-id: ${R2_ACCOUNT_ID:}
       access-key-id: ${R2_ACCESS_KEY_ID:}
       secret-access-key: ${R2_SECRET_ACCESS_KEY:}
@@ -157,6 +197,18 @@ app:
     # окно входа в видеоурок относительно расписания (UTC)
     join-minutes-before: ${LESSON_JOIN_MINUTES_BEFORE:15}
     join-minutes-after: ${LESSON_JOIN_MINUTES_AFTER:60}
+    cancel-hours-before: ${LESSON_CANCEL_HOURS_BEFORE:8}
+    reschedule-hours-before: ${LESSON_RESCHEDULE_HOURS_BEFORE:8}
+  tg:
+    bot-token: ${TG_BOT_TOKEN:}
+    admin-chat-id: ${TG_ADMIN_CHAT_ID:}
+    enabled: ${TG_BOT_ENABLED:false}
+
+monitoring:
+  telegram:
+    enabled: ${MONITORING_TELEGRAM_ENABLED:false}
+    chat-id: ${TELEGRAM_CHAT_ID:}
+    allowed-chat-ids: ${TELEGRAM_ALLOWED_CHAT_IDS:}
 
 logging:
   level:
@@ -168,7 +220,8 @@ search:
   default-page-size: 20
   max-page-size: 100
   # пул кандидатов из PostgreSQL, по которому работает ranking (спека #13)
-  candidate-limit: 100
+  # P1: увеличен с 100 до 300 — recall при фильтрах subject/level/price после переноса в SQL
+  candidate-limit: 300
   ranking:
     # веса нормализованных (0..1) факторов; 0 = фактор выключен
     text-weight: 0.45

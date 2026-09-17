@@ -7,7 +7,7 @@ import java.io.IOException;
 import org.springframework.data.domain.Page;
 
 /**
- * Плоский конверт пагинации, который ждёт фронт (mockData.js):
+ * Плоский конверт пагинации:
  * {content, page, size, total_elements, total_pages, first, last}.
  * Ключи snake_case зашиты явно — глобальная стратегия именования на них не влияет.
  */

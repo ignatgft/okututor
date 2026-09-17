@@ -50,13 +50,14 @@ class AuthServiceTest {
         emailCodeService = mock(EmailCodeService.class);
         AppProperties props = new AppProperties();
         props.getRateLimit().setEnabled(false);
-        rateLimitService = new RateLimitService(Optional.of(mock(com.okututor.backend.common.ratelimit.RedisRateLimiter.class)), props);
-        tokenRotation = new RefreshTokenRotationService(jwtService, refreshTokenService, new UserMapper());
+        com.okututor.backend.observability.ObservabilityMetrics metrics = mock(com.okututor.backend.observability.ObservabilityMetrics.class);
+        rateLimitService = new RateLimitService(Optional.of(mock(com.okututor.backend.common.ratelimit.RateLimiter.class)), props, metrics);
+        tokenRotation = new RefreshTokenRotationService(jwtService, refreshTokenService, new UserMapper(), metrics);
         emailVerificationService = mock(EmailVerificationService.class);
         passwordResetService = new PasswordResetService(
                 userRepository, emailCodeService, tokenRotation, rateLimitService, passwordEncoder);
         authService = new AuthService(userRepository, passwordEncoder, emailCodeService, rateLimitService,
-                tokenRotation, emailVerificationService, passwordResetService);
+                tokenRotation, emailVerificationService, passwordResetService, metrics);
     }
 
     private User verifiedUser(String role) {
@@ -74,7 +75,7 @@ class AuthServiceTest {
     @Test
     void registerRejectsMismatchedRepeatPasswordWithFieldError() {
         RegisterRequest request = new RegisterRequest(
-                "new@test.com", "password123", "different", "New User", Role.STUDENT);
+                "new@test.com", "password123", "different", "New User", Role.STUDENT, true, true);
 
         assertThatThrownBy(() -> authService.register(request, "1.2.3.4"))
                 .isInstanceOf(FieldValidationException.class)
@@ -89,7 +90,7 @@ class AuthServiceTest {
     void registerExistingEmailConflicts() {
         when(userRepository.existsByEmail("taken@test.com")).thenReturn(true);
         RegisterRequest request = new RegisterRequest(
-                "taken@test.com", "password123", "password123", "New User", Role.STUDENT);
+                "taken@test.com", "password123", "password123", "New User", Role.STUDENT, true, true);
 
         assertThatThrownBy(() -> authService.register(request, "1.2.3.4"))
                 .isInstanceOf(ApiException.class)
@@ -101,14 +102,15 @@ class AuthServiceTest {
     void registerCreatesUnverifiedUserAndIssuesVerificationCode() {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         RegisterRequest request = new RegisterRequest(
-                "new@test.com", "password123", "password123", "New User", Role.TUTOR);
+                "new@test.com", "password123", "password123", "New User", Role.TUTOR, true, true);
 
         StatusResponse response = authService.register(request, "1.2.3.4");
 
         assertThat(response.status()).isEqualTo("EMAIL_VERIFICATION_REQUIRED");
+        // Marketplace unified: TUTOR/TEACHER/STUDENT -> USER
         verify(userRepository).save(argThat((User u) ->
                 !u.isVerified()
-                        && u.getRole() == Role.TUTOR
+                        && u.getRole() == Role.USER
                         && u.getFirstName().equals("New")
                         && u.getEmail().equals("new@test.com")));
         verify(emailCodeService).issue(any(), anyString(), any(), any());

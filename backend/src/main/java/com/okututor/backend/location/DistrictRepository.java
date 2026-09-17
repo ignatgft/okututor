@@ -11,4 +11,5 @@ public interface DistrictRepository extends JpaRepository<District, UUID> {
     // Spring Data derives correct? use explicit query for city.slug
     @org.springframework.data.jpa.repository.Query("select d from District d where d.city.slug = :citySlug and d.slug = :slug")
     Optional<District> findByCitySlug(@org.springframework.data.repository.query.Param("citySlug") String citySlug, @org.springframework.data.repository.query.Param("slug") String slug);
+    Optional<District> findBySlug(String slug);
 }

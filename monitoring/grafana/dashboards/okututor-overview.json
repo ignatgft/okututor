@@ -4,100 +4,458 @@
   "tags": ["okututor", "production"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "10s",
   "time": { "from": "now-6h", "to": "now" },
+  "weekStart": "",
+  "templating": { "list": [] },
   "panels": [
     {
+      "id": 1,
       "type": "stat",
-      "title": "Backend UP",
+      "title": "SYSTEM STATUS",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "expr": "up{job=\"okututor-backend\"}", "refId": "A" }],
-      "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "red", "value": 0 }, { "color": "green", "value": 1 }] } } },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "HEALTHY", "color": "green" } } },
+            { "type": "special", "options": { "match": "null", "result": { "text": "N/A", "color": "yellow" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 0.5 }, { "color": "green", "value": 1 }] },
+          "noValue": "N/A"
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "textMode": "auto" },
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 }
     },
     {
+      "id": 2,
       "type": "stat",
-      "title": "Requests / sec",
+      "title": "REQUESTS / SEC",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "sum(rate(http_server_requests_seconds_count[5m]))",
       "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count[5m]))", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 2, "noValue": "N/A" } },
+      "options": { "colorMode": "value", "graphMode": "area" },
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 }
     },
     {
+      "id": 3,
       "type": "stat",
-      "title": "Error rate 5xx %",
+      "title": "ERROR RATE",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "5xx / total * 100",
       "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) * 100", "refId": "A" }],
-      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 10 }] } } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "N/A",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }
+        }
+      },
+      "options": { "colorMode": "background" },
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 }
     },
     {
+      "id": 4,
       "type": "stat",
-      "title": "p95 latency",
+      "title": "P95 LATENCY",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))", "refId": "A" }],
-      "fieldConfig": { "defaults": { "unit": "s" } },
+      "description": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))",
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) * 1000", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0,
+          "noValue": "N/A",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 500 }, { "color": "red", "value": 1000 }] }
+        }
+      },
+      "options": { "colorMode": "background" },
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 }
     },
     {
+      "id": 5,
       "type": "timeseries",
-      "title": "RPS by status",
+      "title": "HTTP TRAFFIC",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(rate(http_server_requests_seconds_count[5m])) by (status)", "refId": "A", "legendFormat": "{{status}}" }
+        { "expr": "sum(rate(http_server_requests_seconds_count[5m]))", "refId": "A", "legendFormat": "total" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))", "refId": "B", "legendFormat": "5xx" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[5m]))", "refId": "C", "legendFormat": "4xx" }
       ],
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 }
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 }
     },
     {
+      "id": 6,
       "type": "timeseries",
-      "title": "Latency p50 / p95 / p99",
+      "title": "ERROR RATE",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))", "refId": "A", "legendFormat": "p50" },
-        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))", "refId": "B", "legendFormat": "p95" },
-        { "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))", "refId": "C", "legendFormat": "p99" }
+        { "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) * 100", "refId": "A", "legendFormat": "5xx %" }
       ],
-      "fieldConfig": { "defaults": { "unit": "s" } },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 }
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 }
     },
     {
+      "id": 7,
+      "type": "timeseries",
+      "title": "RESPONSE LATENCY",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) * 1000", "refId": "A", "legendFormat": "p50 ms" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) * 1000", "refId": "B", "legendFormat": "p95 ms" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) * 1000", "refId": "C", "legendFormat": "p99 ms" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "2xx %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{status=~\"2..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) * 100", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 98 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 20 }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "4xx %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) * 100", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 20 }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "5xx %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) * 100", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 20 }
+    },
+    {
+      "id": 11,
+      "type": "text",
+      "title": "",
+      "options": { "code": { "language": "plaintext", "showLineNumbers": false }, "content": "## BUSINESS", "mode": "markdown" },
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 24 }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Registered users",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_users_registered_total", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 26 }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Published resumes",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_resumes_approved_total", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 26 }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Pending moderation",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_resumes_pending_moderation", "refId": "A" }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 20 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 26 }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Resume views",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_resume_views_total", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 26 }
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Contact clicks",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_contact_clicks_total", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 26 }
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Conversations",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_conversations_total", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 26 }
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Messages",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_messages_total", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 30 }
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "New resumes (5m)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_tutor_profile_created_total[1h])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 30 }
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Approved today",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_resumes_approved_total[24h])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 30 }
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Rejected today",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_resumes_rejected_total[24h])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 30 }
+    },
+    {
+      "id": 22,
+      "type": "text",
+      "title": "",
+      "options": { "content": "## MODERATION", "mode": "markdown", "code": { "language": "plaintext", "showLineNumbers": false } },
+      "gridPos": { "h": 2, "w": 12, "x": 0, "y": 34 }
+    },
+    {
+      "id": 23,
+      "type": "text",
+      "title": "",
+      "options": { "content": "## AUTHENTICATION", "mode": "markdown", "code": { "language": "plaintext", "showLineNumbers": false } },
+      "gridPos": { "h": 2, "w": 12, "x": 12, "y": 34 }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Pending resumes",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "okututor_moderation_pending_resumes", "refId": "A" }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 20 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 36 }
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Approved today",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_moderation_approved_total[24h])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 36 }
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Rejected today",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_moderation_rejected_total[24h])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 36 }
+    },
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "Login success",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_auth_login_success_total[5m])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 36 }
+    },
+    {
+      "id": 28,
+      "type": "stat",
+      "title": "Login failures",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_auth_login_failure_total[5m])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 36 }
+    },
+    {
+      "id": 29,
+      "type": "stat",
+      "title": "Refresh failures",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_auth_refresh_failure_total[5m])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 36 }
+    },
+    {
+      "id": 30,
+      "type": "stat",
+      "title": "OAuth failures",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(okututor_oauth_failure_total[5m])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 3, "x": 21, "y": 36 }
+    },
+    {
+      "id": 31,
+      "type": "text",
+      "title": "",
+      "options": { "content": "## JVM / APPLICATION", "mode": "markdown", "code": { "language": "plaintext", "showLineNumbers": false } },
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 40 }
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Heap usage %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"} * 100", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 85 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 42 }
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "CPU %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "process_cpu_usage * 100", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 85 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 42 }
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "Threads",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "jvm_threads_live_threads", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 42 }
+    },
+    {
+      "id": 35,
+      "type": "stat",
+      "title": "GC pause 5m",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "increase(jvm_gc_pause_seconds_sum[5m])", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 42 }
+    },
+    {
+      "id": 36,
+      "type": "stat",
+      "title": "Loaded classes",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "jvm_classes_loaded_classes", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 42 }
+    },
+    {
+      "id": 37,
+      "type": "stat",
+      "title": "Uptime",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "process_uptime_seconds", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 42 }
+    },
+    {
+      "id": 38,
       "type": "timeseries",
       "title": "JVM Heap",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "jvm_memory_used_bytes{area=\"heap\"}", "refId": "A", "legendFormat": "used heap" },
-        { "expr": "jvm_memory_max_bytes{area=\"heap\"}", "refId": "B", "legendFormat": "max heap" }
+        { "expr": "jvm_memory_max_bytes{area=\"heap\"}", "refId": "B", "legendFormat": "max heap" },
+        { "expr": "jvm_memory_used_bytes{area=\"nonheap\"}", "refId": "C", "legendFormat": "nonheap used" }
       ],
       "fieldConfig": { "defaults": { "unit": "bytes" } },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 }
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 46 }
     },
     {
+      "id": 39,
       "type": "timeseries",
-      "title": "JVM Threads",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "jvm_threads_live_threads", "refId": "A" }],
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 }
-    },
-    {
-      "type": "timeseries",
-      "title": "JVM GC pause",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "rate(jvm_gc_pause_seconds_sum[5m])", "refId": "A", "legendFormat": "{{gc}} {{action}}" }],
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 }
-    },
-    {
-      "type": "timeseries",
-      "title": "JVM CPU",
+      "title": "JVM CPU & GC",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "process_cpu_usage * 100", "refId": "A", "legendFormat": "process cpu %" },
-        { "expr": "system_cpu_usage * 100", "refId": "B", "legendFormat": "system cpu %" }
+        { "expr": "rate(jvm_gc_pause_seconds_sum[5m])", "refId": "B", "legendFormat": "gc {{gc}} {{action}}" }
       ],
-      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 20 }
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 46 }
     },
     {
+      "id": 40,
+      "type": "text",
+      "title": "",
+      "options": { "content": "## DATABASE", "mode": "markdown", "code": { "language": "plaintext", "showLineNumbers": false } },
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 54 }
+    },
+    {
+      "id": 41,
+      "type": "stat",
+      "title": "Active connections",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "hikaricp_connections_active", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 56 }
+    },
+    {
+      "id": 42,
+      "type": "stat",
+      "title": "Idle connections",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "hikaricp_connections_idle", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 56 }
+    },
+    {
+      "id": 43,
+      "type": "stat",
+      "title": "Max connections",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "hikaricp_connections_max", "refId": "A" }],
+      "fieldConfig": { "defaults": { "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 56 }
+    },
+    {
+      "id": 44,
+      "type": "stat",
+      "title": "Pool usage %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "hikaricp_connections_active / hikaricp_connections_max * 100", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 85 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 56 }
+    },
+    {
+      "id": 45,
+      "type": "stat",
+      "title": "Pending connections",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "hikaricp_connections_pending", "refId": "A" }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "noValue": "N/A" } },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 56 }
+    },
+    {
+      "id": 46,
       "type": "timeseries",
-      "title": "DB Connections",
+      "title": "DB Pool",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "hikaricp_connections_active", "refId": "A", "legendFormat": "active" },
@@ -105,79 +463,58 @@
         { "expr": "hikaricp_connections_pending", "refId": "C", "legendFormat": "pending" },
         { "expr": "hikaricp_connections_max", "refId": "D", "legendFormat": "max" }
       ],
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 20 }
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 60 }
     },
     {
-      "type": "stat",
-      "title": "Registered users",
+      "id": 47,
+      "type": "text",
+      "title": "",
+      "options": { "content": "## ACTIVE ALERTS", "mode": "markdown", "code": { "language": "plaintext", "showLineNumbers": false } },
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 66 }
+    },
+    {
+      "id": 48,
+      "type": "table",
+      "title": "Active Alerts",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "okututor_users_registered_total", "refId": "A" }],
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 26 }
+      "targets": [{ "expr": "ALERTS{alertstate=\"firing\"}", "refId": "A", "format": "table" }],
+      "fieldConfig": { "defaults": { "noValue": "No firing alerts — HEALTHY" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 68 }
     },
     {
-      "type": "stat",
-      "title": "Published resumes",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "okututor_resumes_approved_total", "refId": "A" }],
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 26 }
+      "id": 49,
+      "type": "text",
+      "title": "",
+      "options": { "content": "## LOGS", "mode": "markdown", "code": { "language": "plaintext", "showLineNumbers": false } },
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 76 }
     },
     {
-      "type": "stat",
-      "title": "Pending moderation",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "okututor_resumes_pending_moderation", "refId": "A" }],
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 26 }
-    },
-    {
-      "type": "stat",
-      "title": "Resume views",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "okututor_resume_views_total", "refId": "A" }],
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 26 }
-    },
-    {
-      "type": "stat",
-      "title": "Contact clicks",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "okututor_contact_clicks_total", "refId": "A" }],
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 26 }
-    },
-    {
-      "type": "stat",
-      "title": "Conversations",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "expr": "okututor_conversations_total", "refId": "A" }],
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 26 }
-    },
-    {
-      "type": "timeseries",
-      "title": "Business throughput",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        { "expr": "increase(okututor_tutor_profile_created_total[5m])", "refId": "A", "legendFormat": "resumes created" },
-        { "expr": "increase(okututor_tutor_profile_published_total[5m])", "refId": "B", "legendFormat": "published" },
-        { "expr": "increase(okututor_messages_total[5m])", "refId": "C", "legendFormat": "messages" }
-      ],
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 30 }
-    },
-    {
-      "type": "timeseries",
-      "title": "Auth success / failures",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        { "expr": "increase(okututor_auth_login_success_total[5m])", "refId": "A", "legendFormat": "login success" },
-        { "expr": "increase(okututor_auth_login_failure_total[5m])", "refId": "B", "legendFormat": "login failure" },
-        { "expr": "increase(okututor_auth_refresh_failure_total[5m])", "refId": "C", "legendFormat": "refresh failure" },
-        { "expr": "increase(okututor_oauth_failure_total[5m])", "refId": "D", "legendFormat": "oauth failure" }
-      ],
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 30 }
-    },
-    {
+      "id": 50,
       "type": "logs",
-      "title": "Logs — ERROR / WARN",
+      "title": "ERROR",
       "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [{ "expr": "{level=~\"ERROR|WARN\"} | json | line_format \"{{.level}} {{.logger}} {{.message}}\"", "refId": "A" }],
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 38 }
+      "targets": [{ "expr": "{level=\"ERROR\"} |= \"\" | json | line_format \"{{.level}} {{.logger}} {{.message}} trace={{.traceId}} req={{.requestId}}\"", "refId": "A" }],
+      "options": { "showTime": true, "sortOrder": "Descending" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 78 }
+    },
+    {
+      "id": 51,
+      "type": "logs",
+      "title": "WARN",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{level=\"WARN\"} |= \"\" | json", "refId": "A" }],
+      "options": { "showTime": true, "sortOrder": "Descending" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 78 }
+    },
+    {
+      "id": 52,
+      "type": "logs",
+      "title": "All logs (filter: {service=\"okututor-backend\"})",
+      "description": "Use Explore to filter: {job=\"docker\", service=\"okututor-backend\"} |= \"ERROR\"",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{job=\"docker\"} |= \"\" | json | line_format \"{{.level}} {{.logger}} {{.message}}\"", "refId": "A" }],
+      "options": { "showTime": true, "sortOrder": "Descending" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 88 }
     }
   ]
 }

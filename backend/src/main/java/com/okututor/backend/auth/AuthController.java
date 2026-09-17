@@ -38,15 +38,18 @@ public class AuthController {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final ClientIpResolver clientIpResolver;
+    private final com.okututor.backend.common.ratelimit.RateLimitService rateLimitService;
 
     public AuthController(AuthService authService,
                           UserRepository userRepository,
                           UserMapper userMapper,
-                          ClientIpResolver clientIpResolver) {
+                          ClientIpResolver clientIpResolver,
+                          com.okututor.backend.common.ratelimit.RateLimitService rateLimitService) {
         this.authService = authService;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.clientIpResolver = clientIpResolver;
+        this.rateLimitService = rateLimitService;
     }
 
     @PostMapping("/login")
@@ -67,6 +70,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public AuthTokensResponse refresh(@RequestBody RefreshRequest request, HttpServletRequest http) {
+        rateLimitService.checkRefresh(clientIpResolver.resolve(http));
         return authService.refresh(request.refresh_token(), SessionInfo.of(http, clientIpResolver));
     }
 
@@ -111,7 +115,8 @@ public class AuthController {
     }
 
     @PostMapping("/verify-reset-code")
-    public StatusResponse verifyResetCode(@RequestBody VerifyEmailRequest request) {
+    public StatusResponse verifyResetCode(@RequestBody VerifyEmailRequest request, HttpServletRequest http) {
+        rateLimitService.checkVerifyReset(clientIpResolver.resolve(http));
         return authService.verifyResetCode(request.email(), request.code());
     }
 
@@ -124,6 +129,7 @@ public class AuthController {
     public StatusResponse changeEmail(@AuthenticationPrincipal UserPrincipal principal,
                                       @RequestBody ChangeEmailRequest request) {
         requireAuth(principal);
+        rateLimitService.checkChangeEmail(principal.id().toString());
         return authService.changeEmail(
                 userRepository.findById(principal.id()).orElseThrow(() -> ApiException.unauthorized("Unknown user")),
                 request.email());

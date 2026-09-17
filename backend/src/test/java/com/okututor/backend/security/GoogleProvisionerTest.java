@@ -27,7 +27,8 @@ class GoogleProvisionerTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        provisioner = new GoogleProvisioner(userRepository);
+        var mediaService = mock(com.okututor.backend.media.MediaService.class);
+        provisioner = new GoogleProvisioner(userRepository, mediaService);
     }
 
     private OAuth2User googleUser(String email) {
@@ -41,10 +42,10 @@ class GoogleProvisionerTest {
 
     @Test
     void newAccountIsAlwaysStudentEvenIfTutorRoleRequested() {
-        // раньше handler прокидывал ?role=TUTOR сюда — теперь роль игнорируется
+        // Marketplace: новые OAuth-аккаунты всегда USER (может создать резюме)
         User user = provisioner.provision(googleUser("new.user@gmail.com"));
 
-        assertThat(user.getRole()).isEqualTo(Role.STUDENT);
+        assertThat(user.getRole()).isEqualTo(Role.USER);
         assertThat(user.isVerified()).isTrue();
         assertThat(user.getProvider()).isEqualTo(User.AuthProvider.GOOGLE);
     }

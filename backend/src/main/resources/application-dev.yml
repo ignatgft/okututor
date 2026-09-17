@@ -13,8 +13,7 @@ app:
   rate-limit:
     login-per-minute: ${RATE_LIMIT_LOGIN:100}
   seed:
-    # демо-данные уместны только здесь
-    enabled: ${APP_SEED_ENABLED:true}
+    enabled: ${APP_SEED_ENABLED:false}
 
 logging:
   level:

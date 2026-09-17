@@ -68,6 +68,11 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.TOO_MANY_REQUESTS, ErrorCodes.RATE_LIMITED, message);
     }
 
+    /** 410 — ресурс существовал, но больше недоступен (напр. просроченная ссылка). */
+    public static ApiException gone(String code, String message) {
+        return new ApiException(HttpStatus.GONE, code, message);
+    }
+
     public static ApiException invalidCode(String message) {
         return new ApiException(HttpStatus.BAD_REQUEST, ErrorCodes.INVALID_CODE, message);
     }

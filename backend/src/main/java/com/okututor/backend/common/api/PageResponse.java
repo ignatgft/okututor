@@ -5,7 +5,7 @@ import java.util.function.Function;
 import org.springframework.data.domain.Page;
 
 /**
- * конверт пагинации, который ждёт фронт (см. mockData.js):
+ * конверт пагинации:
  * { content, page, size, total_elements, total_pages, first, last } —
  * ключи формируются глобальной стратегией snake_case.
  */

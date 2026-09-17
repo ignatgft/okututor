@@ -33,6 +33,26 @@ management:
       exposure:
         # health для probe; prometheus — метрики, снимаемые мониторингом (сеть обычно закрыта)
         include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${OKUTUTOR_ENV:production}
+  otlp:
+    metrics:
+      export:
+        enabled: ${OTEL_METRICS_ENABLED:false}
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:}
+  tracing:
+    enabled: ${OTEL_TRACING_ENABLED:false}
+    sampling:
+      probability: ${OTEL_SAMPLING:0.1}
+
+# в prod JSON-логи включены по умолчанию (Loki); отключается через SPRING_PROFILES_ACTIVE=prod без jsonlog
+# см. logback-spring.xml — профиль jsonlog переключает appender на JsonEncoder.
 
 logging:
   level:

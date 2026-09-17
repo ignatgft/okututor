@@ -33,18 +33,16 @@ public class SecurityConfig {
             "/api/v1/auth/verify-email",
             "/api/v1/auth/resend-verification",
             "/api/v1/auth/verify-reset-code",
-            // вебхук LiveKit: аутентификация подписью JWT в самом запросе (см. LiveKitWebhookService)
+            "/api/v1/auth/oauth/exchange",
+            // вебхуки: LiveKit (подпись), Telegram Alertmanager (внутренняя сеть)
             "/api/v1/livekit/webhook",
+            "/api/v1/telegram/alert",
             "/api/v1/tutor-requests"
     };
 
     private static final String[] PUBLIC_GET = {
             "/actuator/health",
             "/actuator/info",
-            "/actuator/prometheus",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
             "/oauth2/**",
             "/login/oauth2/**",
             "/api/v1/files/**",
@@ -56,8 +54,14 @@ public class SecurityConfig {
             "/api/v1/levels/**",
             "/api/v1/cities/**",
             "/api/v1/search/**",
+            "/api/v1/seo/**",
             "/api/v1/sitemap.xml",
-            "/api/v1/robots.txt"
+            "/api/v1/robots.txt",
+            "/sitemap.xml",
+            "/robots.txt",
+            "/api/v1/public/**",
+            "/api/v1/legal/**",
+            "/api/v1/shares/**"
     };
 
     @Bean
@@ -76,13 +80,27 @@ public class SecurityConfig {
                                           @org.springframework.beans.factory.annotation.Value(
                                                   "${spring.security.oauth2.client.registration.google.client-id:}")
                                           String googleClientId) throws Exception {
+        // Swagger/OpenAPI доступны только когда явно включены (dev); в prod — app.api-docs-enabled=false
+        List<String> publicGet = new java.util.ArrayList<>(List.of(PUBLIC_GET));
+        if (properties.isApiDocsEnabled()) {
+            publicGet.addAll(List.of("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"));
+        }
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // private files require auth even though /api/v1/files/** is public for avatars
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/files/media/messages/**", "/api/v1/files/media/support/**", "/api/v1/files/media/chat/**", "/api/v1/files/media/private/**").authenticated()
+                        // explicit auth for owner endpoints before public wildcards
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me", "/api/v1/tutors/me/**", "/api/v1/tutor-profiles/me/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/tutors/me/submit", "/api/v1/tutor-profiles/me/submit", "/api/v1/tutors", "/api/v1/tutor-profiles").authenticated()
+                        // prometheus must not be public in prod — scraped via internal network with auth
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/prometheus").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, PUBLIC_POST).permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, PUBLIC_GET).permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, publicGet.toArray(String[]::new)).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, ex) -> {
@@ -106,9 +124,8 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Google-вход включается только реальными кредами; заглушки держат локальный старт чистым. */
     private boolean isGoogleConfigured(String clientId) {
-        return clientId != null && !clientId.isBlank() && !clientId.startsWith("placeholder");
+        return clientId != null && !clientId.isBlank();
     }
 
     @Bean

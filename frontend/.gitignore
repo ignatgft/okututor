@@ -14,8 +14,9 @@ dist-ssr
 *.pyc
 __pycache__/
 
-# Editor directories and files
+# Env — один .env в игноре, шаблон .env.example коммитится (синхронизировано с backend/monitoring)
 .env
+!.env.example
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -32,3 +33,7 @@ figma_tree.txt
 
 # Documentation is not tracked
 *.md
+
+coverage/
+
+coverage/

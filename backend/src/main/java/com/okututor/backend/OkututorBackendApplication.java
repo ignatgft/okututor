@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Исключаем RedisRepositoriesAutoConfiguration, т.к. проект не использует
@@ -13,6 +14,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @SpringBootApplication(exclude = RedisRepositoriesAutoConfiguration.class)
 @EnableAsync
+@EnableScheduling
 public class OkututorBackendApplication {
 
     public static void main(String[] args) {

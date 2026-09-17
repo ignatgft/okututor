@@ -1,0 +1,209 @@
+/* ResumeEditor — matches Image 3 */
+.resume-editor-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--page-padding, 16px);
+}
+.resume-editor-header h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-text, #101727);
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+.resume-editor-header p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--color-text-secondary, #667085);
+}
+.resume-editor-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #E5E9F0);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(16,23,39,0.06));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.resume-editor-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-text, #101727);
+  margin: 8px 0 0;
+}
+.resume-editor-section-title svg { color: #2563EB; }
+.resume-editor-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .resume-editor-grid2 { grid-template-columns: 1fr; }
+  .resume-editor-grid3 { grid-template-columns: 1fr; }
+}
+.resume-editor-grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.resume-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+.resume-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text, #101727);
+  margin: 0 0 6px;
+  display: block;
+}
+.resume-field label span.req { color: var(--color-danger, #EF4444); }
+.resume-field input,
+.resume-field select,
+.resume-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-border, #E5E9F0);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+  font-size: 14px;
+  color: var(--color-text, #101727);
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.resume-field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+.resume-field input::placeholder,
+.resume-field textarea::placeholder { color: #9AA3B2; }
+.resume-field input:focus,
+.resume-field select:focus,
+.resume-field textarea:focus { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.resume-field--error input,
+.resume-field--error textarea,
+.resume-field--error select { border-color: var(--color-danger, #EF4444) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.10) !important; }
+.resume-counter {
+  font-size: 12px;
+  color: var(--color-text-muted, #98A6BE);
+  text-align: right;
+  margin-top: 4px;
+}
+.resume-counter.warn { color: #F59E0B; }
+.resume-counter.error { color: var(--color-danger, #EF4444); }
+
+.resume-price-wrap { position: relative; display: flex; align-items: center; }
+.resume-price-wrap input { padding-right: 28px; }
+.resume-price-suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #475367);
+  pointer-events: none;
+}
+
+.resume-checkbox-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.resume-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text, #101727);
+  cursor: pointer;
+}
+.resume-checkbox input { width: 18px; height: 18px; accent-color: #2563EB; }
+
+.resume-phone-wrap { display: flex; align-items: stretch; }
+.resume-phone-prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--color-bg-secondary, #F2F4F7);
+  border: 1.5px solid var(--color-border, #E5E9F0);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text, #101727);
+  white-space: nowrap;
+}
+.resume-phone-wrap input { border-radius: 0 10px 10px 0; flex: 1; }
+
+.resume-lang-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-border, #E5E9F0);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+  font-size: 14px;
+  color: var(--color-text, #101727);
+  cursor: pointer;
+  text-align: left;
+}
+.resume-lang-trigger:hover { border-color: #2563EB; }
+.resume-lang-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #E5E9F0);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg, 0 12px 16px rgba(16,23,39,0.08));
+  padding: 8px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow: auto;
+}
+.resume-lang-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.resume-lang-option:hover { background: var(--color-primary-soft, #EFF6FF); }
+.resume-lang-option input { width: 16px; height: 16px; }
+
+.resume-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-surface, #fff);
+  border-top: 1px solid var(--color-border-light, #F0F2F5);
+  padding: 12px var(--page-padding, 16px);
+  margin: calc(16px - var(--page-padding, 16px)) calc(-1 * var(--page-padding, 16px)) calc(-1 * var(--page-padding, 16px));
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  border-radius: 0 0 16px 16px;
+}
+@media (min-width: 720px) {
+  .resume-footer { position: static; margin: 8px 0 0; padding: 0; border: none; background: transparent; }
+}
+.resume-footer .btn { min-height: 44px; border-radius: 12px; font-weight: 700; }
+
+.resume-required-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-danger, #EF4444);
+  margin-top: -4px;
+}

@@ -10,6 +10,7 @@ import com.okututor.backend.subject.Subject;
 import com.okututor.backend.subject.SubjectRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,11 +29,15 @@ public class ReferenceDataService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "referenceData", key = "'subjects'")
     public List<Subject> subjects() { return subjectRepository.findAll().stream().sorted((a,b)->Integer.compare(a.getSortOrder(), b.getSortOrder())).toList(); }
     @Transactional(readOnly = true)
+    @Cacheable(value = "referenceData", key = "'levels'")
     public List<Level> levels() { return levelRepository.findAll().stream().sorted((a,b)->Integer.compare(a.getSortOrder(), b.getSortOrder())).toList(); }
     @Transactional(readOnly = true)
+    @Cacheable(value = "referenceData", key = "'cities'")
     public List<City> cities() { return cityRepository.findAll().stream().sorted((a,b)->Integer.compare(a.getSortOrder(), b.getSortOrder())).toList(); }
     @Transactional(readOnly = true)
+    @Cacheable(value = "referenceData", key = "'districts:' + #cityId")
     public List<District> districts(UUID cityId) { return districtRepository.findByCityIdOrderByNameRu(cityId); }
 }

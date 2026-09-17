@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/tutor-profiles")
+@RequestMapping({"/api/v1/admin/tutor-profiles", "/api/v1/admin/tutors"})
 @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
 public class TutorModerationController {
 
@@ -27,9 +27,10 @@ public class TutorModerationController {
 
     @GetMapping
     public Page<TutorProfileResponse> list(@RequestParam(required = false) String status,
+                                           @RequestParam(required = false) String q,
                                            @RequestParam(defaultValue = "0") int page,
                                            @RequestParam(defaultValue = "20") int size) {
-        return service.adminList(status, page, size);
+        return service.adminList(status, q, page, size);
     }
 
     @GetMapping("/{id}")

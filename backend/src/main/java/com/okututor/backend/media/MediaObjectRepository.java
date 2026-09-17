@@ -12,4 +12,6 @@ public interface MediaObjectRepository extends JpaRepository<MediaObject, UUID> 
     Optional<MediaObject> findFirstByKindAndCourseIdOrderByCreatedAtDesc(MediaKind kind, UUID courseId);
 
     List<MediaObject> findByOwnerIsNullAndCourseIdIsNullAndCreatedAtBefore(java.time.Instant threshold);
+
+    List<MediaObject> findByOwnerIsNotNullAndCreatedAtBefore(java.time.Instant threshold);
 }

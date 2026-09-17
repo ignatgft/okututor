@@ -2,9 +2,6 @@ package com.okututor.backend.media;
 
 import com.okututor.backend.common.config.AppProperties;
 import com.okututor.backend.common.error.ApiException;
-import com.okututor.backend.course.Course;
-import com.okututor.backend.course.CourseRepository;
-import com.okututor.backend.course.CourseService;
 import com.okututor.backend.user.User;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +44,6 @@ public class MediaService {
     private final ObjectStorage storage;
     private final MediaObjectRepository mediaObjects;
     private final MessageAttachmentRepository messageAttachments;
-    private final CourseRepository courseRepository;
     private final MediaMetrics metrics;
     private final AppProperties properties;
 
@@ -55,14 +51,12 @@ public class MediaService {
                         ObjectStorage storage,
                         MediaObjectRepository mediaObjects,
                         MessageAttachmentRepository messageAttachments,
-                        CourseRepository courseRepository,
                         MediaMetrics metrics,
                         AppProperties properties) {
         this.imageProcessor = imageProcessor;
         this.storage = storage;
         this.mediaObjects = mediaObjects;
         this.messageAttachments = messageAttachments;
-        this.courseRepository = courseRepository;
         this.metrics = metrics;
         this.properties = properties;
     }
@@ -70,37 +64,39 @@ public class MediaService {
     /** загрузка/замена аватара пользователя. Возвращает публичный URL. */
     @Transactional
     public String updateAvatar(User user, MultipartFile file) {
-        // предыдущий объект захватываем ДО сохранения нового:
-        // иначе auto-flush вернёт сам новый объект и мы удалим его же файл
         Optional<MediaObject> previous =
                 mediaObjects.findFirstByKindAndOwner_IdOrderByCreatedAtDesc(MediaKind.AVATAR, user.getId());
         byte[] input = readBytes(file);
         ProcessedImage processed = process(MediaKind.AVATAR, input);
         String key = MediaKind.AVATAR.objectKey(user.getId(), processed.extension());
 
-        MediaObject saved = persistNew(user, null, MediaKind.AVATAR, key, processed);
+        MediaObject saved = persistNew(user, MediaKind.AVATAR, key, processed);
         cleanup(previous);
         user.setAvatarUrl(saved.getPublicUrl());
         return saved.getPublicUrl();
     }
 
-    /** загрузка обложки курса с проверкой владения (#36). Возвращает публичный URL. */
+    /** загрузка/замена фото резюме (отдельно от аватара, PROFILE kind). Возвращает публичный URL. */
     @Transactional
-    public String updateCourseCover(User actor, UUID courseId, MultipartFile file) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> ApiException.notFound("Course not found"));
-        CourseService.requireOwnerOrAdmin(actor, course);
-
+    public String updateTutorProfilePhoto(User user, MultipartFile file) {
         Optional<MediaObject> previous =
-                mediaObjects.findFirstByKindAndCourseIdOrderByCreatedAtDesc(MediaKind.COURSE_COVER, courseId);
+                mediaObjects.findFirstByKindAndOwner_IdOrderByCreatedAtDesc(MediaKind.PROFILE, user.getId());
         byte[] input = readBytes(file);
-        ProcessedImage processed = process(MediaKind.COURSE_COVER, input);
-        String key = MediaKind.COURSE_COVER.objectKey(course.getId(), processed.extension());
-
-        MediaObject saved = persistNew(null, course, MediaKind.COURSE_COVER, key, processed);
+        ProcessedImage processed = process(MediaKind.PROFILE, input);
+        String key = MediaKind.PROFILE.objectKey(user.getId(), processed.extension());
+        MediaObject saved = persistNew(user, MediaKind.PROFILE, key, processed);
         cleanup(previous);
-        course.setCoverUrl(saved.getPublicUrl());
         return saved.getPublicUrl();
+    }
+
+    /** удаление фото резюме (очищает последнюю PROFILE запись владельца). */
+    @Transactional
+    public void deleteTutorProfilePhoto(User user) {
+        mediaObjects.findFirstByKindAndOwner_IdOrderByCreatedAtDesc(MediaKind.PROFILE, user.getId())
+                .ifPresent(old -> {
+                    mediaObjects.delete(old);
+                    deleteQuietly(old.getObjectKey());
+                });
     }
 
     /** удаление аватара: DB + storage, без dangling references (#37). */
@@ -116,11 +112,6 @@ public class MediaService {
 
     // ---------- вложения сообщений ----------
 
-    /**
-     * сохраняет файл как вложение (без привязки к сообщению). Двухшаговый flow:
-     * POST /api/v1/messages/attachments -> media_id, затем send с attachment_media_id.
-     * Изображения оптимизируются и получают миниатюру, документы хранятся как есть.
-     */
     @Transactional
     public MessageAttachment storeMessageAttachment(User owner, MultipartFile file) {
         byte[] input = readBytes(file);
@@ -136,7 +127,6 @@ public class MediaService {
                 : storeRawAttachment(owner, filename, contentType, input);
     }
 
-    /** загрузка вложения + привязка к чату в одном запросе (multipart send). */
     @Transactional
     public MessageAttachment storeClaimedMessageAttachment(User owner, MultipartFile file) {
         MessageAttachment attachment = storeMessageAttachment(owner, file);
@@ -144,7 +134,6 @@ public class MediaService {
         return messageAttachments.save(attachment);
     }
 
-    /** привязка ранее загруженного вложения по media_id (двухшаговый flow send). */
     @Transactional
     public MessageAttachment claimMessageAttachment(User owner, UUID mediaId) {
         MessageAttachment attachment = messageAttachments.findByMediaId(mediaId)
@@ -165,7 +154,6 @@ public class MediaService {
         List<String> uploaded = new ArrayList<>();
         try {
             if ("image/gif".equals(contentType)) {
-                // анимацию сохраняем в оригинале, миниатюра — статичный WebP
                 MediaObject media = persistRaw(owner, MediaKind.MESSAGE_ATTACHMENT, "image/gif", "gif", input);
                 uploaded.add(media.getObjectKey());
                 ProcessedImage thumb = process(MediaKind.MESSAGE_THUMBNAIL, input);
@@ -225,7 +213,7 @@ public class MediaService {
         });
     }
 
-    private MediaObject persistNew(User owner, Course course, MediaKind kind,
+    private MediaObject persistNew(User owner, MediaKind kind,
                                    String key, ProcessedImage processed) {
         long start = System.currentTimeMillis();
         ObjectStorage.StoredObject stored = safeUpload(kind, key, processed);
@@ -234,7 +222,7 @@ public class MediaService {
         try {
             MediaObject obj = new MediaObject();
             obj.setOwner(owner);
-            obj.setCourseId(course != null ? course.getId() : null);
+            obj.setCourseId(null);
             obj.setObjectKey(stored.key());
             obj.setPublicUrl(stored.publicUrl());
             obj.setKind(kind);
@@ -251,7 +239,6 @@ public class MediaService {
             metrics.uploadSuccess(kind, processed.data().length, processed.data().length);
             return obj;
         } catch (RuntimeException e) {
-            // R2 SUCCESS + DB FAILED -> удалить новый объект (#39)
             deleteQuietly(key);
             throw e;
         }
@@ -287,12 +274,10 @@ public class MediaService {
         }
     }
 
-    /** оптимизированное изображение (resize/кодирование) в storage + DB. */
     private MediaObject persistImage(User owner, MediaKind kind, ProcessedImage processed) {
-        return persistNew(owner, null, kind, kind.objectKey(owner.getId(), processed.extension()), processed);
+        return persistNew(owner, kind, kind.objectKey(owner.getId(), processed.extension()), processed);
     }
 
-    /** файл как есть (PDF/docx/txt/GIF): в storage идёт оригинал. */
     private MediaObject persistRaw(User owner, MediaKind kind, String mimeType, String ext, byte[] data) {
         String key = kind.objectKey(owner.getId(), ext == null ? "bin" : ext);
         long start = System.currentTimeMillis();
@@ -325,7 +310,6 @@ public class MediaService {
         }
     }
 
-    /** фактическое качество кодирования изображения, соответствует app.media.* */
     private int qualityFor(MediaKind kind) {
         return switch (kind) {
             case AVATAR -> properties.getMedia().getAvatarQuality();
@@ -336,11 +320,6 @@ public class MediaService {
         };
     }
 
-    /**
-     * определяет MIME вложения: сначала заявленный в multipart, при
-     * ``application/octet-stream``/пустом — по расширению файла. Вне
-     * whitelist — ошибка валидации (никогда не octet-stream далее).
-     */
     private static String resolveContentType(MultipartFile file, String filename) {
         String declared = file.getContentType();
         String normalized = declared == null ? "" : declared.trim().toLowerCase(Locale.ROOT);
@@ -357,7 +336,6 @@ public class MediaService {
         throw ApiException.validation("Unsupported file type");
     }
 
-    /** чистит имя файла: путь -> имя, без управляющих символов, max 255. */
     private static String sanitizeFilename(String raw) {
         if (raw == null) {
             return "file";

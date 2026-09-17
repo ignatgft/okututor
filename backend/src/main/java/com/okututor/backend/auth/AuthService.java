@@ -43,6 +43,7 @@ public class AuthService {
     private final RefreshTokenRotationService tokenRotation;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -50,7 +51,8 @@ public class AuthService {
                        RateLimitService rateLimitService,
                        RefreshTokenRotationService tokenRotation,
                        EmailVerificationService emailVerificationService,
-                       PasswordResetService passwordResetService) {
+                       PasswordResetService passwordResetService,
+                       com.okututor.backend.observability.ObservabilityMetrics metrics) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailCodeService = emailCodeService;
@@ -58,11 +60,19 @@ public class AuthService {
         this.tokenRotation = tokenRotation;
         this.emailVerificationService = emailVerificationService;
         this.passwordResetService = passwordResetService;
+        this.metrics = metrics;
     }
 
     @Transactional
     public StatusResponse register(RegisterRequest request, String clientIp) {
         rateLimitService.checkRegister(clientIp);
+
+        if (request.termsAccepted() != null && !request.termsAccepted()) {
+            throw new FieldValidationException(Map.of("termsAccepted", "You must accept Terms of Use"));
+        }
+        if (request.privacyAccepted() != null && !request.privacyAccepted()) {
+            throw new FieldValidationException(Map.of("privacyAccepted", "You must accept Privacy Policy"));
+        }
 
         if (!safeEquals(request.password(), request.repeat_password())) {
             throw new FieldValidationException(Map.of("repeat_password", "Passwords do not match"));
@@ -71,6 +81,7 @@ public class AuthService {
         if (userRepository.existsByEmail(email)) {
             throw ApiException.conflict("An account with this email already exists");
         }
+        validatePassword(request.password());
 
         User user = new User();
         user.setEmail(email);
@@ -82,6 +93,7 @@ public class AuthService {
         user.setVerified(false);
         userRepository.save(user);
 
+        try { metrics.userRegistered(); } catch (Exception ignored) {}
         emailCodeService.issue(user, email, EmailCodePurpose.EMAIL_VERIFY, null);
         return StatusResponse.emailVerificationRequired(email);
     }
@@ -99,22 +111,26 @@ public class AuthService {
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             log.warn("SECURITY login_failed email={} ip={} reason=unknown_user", sanitize(email), clientIp);
+            metrics.authLoginFailed();
             throw ApiException.unauthorized("Invalid email or password");
         }
 
         if (user.isBlocked()) {
             log.warn("SECURITY login_blocked email={} ip={}", sanitize(email), clientIp);
+            metrics.authLoginFailed();
             throw ApiException.forbidden("Account is blocked. Contact support.");
         }
         if (user.getPasswordHash() == null
                 || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             log.warn("SECURITY login_failed email={} ip={} reason=bad_password", sanitize(email), clientIp);
+            metrics.authLoginFailed();
             throw ApiException.unauthorized("Invalid email or password");
         }
         if (!user.isVerified()) {
             log.info("SECURITY login_email_not_verified email={} ip={}", sanitize(email), clientIp);
             return new LoginResult.EmailNotVerified(user.getEmail());
         }
+        metrics.authLoginSuccess();
         return new LoginResult.Success(buildTokenPair(user, session));
     }
 
@@ -220,6 +236,15 @@ public class AuthService {
         String local = e.substring(0, at);
         String visible = local.length() <= 2 ? local.substring(0, 1) : local.substring(0, 2);
         return visible + "***@" + e.substring(at + 1);
+    }
+
+    static void validatePassword(String pw) {
+        if (pw == null || pw.length() < 8) {
+            throw new FieldValidationException(Map.of("password", "Password must be at least 8 characters"));
+        }
+        if (pw.length() > 128) {
+            throw new FieldValidationException(Map.of("password", "Password must be at most 128 characters"));
+        }
     }
 
     private static boolean safeEquals(String a, String b) {

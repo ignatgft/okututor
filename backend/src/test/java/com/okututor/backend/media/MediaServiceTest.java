@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 
 import com.okututor.backend.common.config.AppProperties;
 import com.okututor.backend.common.error.ApiException;
-import com.okututor.backend.course.CourseRepository;
 import com.okututor.backend.user.Role;
 import com.okututor.backend.user.User;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -32,7 +31,6 @@ class MediaServiceTest {
     private ObjectStorage storage;
     private MediaObjectRepository mediaObjects;
     private MessageAttachmentRepository messageAttachments;
-    private CourseRepository courseRepository;
     private MediaMetrics metrics;
     private AppProperties properties;
     private MediaService service;
@@ -47,10 +45,9 @@ class MediaServiceTest {
         storage = mock(ObjectStorage.class);
         mediaObjects = mock(MediaObjectRepository.class);
         messageAttachments = mock(MessageAttachmentRepository.class);
-        courseRepository = mock(CourseRepository.class);
         metrics = new MediaMetrics(new SimpleMeterRegistry());
         properties = new AppProperties();
-        service = new MediaService(processor, storage, mediaObjects, messageAttachments, courseRepository, metrics, properties);
+        service = new MediaService(processor, storage, mediaObjects, messageAttachments, metrics, properties);
 
         user = new User();
         user.setId(UUID.randomUUID());

@@ -108,6 +108,48 @@ public class TutorProfile {
     @Column(name = "published_at")
     private Instant publishedAt;
 
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+
+    @Column(name = "last_active_at")
+    private Instant lastActiveAt;
+
+    @Column(name = "hidden_at")
+    private Instant hiddenAt;
+
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Column(name = "photo_url", columnDefinition = "text")
+    private String photoUrl;
+
+    @Column(name = "seo_title", length = 200)
+    private String seoTitle;
+
+    @Column(name = "seo_description", length = 500)
+    private String seoDescription;
+
+    @Column(name = "seo_keywords", length = 500)
+    private String seoKeywords;
+
+    @Column(name = "noindex", nullable = false)
+    private boolean noindex = false;
+
+    @Column(name = "rating", nullable = false, precision = 2, scale = 1)
+    private java.math.BigDecimal rating = new java.math.BigDecimal("0.0");
+
+    @Column(name = "reviews_count", nullable = false)
+    private int reviewsCount = 0;
+
+    @Column(name = "achievements", columnDefinition = "text")
+    private String achievements; // JSON array
+
+    @Column(name = "education_json", columnDefinition = "text")
+    private String educationJson; // JSON array
+
     @PrePersist
     void prePersist() {
         if (id == null) id = UUID.randomUUID();
@@ -126,8 +168,18 @@ public class TutorProfile {
         if (status != TutorProfileStatus.DRAFT && status != TutorProfileStatus.REJECTED) {
             throw new IllegalStateException("Can submit only from DRAFT or REJECTED, current: " + status);
         }
+        if (photoUrl == null || photoUrl.isBlank()) {
+            throw new IllegalStateException("Photo is required to submit for moderation");
+        }
+        if (isGooglePhoto(photoUrl)) {
+            throw new IllegalStateException("Google account photo cannot be used for resume");
+        }
         status = TutorProfileStatus.PENDING_MODERATION;
         rejectionReason = null;
+    }
+
+    private static boolean isGooglePhoto(String url) {
+        return com.okututor.backend.common.util.PhotoUrlUtils.isGooglePhoto(url);
     }
 
     public void approve() {
@@ -135,7 +187,11 @@ public class TutorProfile {
             throw new IllegalStateException("Can approve only from PENDING_MODERATION or SUSPENDED, current: " + status);
         }
         status = TutorProfileStatus.PUBLISHED;
-        publishedAt = Instant.now();
+        Instant now = Instant.now();
+        publishedAt = now;
+        expiresAt = now.plusSeconds(30L * 24 * 3600);
+        lastActiveAt = now;
+        hiddenAt = null;
         rejectionReason = null;
     }
 
@@ -161,6 +217,83 @@ public class TutorProfile {
         }
         status = TutorProfileStatus.PUBLISHED;
         rejectionReason = null;
+    }
+
+    public void hide() {
+        if (status != TutorProfileStatus.PUBLISHED) {
+            throw new IllegalStateException("Can hide only PUBLISHED, current: " + status);
+        }
+        status = TutorProfileStatus.HIDDEN;
+        hiddenAt = Instant.now();
+    }
+
+    public void unhide() {
+        if (status != TutorProfileStatus.HIDDEN) {
+            throw new IllegalStateException("Can unhide only HIDDEN, current: " + status);
+        }
+        status = TutorProfileStatus.PUBLISHED;
+        hiddenAt = null;
+        // renew expiry on unhide if expired
+        if (expiresAt != null && expiresAt.isBefore(Instant.now())) {
+            Instant now = Instant.now();
+            publishedAt = now;
+            expiresAt = now.plusSeconds(30L * 24 * 3600);
+            lastActiveAt = now;
+        }
+    }
+
+    public void publish() {
+        if (status == TutorProfileStatus.DELETED || status == TutorProfileStatus.ARCHIVED) {
+            throw new IllegalStateException("Cannot publish DELETED/ARCHIVED, current: " + status);
+        }
+        Instant now = Instant.now();
+        publishedAt = now;
+        lastActiveAt = now;
+        expiresAt = now.plusSeconds(30L * 24 * 3600);
+        status = TutorProfileStatus.PUBLISHED;
+        hiddenAt = null;
+        archivedAt = null;
+        deletedAt = null;
+        rejectionReason = null;
+    }
+
+    public void renew() {
+        Instant now = Instant.now();
+        expiresAt = now.plusSeconds(30L * 24 * 3600);
+        publishedAt = now;
+        lastActiveAt = now;
+        status = TutorProfileStatus.PUBLISHED;
+        hiddenAt = null;
+        archivedAt = null;
+        deletedAt = null;
+        rejectionReason = null;
+    }
+
+    public void softDelete() {
+        if (status == TutorProfileStatus.DELETED) {
+            throw new IllegalStateException("Already DELETED");
+        }
+        status = TutorProfileStatus.DELETED;
+        deletedAt = Instant.now();
+    }
+
+    public void archive() {
+        if (status != TutorProfileStatus.PUBLISHED && status != TutorProfileStatus.HIDDEN
+                && status != TutorProfileStatus.EXPIRED && status != TutorProfileStatus.SUSPENDED) {
+            throw new IllegalStateException("Can archive only PUBLISHED/HIDDEN/EXPIRED/SUSPENDED, current: " + status);
+        }
+        status = TutorProfileStatus.ARCHIVED;
+        archivedAt = Instant.now();
+    }
+
+    public boolean isExpired() {
+        return expiresAt != null && expiresAt.isBefore(Instant.now());
+    }
+
+    public boolean isExpiringSoon(int days) {
+        if (expiresAt == null) return false;
+        Instant now = Instant.now();
+        return expiresAt.isAfter(now) && expiresAt.isBefore(now.plusSeconds((long) days * 24 * 3600));
     }
 
     // getters/setters
@@ -216,4 +349,32 @@ public class TutorProfile {
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getPublishedAt() { return publishedAt; }
     public void setPublishedAt(Instant v) { this.publishedAt = v; }
+    public Instant getExpiresAt() { return expiresAt; }
+    public void setExpiresAt(Instant v) { this.expiresAt = v; }
+    public Instant getLastActiveAt() { return lastActiveAt; }
+    public void setLastActiveAt(Instant v) { this.lastActiveAt = v; }
+    public Instant getHiddenAt() { return hiddenAt; }
+    public void setHiddenAt(Instant v) { this.hiddenAt = v; }
+    public Instant getArchivedAt() { return archivedAt; }
+    public void setArchivedAt(Instant v) { this.archivedAt = v; }
+    public Instant getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(Instant v) { this.deletedAt = v; }
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String v) { this.photoUrl = v; }
+    public String getSeoTitle() { return seoTitle; }
+    public void setSeoTitle(String v) { this.seoTitle = v; }
+    public String getSeoDescription() { return seoDescription; }
+    public void setSeoDescription(String v) { this.seoDescription = v; }
+    public String getSeoKeywords() { return seoKeywords; }
+    public void setSeoKeywords(String v) { this.seoKeywords = v; }
+    public boolean isNoindex() { return noindex; }
+    public void setNoindex(boolean v) { this.noindex = v; }
+    public java.math.BigDecimal getRating() { return rating; }
+    public void setRating(java.math.BigDecimal v) { this.rating = v; }
+    public int getReviewsCount() { return reviewsCount; }
+    public void setReviewsCount(int v) { this.reviewsCount = v; }
+    public String getAchievements() { return achievements; }
+    public void setAchievements(String v) { this.achievements = v; }
+    public String getEducationJson() { return educationJson; }
+    public void setEducationJson(String v) { this.educationJson = v; }
 }

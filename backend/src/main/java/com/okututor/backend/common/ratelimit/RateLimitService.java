@@ -64,6 +64,34 @@ public class RateLimitService {
         acquire("tutor-profile-create:" + userId, 5, Duration.ofHours(1));
     }
 
+    public void checkRefresh(String ip) {
+        acquire("refresh:" + ip, 30, Duration.ofMinutes(1));
+    }
+
+    public void checkMessageSend(String userId) {
+        acquire("message-send:" + userId, 30, Duration.ofMinutes(1));
+    }
+
+    public void checkTutorRequestByUser(String userId) {
+        acquire("tutor-request-user:" + userId, 10, Duration.ofHours(1));
+    }
+
+    public void checkVerifyReset(String ip) {
+        acquire("verify-reset:" + ip, 10, Duration.ofMinutes(5));
+    }
+
+    public void checkChangeEmail(String userId) {
+        acquire("change-email:" + userId, 5, Duration.ofHours(1));
+    }
+
+    public void checkStorageUpload(String userId) {
+        acquire("storage-upload:" + userId, 10, Duration.ofMinutes(1));
+    }
+
+    public void checkSupportCreate(String userId) {
+        acquire("support-create:" + userId, 10, Duration.ofMinutes(1));
+    }
+
     private void acquire(String key, int limit, Duration window) {
         if (!properties.getRateLimit().isEnabled()) {
             return;
