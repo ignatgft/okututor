@@ -3,7 +3,7 @@
 ## 1. Подготовка
 
 - Ubuntu 22.04, Docker, Dokploy (https://dokploy.com)
-- Домен: `okututor.kg` (frontend) + `api.okututor.kg` (backend) + `grafana.okututor.kg` (опц.) — Cloudflare DNS → VPS IP, Proxy ON, SSL Auto
+- Домен: `okututor.com` (frontend) + `api.okututor.com` (backend) + `grafana.okututor.com` (опц.) — Cloudflare DNS → VPS IP, Proxy ON, SSL Auto
 
 ## 2. Приложения в Dokploy
 
@@ -15,7 +15,7 @@ Dokploy → Create Project → Create Application `okututor-monitoring` → Sour
 
 Dokploy → Create Application `okututor-backend` → Compose `ops/docker/docker-compose.prod.yml` (или `backend/Dockerfile`) → Environment из `prod-config/.env.backend.prod` (DB_* Neon, JWT_SECRET, R2_*, LIVEKIT_*, GOOGLE_*, MAIL_*) → Deploy.
 
-Frontend — Cloudflare Pages, `VITE_API_URL=https://api.okututor.kg`.
+Frontend — Cloudflare Pages, `VITE_API_URL=https://api.okututor.com`.
 
 ## 3. Env
 
@@ -36,10 +36,10 @@ cd monitoring && docker compose --env-file .env.example config -q
 Проверка:
 
 ```bash
-curl https://api.okututor.kg/actuator/health/ready   # {"status":"UP"}
-curl https://okututor.kg/health                      # frontend
-https://grafana.okututor.kg (admin / ***)
-curl https://api.okututor.kg/actuator/prometheus | head  # требует auth / внутренний scrape
+curl https://api.okututor.com/actuator/health/ready   # {"status":"UP"}
+curl https://okututor.com/health                      # frontend
+https://grafana.okututor.com (admin / ***)
+curl https://api.okututor.com/actuator/prometheus | head  # требует auth / внутренний scrape
 # мониторинг (на VPS где monitoring)
 curl http://localhost:9090/-/healthy  # prometheus
 curl http://localhost:3100/ready       # loki
@@ -48,7 +48,7 @@ curl http://localhost:3000/api/health  # grafana
 curl http://localhost:8085/health      # telegram-bot
 ```
 
-Backend scrape: `monitoring/prometheus/prometheus.yml` `targets: ["backend:8080"]` — для same-host добавить backend в сеть `monitoring` или `host.docker.internal`; для другого host — `api.okututor.kg:443` с https/BasicAuth (настройка в README).
+Backend scrape: `monitoring/prometheus/prometheus.yml` `targets: ["backend:8080"]` — для same-host добавить backend в сеть `monitoring` или `host.docker.internal`; для другого host — `api.okututor.com:443` с https/BasicAuth (настройка в README).
 
 ## 6. Telegram Bot
 
@@ -58,7 +58,7 @@ API: `GET /api/v1/admin/monitoring/telegram` (ADMIN) → `{chatId, connected}`.
 
 ## 7. Внешний uptime
 
-UptimeRobot → `https://api.okututor.kg/actuator/health` (60s) + `https://okututor.kg` — страхует падение всего VPS (включая monitoring).
+UptimeRobot → `https://api.okututor.com/actuator/health` (60s) + `https://okututor.com` — страхует падение всего VPS (включая monitoring).
 
 ## 8. Logs
 

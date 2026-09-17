@@ -97,7 +97,7 @@ jobs:
         run: |
           echo "Waiting 30s for app to start..."
           sleep 30
-          curl -f https://api.okututor.kg/actuator/health/ready || echo "Healthcheck skipped (no prod URL)"
+          curl -f https://api.okututor.com/actuator/health/ready || echo "Healthcheck skipped (no prod URL)"
       - name: Rollback hint
         if: failure()
         run: echo "Deploy failed — rollback in Dokploy → Previous Deployment → Redeploy"

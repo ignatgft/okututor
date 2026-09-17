@@ -64,7 +64,7 @@ Copy values from `monitoring/.env.example` into Dokploy → Environment Variable
 | `TELEGRAM_ALLOWED_CHAT_IDS` | yes | `123456789` |
 | `PROMETHEUS_RETENTION` | no | `15d` |
 | `LOKI_RETENTION_PERIOD` | no | `168h` |
-| `GRAFANA_DOMAIN` | if exposed | `grafana.okututor.kg` |
+| `GRAFANA_DOMAIN` | if exposed | `grafana.okututor.com` |
 
 ### 4. Domain / reverse proxy
 
@@ -86,7 +86,7 @@ scrape_configs:
   - job_name: okututor-backend
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ["api.okututor.kg:443"]  # or internal IP:8080
+      - targets: ["api.okututor.com:443"]  # or internal IP:8080
     scheme: https
     # basic_auth if backend protects /actuator/prometheus
 ```

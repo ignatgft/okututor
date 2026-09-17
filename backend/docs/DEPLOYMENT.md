@@ -41,7 +41,7 @@ docker system prune -f
 
 ### Backend scrape
 
-Prometheus: `monitoring/prometheus/prometheus.yml` → `backend:8080/actuator/prometheus` (если backend в том же Dokploy host — `host.docker.internal` или добавить backend в сеть `monitoring`; если на другом host — `https://api.okututor.kg`). Не хардкодить несуществующий host. `SecurityConfig` `/actuator/prometheus` — `authenticated()`.
+Prometheus: `monitoring/prometheus/prometheus.yml` → `backend:8080/actuator/prometheus` (если backend в том же Dokploy host — `host.docker.internal` или добавить backend в сеть `monitoring`; если на другом host — `https://api.okututor.com`). Не хардкодить несуществующий host. `SecurityConfig` `/actuator/prometheus` — `authenticated()`.
 
 ## Application
 
@@ -54,7 +54,7 @@ curl http://localhost:8080/actuator/health/ready
 
 Dokploy: Create Project `okututor` → Create Application `okututor-backend` → Compose Path `ops/docker/docker-compose.prod.yml` (или `backend/Dockerfile`) → Environment из `prod-config/.env.backend.prod` (DB_* Neon `ep-shy-art-*.neon.tech`, JWT_SECRET, R2_*, LIVEKIT_*, GOOGLE_*, MAIL_*, TG_BOT_TOKEN) → Deploy.
 
-Frontend — **не на VPS** (Cloudflare Pages): `VITE_API_URL=https://api.okututor.kg`. DNS/CDN/WAF/SSL — Cloudflare.
+Frontend — **не на VPS** (Cloudflare Pages): `VITE_API_URL=https://api.okututor.com`. DNS/CDN/WAF/SSL — Cloudflare.
 
 Neon — managed Postgres, Hikari `20/5`, `leak-detection 10s`, alert `active/max >85%`.
 
@@ -72,13 +72,13 @@ Neon — managed Postgres, Hikari `20/5`, `leak-detection 10s`, alert `active/ma
 
 ```bash
 docker stop okututor-backend  # BackendDown → up==0 2m → Telegram CRITICAL
-# Внешний UptimeRobot → https://api.okututor.kg/actuator/health/ready (60s) страхует падение monitoring
+# Внешний UptimeRobot → https://api.okututor.com/actuator/health/ready (60s) страхует падение monitoring
 fallocate -l 1G /tmp/fill && sleep 310 && rm /tmp/fill  # Disk (если node-exporter включён)
 ```
 
 ## Внешний uptime
 
-UptimeRobot/Checkly → `https://api.okututor.kg/actuator/health/ready` + `https://okututor.kg` — независимо от monitoring.
+UptimeRobot/Checkly → `https://api.okututor.com/actuator/health/ready` + `https://okututor.com` — независимо от monitoring.
 
 ## Где что лежит (IaC)
 

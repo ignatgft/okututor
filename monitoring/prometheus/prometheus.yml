@@ -28,7 +28,7 @@ scrape_configs:
     # If backend is in same Dokploy host but separate compose, use host.docker.internal or
     # the backend's Dokploy network alias / public HTTPS.
     # For single-host same network: backend:8080 (add backend to monitoring network externally).
-    # For separate hosts: https://api.okututor.kg (requires auth) — edit README override.
+    # For separate hosts: https://api.okututor.com (requires auth) — edit README override.
     static_configs:
       - targets: ["backend:8080"]
         labels:

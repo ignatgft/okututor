@@ -34,10 +34,10 @@ Backend 8080 (Spring Boot, prod,jsonlog, Hikari 20/5, leak 10s)
 ```
 Cloudflare Pages / CDN
   ├─ DNS / CDN / WAF / SSL (auto)
-  ├─ frontend (VITE_API_URL=https://api.okututor.kg)
+  ├─ frontend (VITE_API_URL=https://api.okututor.com)
   └─ R2 (avatars/resumes/legal, presigned PUT)
 ```
-UptimeRobot → `https://okututor.kg` + `https://api.okututor.kg/actuator/health/ready`.
+UptimeRobot → `https://okututor.com` + `https://api.okututor.com/actuator/health/ready`.
 
 ### Database — Neon (managed)
 
@@ -51,7 +51,7 @@ Neon PostgreSQL (ep-shy-art-*.neon.tech)
 ```
                 Cloudflare (Frontend, DNS/CDN/WAF, R2)
                          │
-                   api.okututor.kg  ────────┐
+                   api.okututor.com  ────────┐
                          │                  │
                   ┌──────▼──────┐           │
                   │  APPLICATION│           │  /actuator/prometheus (authenticated)
@@ -84,7 +84,7 @@ External Monitor ──→ │  monitoring (1 Dokploy App)  │
 | alertmanager | 9093 |  |
 | loki | 3100 |  |
 
-`monitoring/prometheus/prometheus.yml` — `targets: ["backend:8080"]` (same host добавить backend в сеть `monitoring` или `host.docker.internal`; другой host — `api.okututor.kg:443` scheme https + BasicAuth). Не хардкодить несуществующий host. Promtail: `/var/lib/docker/containers` + `/var/run/docker.sock` → Loki.
+`monitoring/prometheus/prometheus.yml` — `targets: ["backend:8080"]` (same host добавить backend в сеть `monitoring` или `host.docker.internal`; другой host — `api.okututor.com:443` scheme https + BasicAuth). Не хардкодить несуществующий host. Promtail: `/var/lib/docker/containers` + `/var/run/docker.sock` → Loki.
 
 ## 4. Backend expose
 

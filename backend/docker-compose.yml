@@ -1,0 +1,31 @@
+name: okututor-backend
+
+networks:
+  monitoring:
+    external: true
+    name: okututor-monitoring_monitoring
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: okututor-backend
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      OKUTUTOR_ENV: development
+      # External services: Neon, R2, LiveKit Cloud, Resend — no local postgres/redis
+      # For prod: set SPRING_PROFILES_ACTIVE=prod and provide JWT_SECRET + https CORS
+      OTEL_TRACING_ENABLED: "false"
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+    ports:
+      - "8080:8080"
+    networks: [monitoring]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s

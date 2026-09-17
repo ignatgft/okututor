@@ -1,7 +1,7 @@
 # OkuTutor — Runbook (что делать при падении)
 
 ## Backend DOWN
-- Проверить `https://api.okututor.kg/actuator/health` (403 ожидается без auth, 200 с токеном) и `systemctl status okututor` на VPS#2
+- Проверить `https://api.okututor.com/actuator/health` (403 ожидается без auth, 200 с токеном) и `systemctl status okututor` на VPS#2
 - Логи: `docker logs okututor-backend --tail 200` или Loki ` {app="backend"} |= "ERROR" `
 - Метрики: Grafana `Backend` → `http_server_requests_seconds_count` 5xx spike
 - Действие: `dokploy restart backend` → если не помогло `git revert` + `dokploy deploy` предыдущий образ, проверить NeonDB `select 1`
@@ -20,7 +20,7 @@
 - Действие: `redis-cli ping` на VPS#2, если нет Redis — работает fallback `ConcurrentMapCacheManager` (in-memory), проверить `app.rate-limit.use-redis=false` для дев
 
 ## Cloudflare / Frontend
-- Проверка `curl -I https://okututor.kg` → `cf-cache-status`
+- Проверка `curl -I https://okututor.com` → `cf-cache-status`
 - Действие: Cloudflare dashboard → Purge Cache, проверить `nginx.conf` CSP (убрать `unsafe-eval`)
 
 ## R2
