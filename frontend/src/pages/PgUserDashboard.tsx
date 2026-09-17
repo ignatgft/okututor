@@ -103,6 +103,15 @@ export default function PgUserDashboard(): JSX.Element {
   // Decide what to show: if we have conversations, enrich recent with conversation data; else show requests
   const hasRecentData = recentRequestsForDisplay.length > 0 || recentConversationsForDisplay.length > 0;
 
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (q) navigate(`/tutors?q=${encodeURIComponent(q)}`);
+    else navigate("/tutors");
+  };
+
   return (
     <div style={{ display: "grid", gap: 24, maxWidth: 1440, margin: "0 auto", width: "100%" }}>
       {/* Greeting */}
@@ -115,6 +124,60 @@ export default function PgUserDashboard(): JSX.Element {
             ? t("dashboard.has_resume_hint", "У вас есть резюме. Вы можете искать репетиторов и принимать обращения.")
             : t("dashboard.no_resume_hint", "Вы можете искать репетиторов или создать своё резюме.")}
         </p>
+      </section>
+
+      {/* Prominent Search — найти репетитора сразу */}
+      <section aria-labelledby="dashboard-search" style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)", padding: 20, display: "grid", gap: 12 }}>
+        <h2 id="dashboard-search" style={{ margin: 0, fontSize: "var(--font-size-lg)", display: "flex", alignItems: "center", gap: 8 }}>
+          <Search size={18} /> {t("dashboard.search_title", "Найти репетитора")}
+        </h2>
+        <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>{t("dashboard.search_hint", "Начните вводить предмет, имя или город — перейдёте к каталогу")}</p>
+        <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 220, position: "relative", display: "flex", alignItems: "center" }}>
+            <Search size={16} style={{ position: "absolute", left: 12, color: "var(--color-text-muted)", pointerEvents: "none" }} />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("search.placeholder", "Математика, английский, химия...") as string}
+              aria-label={t("search.placeholder", "Поиск репетитора") as string}
+              style={{
+                width: "100%",
+                padding: "12px 14px 12px 36px",
+                borderRadius: "var(--radius-full)",
+                border: "1px solid var(--color-border)",
+                background: "var(--color-bg)",
+                fontSize: "var(--font-size-base)",
+                outline: "none",
+              }}
+            />
+          </div>
+          <button type="submit" className="btn-primary" style={{ padding: "12px 20px", borderRadius: "var(--radius-full)", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Search size={16} /> {t("common.search", "Найти")}
+          </button>
+          <Link to="/tutors" className="btn-secondary" style={{ padding: "12px 16px", borderRadius: "var(--radius-full)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {t("dashboard.all_tutors", "Все репетиторы")}
+          </Link>
+        </form>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+          {["Математика", "Английский", "Физика", "Химия", "ОРТ"].map((subj) => (
+            <button
+              key={subj}
+              type="button"
+              onClick={() => navigate(`/tutors?q=${encodeURIComponent(subj)}`)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "var(--radius-full)",
+                border: "1px solid var(--color-border)",
+                background: "var(--color-bg-secondary)",
+                fontSize: "var(--font-size-sm)",
+                cursor: "pointer",
+              }}
+            >
+              {subj}
+            </button>
+          ))}
+        </div>
       </section>
 
       {showInitialSpinner ? (
