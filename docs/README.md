@@ -35,7 +35,8 @@ backend/docs/
 ## Где искать
 
 - **Мониторинг:** `monitoring/README.md` + `backend/docs/monitoring/README.md` — 6 контейнеров, Prometheus/Loki/Grafana/Promtail/Alertmanager/Telegram Bot, healthchecks
-- **Деплой:** `backend/docs/DEPLOYMENT.md` / `ops/docker/DEPLOY.md`
+- **Деплой (подробно):** `docs/DEVOPS_DEPLOYMENT.md` / `backend/docs/DEVOPS_DEPLOYMENT.md` — полная инструкция (локально без домена + прод Dokploy .com, env, сети, проверка)
+- **Деплой (кратко):** `backend/docs/DEPLOYMENT.md` / `ops/docker/DEPLOY.md`
 - **Архитектура:** `backend/docs/ARCHITECTURE.md` / `backend/docs/architecture/DEVOPS_ARCHITECTURE.md`
 - **Безопасность/аудит:** `backend/docs/audit/*`
 
