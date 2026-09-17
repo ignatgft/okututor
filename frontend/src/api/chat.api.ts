@@ -14,14 +14,17 @@ export interface ChatConversation {
   counterpart_name?: string | null;
   counterpart_avatar?: string | null;
   counterpart_id?: string;
+  counterpart_slug?: string | null;
   last_message?: string | null;
   last_message_at?: string | null;
   updated_at?: string | null;
   created_at?: string | null;
   unread_count?: number;
-  // extended from MessagingService.ConversationResponse
+  // extended from backend ChatConversationResponse
   tutorProfileSlug?: string | null;
   tutorProfileId?: string | null;
+  other_participant_avatar_url?: string | null;
+  other_participant_slug?: string | null;
   [key: string]: unknown;
 }
 
@@ -75,6 +78,10 @@ export const chatApi = {
           // backend ChatConversationResponse: otherParticipantName/otherParticipantId/lastMessage (snake_case via Jackson SNAKE_CASE)
           counterpart_name: (r["other_participant_name"] as string | undefined) ?? (r["otherParticipantName"] as string | undefined) ?? (r["otherUserName"] as string | undefined) ?? (r["counterpart_name"] as string | undefined) ?? null,
           counterpart_id: (r["other_participant_id"] as string | undefined) ?? (r["otherParticipantId"] as string | undefined) ?? (r["otherUserId"] as string | undefined) ?? (r["counterpart_id"] as string | undefined) ?? undefined,
+          counterpart_avatar: (r["other_participant_avatar_url"] as string | undefined) ?? (r["otherParticipantAvatarUrl"] as string | undefined) ?? (r["counterpart_avatar"] as string | undefined) ?? null,
+          counterpart_slug: (r["other_participant_slug"] as string | undefined) ?? (r["otherParticipantSlug"] as string | undefined) ?? (r["tutor_profile_slug"] as string | undefined) ?? null,
+          tutorProfileId: (r["tutor_profile_id"] as string | undefined) ?? (r["tutorProfileId"] as string | undefined) ?? null,
+          tutorProfileSlug: (r["other_participant_slug"] as string | undefined) ?? (r["tutor_profile_slug"] as string | undefined) ?? null,
           last_message: (r["last_message"] as string | undefined) ?? (r["lastMessage"] as string | undefined) ?? null,
           last_message_at: (r["last_message_at"] as string | undefined) ?? (r["lastMessageAt"] as string | undefined) ?? null,
           updated_at: (r["updated_at"] as string | undefined) ?? (r["updatedAt"] as string | undefined) ?? null,
@@ -99,6 +106,10 @@ export const chatApi = {
           id: String(r["id"]),
           counterpart_name: (r["other_participant_name"] as string | undefined) ?? (r["otherParticipantName"] as string | undefined) ?? (r["otherUserName"] as string | undefined) ?? (r["counterpart_name"] as string | undefined) ?? null,
           counterpart_id: (r["other_participant_id"] as string | undefined) ?? (r["otherParticipantId"] as string | undefined) ?? (r["otherUserId"] as string | undefined) ?? undefined,
+          counterpart_avatar: (r["other_participant_avatar_url"] as string | undefined) ?? (r["otherParticipantAvatarUrl"] as string | undefined) ?? null,
+          counterpart_slug: (r["other_participant_slug"] as string | undefined) ?? (r["otherParticipantSlug"] as string | undefined) ?? null,
+          tutorProfileSlug: (r["other_participant_slug"] as string | undefined) ?? null,
+          tutorProfileId: (r["tutor_profile_id"] as string | undefined) ?? null,
           last_message: (r["last_message"] as string | undefined) ?? (r["lastMessage"] as string | undefined) ?? null,
           last_message_at: (r["last_message_at"] as string | undefined) ?? (r["lastMessageAt"] as string | undefined) ?? null,
           updated_at: (r["updated_at"] as string | undefined) ?? (r["updatedAt"] as string | undefined) ?? null,

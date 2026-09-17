@@ -19,19 +19,53 @@ type Props = {
   // for mobile/desktop layout control, parent decides visibility
 };
 
+function avatarColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return `hsl(${h} 70% 50%)`;
+}
+
+function initials(name?: string | null): string {
+  if (!name) return "?";
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
+}
+
+function normalizeAvatar(url?: string | null): string | null {
+  if (!url) return null;
+  const s = String(url).trim();
+  if (!s) return null;
+  if (s.startsWith("http")) {
+    // R2 pub URL -> proxy via backend
+    if (s.includes("r2.dev") || s.includes("r2.cloudflarestorage.com")) {
+      return s; // backend will proxy, but keep as is for now
+    }
+    return s;
+  }
+  if (s.startsWith("/")) return s;
+  return `/${s.replace(/^\/+/, "")}`;
+}
+
 function ChatHeader({ conversation, onBack }: { conversation: ChatConversation; onBack?: () => void }): JSX.Element {
   const { t } = useTranslation();
   const name = (conversation.counterpart_name as string | null) || t("chat.counterpart", "Собеседник") as string;
-  const subtitle = (conversation.last_message as string | null) ? "" : (conversation.created_at as string | null) ? new Date(conversation.created_at as string).toLocaleDateString() : "";
+  const avatarUrl = normalizeAvatar((conversation.counterpart_avatar as string | null) || (conversation.other_participant_avatar_url as string | null) || null);
+  const slug = (conversation.counterpart_slug as string | null) || (conversation.tutorProfileSlug as string | null) || (conversation.other_participant_slug as string | null) || null;
+  const profileId = (conversation.tutorProfileId as string | null) || null;
+  const targetPath = slug ? `/tutor/${slug}` : profileId ? `/tutor/${profileId}` : conversation.counterpart_id ? `/profile/${conversation.counterpart_id}` : null;
+
+  const handleOpenProfile = () => {
+    if (targetPath) window.location.href = targetPath;
+  };
 
   return (
     <div
-      className="chat-header"
+      className="chat-header tg-chat-header"
       style={{
         display: "flex",
         alignItems: "center",
         gap: 12,
-        padding: "10px var(--space-4, 16px)",
+        padding: "8px 12px",
         borderBottom: "1px solid var(--color-border, #E5E7EB)",
         background: "var(--color-surface, #fff)",
         minHeight: 56,
@@ -49,10 +83,68 @@ function ChatHeader({ conversation, onBack }: { conversation: ChatConversation; 
           ←
         </button>
       )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, color: "var(--color-text, #111827)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
-        {subtitle && <div style={{ fontSize: "var(--font-size-xs, 0.75rem)", color: "var(--color-text-muted, #6B7280)" }}>{subtitle}</div>}
+      {/* TG avatar */}
+      <span
+        aria-hidden="true"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 999,
+          background: avatarColor(name),
+          color: "#fff",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: 700,
+          fontSize: 14,
+          flexShrink: 0,
+          overflow: "hidden",
+        }}
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+        ) : (
+          initials(name)
+        )}
+      </span>
+      {/* Clickable info */}
+      <div
+        onClick={targetPath ? handleOpenProfile : undefined}
+        role={targetPath ? "button" : undefined}
+        tabIndex={targetPath ? 0 : undefined}
+        onKeyDown={targetPath ? (e) => e.key === "Enter" && handleOpenProfile() : undefined}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          cursor: targetPath ? "pointer" : "default",
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+        title={targetPath ? (t("chat.open_profile", "Открыть профиль") as string) : undefined}
+      >
+        <div
+          style={{
+            fontWeight: 700,
+            color: "var(--color-text, #111827)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            fontSize: "0.95rem",
+            lineHeight: 1.2,
+          }}
+        >
+          {name}
+          {targetPath && <span style={{ marginLeft: 6, fontSize: 12, color: "var(--color-text-muted)" }}>↗</span>}
+        </div>
+        <div style={{ fontSize: "0.75rem", color: "var(--color-success, #16a34a)", lineHeight: 1 }}>
+          {t("chat.online", "в сети")}
+        </div>
       </div>
+      {/* More button placeholder */}
+      <button type="button" aria-label="more" style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "transparent", color: "var(--color-text-muted)", cursor: "pointer" }}>
+        ⋮
+      </button>
     </div>
   );
 }

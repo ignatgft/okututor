@@ -280,6 +280,21 @@ public class ChatService {
                 }
             }
             long unread = unreadMap.getOrDefault(conv.getId(), 0L);
+            String otherAvatar = null;
+            String otherSlug = null;
+            UUID tutorProfileId = null;
+            if (otherId != null) {
+                try {
+                    User otherUser = other != null ? other.getUser() : null;
+                    if (otherUser != null) otherAvatar = otherUser.getAvatarUrl();
+                    var tpOpt = tutorProfileRepository.findByUserId(otherId);
+                    if (tpOpt.isPresent()) {
+                        TutorProfile tp = tpOpt.get();
+                        otherSlug = tp.getSlug();
+                        tutorProfileId = tp.getId();
+                    }
+                } catch (Exception ignored) {}
+            }
             content.add(new ChatConversationResponse(
                     conv.getId(),
                     conv.getRequest().getId(),
@@ -290,7 +305,10 @@ public class ChatService {
                     conv.getLastMessage(),
                     unread,
                     otherId,
-                    otherName
+                    otherName,
+                    otherAvatar,
+                    otherSlug,
+                    tutorProfileId
             ));
         }
 
@@ -415,12 +433,22 @@ public class ChatService {
         // find other participant
         UUID otherId = null;
         String otherName = null;
+        String otherAvatar = null;
+        String otherSlug = null;
+        UUID tutorProfileId = null;
         try {
             List<ChatParticipant> others = participantRepository.findOtherParticipants(conv.getId(), currentUserId);
             if (!others.isEmpty()) {
                 User other = others.get(0).getUser();
                 otherId = other.getId();
                 otherName = safeName(other);
+                otherAvatar = other.getAvatarUrl();
+                var tpOpt = tutorProfileRepository.findByUserId(otherId);
+                if (tpOpt.isPresent()) {
+                    TutorProfile tp = tpOpt.get();
+                    otherSlug = tp.getSlug();
+                    tutorProfileId = tp.getId();
+                }
             }
         } catch (Exception ignored) {}
         return new ChatConversationResponse(
@@ -433,7 +461,10 @@ public class ChatService {
                 conv.getLastMessage(),
                 unread,
                 otherId,
-                otherName
+                otherName,
+                otherAvatar,
+                otherSlug,
+                tutorProfileId
         );
     }
 

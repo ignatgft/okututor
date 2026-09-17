@@ -13,5 +13,8 @@ public record ChatConversationResponse(
         String lastMessage,
         long unreadCount,
         UUID otherParticipantId,
-        String otherParticipantName
+        String otherParticipantName,
+        String otherParticipantAvatarUrl,
+        String otherParticipantSlug,
+        UUID tutorProfileId
 ) {}
