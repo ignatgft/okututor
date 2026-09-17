@@ -1,8 +1,0 @@
-apiVersion: 1
-providers:
-  - name: okututor
-    type: file
-    updateIntervalSeconds: 30
-    allowUiUpdates: true
-    options:
-      path: /var/lib/grafana/dashboards
