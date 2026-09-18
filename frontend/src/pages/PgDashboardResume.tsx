@@ -10,7 +10,9 @@ import ResumeStatusCard from "../components/ResumeStatusCard";
 import ResumeEditMenu from "../components/ResumeEditMenu";
 import ResumeSharePanel from "../components/ResumeSharePanel";
 import { tutorProfileMarketplaceApi } from "../api/marketplace/tutorProfileMarketplace.api";
+import { tutorsApi } from "../api/tutors.api";
 import { resumeStatusLabel } from "../utils/resumeStatus";
+import { useQuery } from "@tanstack/react-query";
 
 // --- styled stat card matching reference ---
 function StatCard({
@@ -99,14 +101,53 @@ export default function PgDashboardResume(): JSX.Element {
   }, [setPageTitle, t]);
 
   const { data: resume, isLoading, isError, error, refetch } = useDashboardResume(true);
+  const { data: applicationRaw, isLoading: appLoading } = useQuery({
+    queryKey: ["tutorApplication", "me"],
+    queryFn: async () => {
+      const res = await tutorsApi.myApplication();
+      if (res.response.ok) return res.data as unknown as Record<string, unknown>;
+      return null;
+    },
+    enabled: !resume && !isLoading,
+    staleTime: 30_000,
+    retry: false,
+  });
+  const application = applicationRaw as unknown as Record<string, unknown> | null;
 
   const rec = resume as unknown as Record<string, unknown> | null;
   const pick = (camel: string, snake: string): unknown => rec?.[camel] ?? rec?.[snake];
   const str = (camel: string, snake: string): string => String(pick(camel, snake) ?? "");
 
-  if (isLoading) return <Spinner label={t("common.loading", "Загрузка...") as string} />;
+  if (isLoading || (appLoading && !resume)) return <Spinner label={t("common.loading", "Загрузка...") as string} />;
   if (isError)
     return <ErrorState message={(error as Error)?.message || (t("common.error", "Ошибка") as string)} onRetry={() => void refetch()} />;
+
+  // Показываем статус заявки на модерацию, если профиля ещё нет но заявка есть
+  if (!resume && application) {
+    const appStatus = String((application as Record<string, unknown>)["status"] ?? (application as Record<string, unknown>)["state"] ?? "PENDING");
+    const isPending = ["PENDING", "PENDING_MODERATION", "REVIEW", "SUBMITTED"].includes(appStatus.toUpperCase());
+    if (isPending) {
+      return (
+        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 16, padding: 24, textAlign: "center" }}>
+            <div style={{ width: 48, height: 48, borderRadius: 999, background: "var(--color-warning-soft)", color: "var(--color-warning)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>⏳</div>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Резюме на модерации</h2>
+            <p style={{ margin: "8px 0 0", color: "var(--color-text-secondary)", fontSize: 14, lineHeight: 1.5 }}>
+              {t("become_tutor.verification_hint", "Ваша заявка будет рассмотрена нашей командой.")} Обычно до 24 часов.
+            </p>
+            <div style={{ marginTop: 12, display: "inline-flex", gap: 8, alignItems: "center", padding: "6px 12px", borderRadius: 999, background: "var(--color-warning-soft)", color: "var(--color-warning)", fontSize: 12, fontWeight: 600 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--color-warning)", display: "inline-block" }} />
+              {resumeStatusLabel(appStatus) || "На модерации"}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link to="/app/dashboard" className="btn-secondary" style={{ textDecoration: "none" }}>Найти репетитора</Link>
+            <button type="button" className="btn-ghost" onClick={() => void refetch()} style={{ fontSize: 13 }}>Обновить статус</button>
+          </div>
+        </div>
+      );
+    }
+  }
 
   if (!resume) {
     return (

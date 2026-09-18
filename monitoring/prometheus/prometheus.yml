@@ -44,6 +44,13 @@ scrape_configs:
         labels:
           service: alertmanager
 
+  - job_name: node
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          service: node-exporter
+
   - job_name: loki
     static_configs:
       - targets: ["loki:3100"]

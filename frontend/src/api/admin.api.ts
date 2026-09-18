@@ -69,4 +69,6 @@ export const adminApi = {
 
   metricsRevenue: (days = 30): Promise<HttpResult<unknown>> =>
     apiClient.get(`${endpoints.adminMetrics.revenue}?days=${days}`),
+
+  systemResources: (): Promise<HttpResult<unknown>> => apiClient.get("/api/v1/admin/system/resources"),
 };

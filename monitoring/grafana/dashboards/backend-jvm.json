@@ -1,0 +1,48 @@
+{
+  "title": "Бэкенд — JVM и ресурсы",
+  "tags": ["jvm", "backend", "ru"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "JVM Heap — использование",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "jvm_memory_used_bytes{area=\"heap\"}", "refId": "A", "legendFormat": "heap used"},
+        {"expr": "jvm_memory_max_bytes{area=\"heap\"}", "refId": "B", "legendFormat": "heap max"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "bytes"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU процесса",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "rate(process_cpu_seconds_total[5m]) * 100", "refId": "A"},
+        {"expr": "rate(node_cpu_seconds_total{mode=\"idle\"}[5m])", "refId": "B", "hide": true}
+      ],
+      "fieldConfig": {"defaults": {"unit": "percent"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Потоки JVM",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [{"expr": "jvm_threads_live_threads", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP — запросы/сек (бэкенд)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [{"expr": "rate(http_server_requests_seconds_count[5m])", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "GC паузы",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "targets": [{"expr": "rate(jvm_gc_pause_seconds_sum[5m])", "refId": "A"}]
+    }
+  ]
+}

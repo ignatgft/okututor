@@ -26,6 +26,7 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   // Reset when src changes / open
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
       setRotation(0);
       setOffset({ x: 0, y: 0 });
       setAspect(initialAspect);
+      setImgError(false);
     }
   }, [open, src, initialAspect]);
 
@@ -41,21 +43,19 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
     const img = imageRef.current;
     const container = containerRef.current;
     if (!img || !container) return;
+    if (!img.naturalWidth || !img.naturalHeight) {
+      setImgError(true);
+      return;
+    }
+    setImgError(false);
     const natW = img.naturalWidth;
     const natH = img.naturalHeight;
     setNaturalSize({ w: natW, h: natH });
     const rect = container.getBoundingClientRect();
     const cw = rect.width || 400;
     const ch = rect.height || 320;
-    // fit image into container with 90% margin, preserve aspect
     const fit = Math.min((cw * 0.92) / natW, (ch * 0.92) / natH, 1);
-    // if image smaller than crop, we still want it to cover; initial scale will handle
     setBaseSize({ w: natW * fit, h: natH * fit });
-    // after fitting, ensure it covers crop area: auto-zoom if needed
-    // crop size approx 0.75 * min(cw,ch) for 1:1
-    // compute minimal cover scale after fit
-    // we keep scale at 1 initially, user can zoom; but if image is tiny vs crop, bump scale
-    // we'll compute after crop size is known via aspect; for now keep 1
   }, []);
 
   useEffect(() => {
@@ -245,27 +245,37 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
             onWheel={handleWheel}
             style={{ cursor: dragging ? "grabbing" : "grab", touchAction: "none" }}
           >
-            {/* hidden img for canvas draw source — also visible */}
-            <img loading="lazy" decoding="async"
-              ref={imageRef}
-              src={src}
-              alt="preview"
-              draggable={false}
-              onLoad={handleImageLoad}
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: "50%",
-                width: baseSize.w,
-                height: baseSize.h,
-                maxWidth: "none",
-                transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${scale})`,
-                transformOrigin: "center center",
-                userSelect: "none",
-                pointerEvents: "none",
-                display: naturalSize.w ? "block" : "none",
-              }}
-            />
+            {/* image — also canvas source */}
+            {!imgError ? (
+              <img loading="eager" decoding="sync"
+                ref={imageRef}
+                src={src}
+                alt="preview"
+                draggable={false}
+                onLoad={handleImageLoad}
+                onError={() => setImgError(true)}
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  width: baseSize.w || 320,
+                  height: baseSize.h || 320,
+                  maxWidth: "none",
+                  transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${scale})`,
+                  transformOrigin: "center center",
+                  userSelect: "none",
+                  pointerEvents: "none",
+                  display: "block",
+                  objectFit: "contain",
+                  background: "#F8FAFC",
+                }}
+              />
+            ) : (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: 14, flexDirection: "column", gap: 8 }}>
+                <span>Не удалось загрузить фото</span>
+                <span style={{ fontSize: 12 }}>Попробуйте выбрать другой файл</span>
+              </div>
+            )}
             {/* crop box */}
             <div ref={cropRef} className="photo-crop-box" style={getCropStyle()}>
               <div className="photo-crop-grid">

@@ -75,8 +75,18 @@
   border: 1px solid var(--color-border-light, #F0F2F5);
   isolation: isolate;
 }
+@media (max-width: 640px) {
+  .photo-crop-overlay { padding: 0; align-items: flex-end; }
+  .photo-crop-modal { max-width: 100%; border-radius: 20px 20px 0 0; max-height: 96dvh; }
+  .photo-crop-viewport-wrap { padding: 12px 12px 0; }
+  .photo-crop-controls { padding: 12px 12px 0; }
+  .photo-crop-footer { padding: 12px; }
+  .photo-crop-header { padding: 14px 16px 12px; }
+}
 @media (max-width: 480px) {
   .photo-crop-viewport { height: 300px; }
+  .photo-crop-rotate-row { gap: 8px; }
+  .photo-crop-rotate-btn { font-size: 13px; padding: 8px 10px; }
 }
 .photo-crop-box {
   position: absolute;
