@@ -78,6 +78,62 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
     @Query("select t from TutorProfile t where t.status in ('PUBLISHED','ACTIVE') and t.noindex = false and (t.expiresAt is null or t.expiresAt > current_timestamp) order by t.publishedAt desc")
     List<TutorProfile> findPublishedForSitemap();
 
+    // Slice pagination for infinite scroll — no COUNT, uses LIMIT size+1
+    @Query("""
+            select t from TutorProfile t
+            join fetch t.user
+            left join fetch t.city
+            left join fetch t.district
+            where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
+              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+            order by t.publishedAt desc nulls last, t.id desc
+            """)
+    org.springframework.data.domain.Slice<TutorProfile> findPublishedSlice(org.springframework.data.domain.Pageable pageable);
+
+    @Query("""
+            select t from TutorProfile t
+            join fetch t.user
+            left join fetch t.city
+            left join fetch t.district
+            where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
+              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and (:tutorType is null or t.tutorType = :tutorType)
+              and (:cityId is null or t.city.id = :cityId)
+              and (:districtId is null or t.district.id = :districtId)
+              and (:online is null or t.online = :online)
+              and (:offline is null or t.offline = :offline)
+              and (:priceFrom is null or t.priceFrom >= :priceFrom or t.priceTo >= :priceFrom)
+              and (:priceTo is null or t.priceTo <= :priceTo or t.priceFrom <= :priceTo)
+            order by t.publishedAt desc nulls last, t.id desc
+            """)
+    org.springframework.data.domain.Slice<TutorProfile> findPublishedSliceWithFilters(@Param("tutorType") TutorType tutorType,
+                                                @Param("cityId") UUID cityId,
+                                                @Param("districtId") UUID districtId,
+                                                @Param("online") Boolean online,
+                                                @Param("offline") Boolean offline,
+                                                @Param("priceFrom") java.math.BigDecimal priceFrom,
+                                                @Param("priceTo") java.math.BigDecimal priceTo,
+                                                org.springframework.data.domain.Pageable pageable);
+
+    // Keyset/cursor pagination — deterministic, no OFFSET, no COUNT
+    @Query("""
+            select t from TutorProfile t
+            join fetch t.user
+            left join fetch t.city
+            left join fetch t.district
+            where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
+              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and (
+                :cursorPublishedAt is null
+                or t.publishedAt < :cursorPublishedAt
+                or (t.publishedAt = :cursorPublishedAt and t.id < :cursorId)
+              )
+            order by t.publishedAt desc nulls last, t.id desc
+            """)
+    java.util.List<TutorProfile> findPublishedCursor(@Param("cursorPublishedAt") java.time.Instant cursorPublishedAt,
+                                                     @Param("cursorId") UUID cursorId,
+                                                     org.springframework.data.domain.Pageable pageable);
+
     @Query("select t from TutorProfile t join fetch t.user left join fetch t.city left join fetch t.district where t.id in :ids")
     List<TutorProfile> findAllWithLocationByIdIn(@Param("ids") java.util.Collection<UUID> ids);
 

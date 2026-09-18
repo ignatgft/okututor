@@ -1,457 +1,196 @@
-import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../components/pageTitleContext";
-import { FileText, Zap, Search, MessageCircle, Eye } from "lucide-react";
-import { Badge, Spinner, EmptyState, ErrorState } from "../components/ui/Primitives";
-import useAuthStore from "../store/authStore";
-import { useDashboardResume } from "../features/dashboard/hooks/useDashboardResume";
-import { useDashboardRequests } from "../features/dashboard/hooks/useDashboardRequests";
-import { useConversations } from "../features/chat/hooks/useConversations";
-import { useUnreadCount } from "../features/chat/hooks/useUnreadCount";
-import { chatApi } from "../api/chat.api";
-
-function formatTime(iso: string | null | undefined): string {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso as string);
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
-    if (diff < 60_000) return "сейчас";
-    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} мин назад`;
-    if (diff < 86_400_000) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    return d.toLocaleDateString();
-  } catch {
-    return "";
-  }
-}
-
-function resumeStatusLabel(status: string, t: (k: string, fb: string) => string): string {
-  const map: Record<string, string> = {
-    DRAFT: t("statuses.DRAFT", "Черновик"),
-    PENDING_MODERATION: t("tutor_status.PENDING_MODERATION", "На модерации"),
-    PENDING: t("statuses.PENDING", "На модерации"),
-    PUBLISHED: t("statuses.PUBLISHED", "Опубликовано"),
-    ACTIVE: t("statuses.PUBLISHED", "Активно"),
-    REJECTED: t("statuses.REJECTED", "Отклонено"),
-    SUSPENDED: t("tutor_status.SUSPENDED", "Приостановлено"),
-    EXPIRED: t("statuses.EXPIRED", "Истекло"),
-    HIDDEN: t("statuses.HIDDEN", "Скрыто"),
-    ARCHIVED: t("statuses.ARCHIVED", "В архиве"),
-    DELETED: t("statuses.DELETED", "Удалено"),
-  };
-  return map[status] ?? status;
-}
+import TutorResumeCard from "../features/tutors/components/TutorResumeCard";
+import TutorFilters from "../features/tutors/components/TutorFilters";
+import { useTutorSearch } from "../features/search/hooks/useTutorSearch";
+import Pagination from "../components/ui/Pagination";
+import { Spinner, EmptyState, ErrorState } from "../components/ui/Primitives";
+import { trackEvent } from "../utils/analytics";
+import { MARKETPLACE_SUBJECTS, MARKETPLACE_CITIES } from "../constants/cities";
 
 export default function PgUserDashboard(): JSX.Element {
   const { t } = useTranslation();
-  const { user, isAuthenticated } = useAuthStore();
-  const setPageTitle = usePageTitle();
-  const navigate = useNavigate();
+  usePageTitle();
+  const [activeTab, setActiveTab] = useState<"all" | "online" | "offline">("all");
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  useEffect(() => { setPageTitle(t("dashboard.overview", "Обзор") as string); }, [setPageTitle, t]);
+  const {
+    tutors, searchQuery, error, loading, totalPages, totalResults, filters, handlers,
+  } = useTutorSearch(20);
 
-  const resumeQuery = useDashboardResume(isAuthenticated);
-  const requestsQuery = useDashboardRequests(isAuthenticated);
-  const conversationsQuery = useConversations(isAuthenticated);
-  const unreadQuery = useUnreadCount(isAuthenticated);
+  const hasActiveFilters = useMemo(() =>
+    Boolean(filters.subject || filters.city || filters.price_min || filters.price_max || filters.format || filters.tutor_type || filters.level || searchQuery.trim())
+  , [filters, searchQuery]);
 
-  const resume = resumeQuery.data ?? null;
-  const hasResume = !!resume;
-  const status = (resume?.status as string) ?? null;
-  const views = (resume?.viewsCount as number) ?? (resume as unknown as Record<string, unknown> | null)?.["views_count"] as number ?? 0;
-  const requests = requestsQuery.data ?? [];
-  const conversations = (conversationsQuery.data as unknown as Record<string, unknown>[])?.map((c) => ({
-    id: String(c["id"] ?? ""),
-    counterpart_name: (c["counterpart_name"] as string | null) ?? (c["counterpartName"] as string | null) ?? null,
-    last_message: (c["last_message"] as string | null) ?? (c["lastMessage"] as string | null) ?? null,
-    last_message_at: (c["last_message_at"] as string | null) ?? (c["lastMessageAt"] as string | null) ?? (c["updated_at"] as string | null) ?? (c["updatedAt"] as string | null) ?? null,
-    updated_at: (c["updated_at"] as string | null) ?? (c["updatedAt"] as string | null) ?? null,
-    unread_count: (c["unread_count"] as number) ?? (c["unreadCount"] as number) ?? 0,
-    requestId: (c["requestId"] as string | null) ?? (c["request_id"] as string | null) ?? null,
-  })) ?? [];
-  const unreadCount = unreadQuery.data ?? 0;
+  const activeFilterCount = useMemo(() =>
+    [filters.subject, filters.city, filters.price_min, filters.price_max, filters.format, filters.tutor_type, filters.level].filter(Boolean).length
+  , [filters]);
 
-  const isInitialLoading = resumeQuery.isLoading || requestsQuery.isLoading;
-  // we show per-section loading, not full white screen, but if everything is loading initially, show spinner
-  const showInitialSpinner = isInitialLoading && !resumeQuery.isError && !requestsQuery.isError && conversations.length === 0 && requests.length === 0;
-
-  const handleRecentClick = async (item: { id: string; requestId?: string; counterpart_name?: string | null }) => {
-    // Prefer conversation id if we have it
-    // If item is a TutorRequest, try to get/create conversation
-    const isRequest = requests.some((r) => String(r.id) === String(item.id));
-    if (isRequest) {
-      try {
-        const res = await chatApi.createOrGetConversationForRequest(String(item.id));
-        if (res.response.ok && (res.data as unknown as Record<string, unknown>)?.["id"]) {
-          const convId = String((res.data as unknown as Record<string, unknown>)["id"]);
-          navigate(`/dashboard/requests/${convId}`);
-          return;
-        }
-      } catch {
-        // fallback to request id navigation
-      }
-      navigate(`/dashboard/requests/${item.id}`);
-    } else {
-      navigate(`/dashboard/requests/${item.id}`);
-    }
+  const handleTab = (tab: "all" | "online" | "offline") => {
+    setActiveTab(tab);
+    if (tab === "all") handlers.applyFilters({ format: "" });
+    if (tab === "online") handlers.applyFilters({ format: "online" });
+    if (tab === "offline") handlers.applyFilters({ format: "offline" });
   };
 
-  // Merge requests + conversations for recent display: prioritize requests with conversation enrichment
-  const recentRequestsForDisplay = requests.slice(0, 5);
-  const recentConversationsForDisplay = conversations.slice(0, 5);
-  // Decide what to show: if we have conversations, enrich recent with conversation data; else show requests
-  const hasRecentData = recentRequestsForDisplay.length > 0 || recentConversationsForDisplay.length > 0;
+  const getSubjectLabel = (v: string) => MARKETPLACE_SUBJECTS.find((s) => s.value === v)?.labelRu ?? v;
+  const getCityLabel = (v: string) => MARKETPLACE_CITIES.find((c) => c.value === v)?.labelRu ?? v;
+  const activeChips: { label: string; onClear: () => void }[] = [];
+  if (filters.subject) activeChips.push({ label: `Предмет: ${getSubjectLabel(filters.subject)}`, onClear: () => handlers.applyFilters({ subject: "" }) });
+  if (filters.city) activeChips.push({ label: `Город: ${getCityLabel(filters.city)}`, onClear: () => handlers.applyFilters({ city: "" }) });
+  if (filters.format) activeChips.push({ label: `Формат: ${filters.format}`, onClear: () => handlers.applyFilters({ format: "" }) });
+  if (filters.tutor_type) activeChips.push({ label: `Тип: ${filters.tutor_type}`, onClear: () => handlers.applyFilters({ tutor_type: "" }) });
+  if (filters.level) activeChips.push({ label: `Уровень: ${filters.level}`, onClear: () => handlers.applyFilters({ level: "" }) });
+  if (searchQuery.trim()) activeChips.push({ label: `Поиск: ${searchQuery.trim()}`, onClear: () => handlers.setSearchQuery("") });
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const resetAll = () => {
+    handlers.setSearchQuery("");
+    handlers.applyFilters({ subject: "", city: "", price_min: "", price_max: "", format: "", tutor_type: "", level: "", page: 0 });
+    setActiveTab("all");
+    setFilterOpen(false);
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = searchQuery.trim();
-    if (q) navigate(`/tutors?q=${encodeURIComponent(q)}`);
-    else navigate("/tutors");
+    handlers.handleSearchSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+    if (searchQuery.trim()) trackEvent("search", { search_term: searchQuery.trim() });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <div style={{ display: "grid", gap: 24, maxWidth: 1440, margin: "0 auto", width: "100%" }}>
-      {/* Greeting */}
-      <section aria-labelledby="dashboard-greeting">
-        <h1 id="dashboard-greeting" style={{ margin: 0, fontSize: "var(--font-size-2xl)", lineHeight: "var(--line-height-tight)" }}>
-          {t("dashboard.greeting", "Привет, {{name}}", { name: user?.full_name || t("common.user", "User") as string })}
-        </h1>
-        <p style={{ color: "var(--color-text-secondary)", marginTop: 8, marginBottom: 0, fontSize: "var(--font-size-base)" }}>
-          {hasResume
-            ? t("dashboard.has_resume_hint", "У вас есть резюме. Вы можете искать репетиторов и принимать обращения.")
-            : t("dashboard.no_resume_hint", "Вы можете искать репетиторов или создать своё резюме.")}
-        </p>
-      </section>
-
-      {/* Prominent Search — найти репетитора сразу */}
-      <section aria-labelledby="dashboard-search" style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)", padding: 20, display: "grid", gap: 12 }}>
-        <h2 id="dashboard-search" style={{ margin: 0, fontSize: "var(--font-size-lg)", display: "flex", alignItems: "center", gap: 8 }}>
-          <Search size={18} /> {t("dashboard.search_title", "Найти репетитора")}
-        </h2>
-        <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>{t("dashboard.search_hint", "Начните вводить предмет, имя или город — перейдёте к каталогу")}</p>
-        <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 220, position: "relative", display: "flex", alignItems: "center" }}>
-            <Search size={16} style={{ position: "absolute", left: 12, color: "var(--color-text-muted)", pointerEvents: "none" }} />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("search.placeholder", "Математика, английский, химия...") as string}
-              aria-label={t("search.placeholder", "Поиск репетитора") as string}
-              style={{
-                width: "100%",
-                padding: "12px 14px 12px 36px",
-                borderRadius: "var(--radius-full)",
-                border: "1px solid var(--color-border)",
-                background: "var(--color-bg)",
-                fontSize: "var(--font-size-base)",
-                outline: "none",
-              }}
-            />
-          </div>
-          <button type="submit" className="btn-primary" style={{ padding: "12px 20px", borderRadius: "var(--radius-full)", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Search size={16} /> {t("common.search", "Найти")}
-          </button>
-          <Link to="/tutors" className="btn-secondary" style={{ padding: "12px 16px", borderRadius: "var(--radius-full)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {t("dashboard.all_tutors", "Все репетиторы")}
-          </Link>
-        </form>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
-          {["Математика", "Английский", "Физика", "Химия", "ОРТ"].map((subj) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, paddingBottom: "calc(var(--bottom-nav-height,64px) + 16px)" }}>
+      {/* Sticky search header */}
+      <div className="tutors-sticky-header" style={{ position: "sticky", top: 56, zIndex: 8, background: "var(--color-background, #f8fafc)", margin: "0 -16px", padding: "10px 16px 10px", borderBottom: "1px solid var(--color-border, #e5e7eb)", display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          {[
+            { id: "all", label: "Все" },
+            { id: "online", label: "Онлайн" },
+            { id: "offline", label: "Очно" },
+          ].map((tab) => (
             <button
-              key={subj}
+              key={tab.id}
               type="button"
-              onClick={() => navigate(`/tutors?q=${encodeURIComponent(subj)}`)}
+              onClick={() => handleTab(tab.id as never)}
               style={{
-                padding: "6px 12px",
-                borderRadius: "var(--radius-full)",
-                border: "1px solid var(--color-border)",
-                background: "var(--color-bg-secondary)",
-                fontSize: "var(--font-size-sm)",
+                padding: "8px 16px",
+                borderRadius: 9999,
+                border: activeTab === tab.id ? "1px solid var(--color-primary)" : "1px solid var(--color-border)",
+                background: activeTab === tab.id ? "var(--color-primary)" : "var(--color-surface)",
+                color: activeTab === tab.id ? "#fff" : "var(--color-text-secondary)",
+                fontSize: 14,
+                fontWeight: 600,
+                whiteSpace: "nowrap",
                 cursor: "pointer",
+                flexShrink: 0,
               }}
             >
-              {subj}
+              {tab.label}
             </button>
           ))}
         </div>
-      </section>
 
-      {showInitialSpinner ? (
-        <Spinner label={t("common.loading", "Загрузка...") as string} />
-      ) : (
-        <>
-          {/* Stats */}
-          <section aria-labelledby="dashboard-stats" style={{ display: "grid", gap: 12 }}>
-            <h2 id="dashboard-stats" className="visually-hidden">{t("dashboard.stats", "Статистика")}</h2>
-            <div
-              className="stats-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                gap: 16,
-              }}
-            >
-              {/* Мои обращения */}
-              <div className="card" style={{ padding: 16, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)" }}>
-                {requestsQuery.isLoading ? (
-                  <div className="skeleton" style={{ height: 24, width: 40, marginBottom: 8 }} />
-                ) : requestsQuery.isError ? (
-                  <div style={{ color: "var(--color-danger)", fontSize: "var(--font-size-sm)" }}>{(requestsQuery.error as Error)?.message || t("common.error", "Ошибка")}</div>
-                ) : (
-                  <>
-                    <div style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, color: "var(--color-text)" }}>{requests.length}</div>
-                    <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)", marginTop: 4 }}>{t("dashboard.my_requests", "Мои обращения")}</div>
-                  </>
-                )}
-              </div>
-
-              {/* Непрочитанные */}
-              <div className="card" style={{ padding: 16, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)" }}>
-                {unreadQuery.isLoading ? (
-                  <div className="skeleton" style={{ height: 24, width: 40, marginBottom: 8 }} />
-                ) : unreadQuery.isError ? (
-                  <div style={{ color: "var(--color-danger)", fontSize: "var(--font-size-sm)" }}>{t("common.error", "Ошибка")}</div>
-                ) : (
-                  <>
-                    <div style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, color: unreadCount > 0 ? "var(--color-primary)" : "var(--color-text)" }}>{unreadCount}</div>
-                    <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)", marginTop: 4 }}>{t("dashboard.unread", "Непрочитанные")}</div>
-                  </>
-                )}
-              </div>
-
-              {/* Просмотры резюме */}
-              <div className="card" style={{ padding: 16, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)" }}>
-                {resumeQuery.isLoading ? (
-                  <div className="skeleton" style={{ height: 24, width: 40, marginBottom: 8 }} />
-                ) : resumeQuery.isError ? (
-                  <div style={{ color: "var(--color-danger)", fontSize: "var(--font-size-sm)" }}>{t("common.error", "Ошибка")}</div>
-                ) : hasResume ? (
-                  <>
-                    <div style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, color: "var(--color-text)" }}>{views}</div>
-                    <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Eye size={14} /> {t("dashboard.resume_views", "Просмотры резюме")}</div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, color: "var(--color-text-muted)" }}>—</div>
-                    <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Eye size={14} /> {t("dashboard.resume_views", "Просмотры резюме")}</div>
-                  </>
-                )}
-              </div>
-
-              {/* Статус резюме */}
-              <div className="card" style={{ padding: 16, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)" }}>
-                {resumeQuery.isLoading ? (
-                  <div className="skeleton" style={{ height: 24, width: 80, marginBottom: 8 }} />
-                ) : resumeQuery.isError ? (
-                  <div style={{ color: "var(--color-danger)", fontSize: "var(--font-size-sm)" }}>{t("common.error", "Ошибка")}</div>
-                ) : hasResume && status ? (
-                  <>
-                    <div style={{ marginBottom: 6 }}><Badge status={status}>{resumeStatusLabel(status, t as (k: string, fb: string) => string)}</Badge></div>
-                    <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)", marginTop: 4 }}>{t("dashboard.resume_status", "Статус резюме")}</div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-muted)" }}>{t("dashboard.no_resume", "Нет резюме")}</div>
-                    <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)", marginTop: 4 }}>{t("dashboard.resume_status", "Статус резюме")}</div>
-                  </>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* Quick actions + Resume status */}
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }} aria-labelledby="dashboard-actions">
-            <h2 id="dashboard-actions" className="visually-hidden">{t("dashboard.quick_actions", "Быстрые действия")}</h2>
-
-            {/* Resume card */}
-            <div className="card" style={{ padding: 20, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)", display: "flex", flexDirection: "column", gap: 12 }}>
-              <h3 style={{ margin: 0, fontSize: "var(--font-size-lg)", display: "flex", alignItems: "center", gap: 8 }}><FileText size={18} /> {t("tutor.resume", "Моё резюме")}</h3>
-              {resumeQuery.isLoading ? (
-                <Spinner label={t("common.loading", "Загрузка...") as string} />
-              ) : resumeQuery.isError ? (
-                <ErrorState message={(resumeQuery.error as Error).message} onRetry={() => void resumeQuery.refetch()} />
-              ) : hasResume ? (
-                <>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <Badge status={status ?? "DRAFT"}>{status ? resumeStatusLabel(status, t as (k: string, fb: string) => string) : "—"}</Badge>
-                    <span style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}> {views} {t("tutor.views", "просмотров")}</span>
-                  </div>
-                  {status === "REJECTED" && (resume?.rejectionReason as string) && (
-                    <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-danger)", background: "var(--color-danger-soft, #FEF2F2)", padding: 8, borderRadius: 8 }}>{resume?.rejectionReason as string}</p>
-                  )}
-                  {status === "PENDING_MODERATION" && (
-                    <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>{t("become_tutor.verification_hint", "Ваша заявка будет рассмотрена нашей командой.")}</p>
-                  )}
-                  {status === "PUBLISHED" && (
-                    <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-success)" }}>{t("dashboard.resume_published_hint", "Резюме видно ученикам")}</p>
-                  )}
-                  {status === "SUSPENDED" && (
-                    <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-danger)" }}>{t("dashboard.resume_suspended_hint", "Резюме приостановлено")}</p>
-                  )}
-                  {status === "DRAFT" && (
-                    <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>{t("dashboard.resume_draft_hint", "Резюме в черновике. Отправьте на модерацию.")}</p>
-                  )}
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-                    <Link to="/dashboard/resume" className="btn-primary" style={{ textDecoration: "none" }}>{t("common.view", "Открыть резюме")}</Link>
-                    <Link to="/become-tutor" className="btn-secondary" style={{ textDecoration: "none" }}>{t("common.edit", "Редактировать резюме")}</Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ textAlign: "left", padding: "8px 0" }}>
-                    <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--color-text)" }}>{t("dashboard.create_resume_title", "Создайте своё резюме")}</p>
-                    <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
-                      {t("dashboard.create_resume_hint", "Разместите информацию о себе и принимайте обращения.")}
-                    </p>
-                  </div>
-                  <Link to="/become-tutor" className="btn-primary" style={{ textDecoration: "none", alignSelf: "flex-start" }}>{t("marketplace.create_resume", "Создать резюме")}</Link>
-                </>
-              )}
-            </div>
-
-            {/* Quick actions card */}
-            <div className="card" style={{ padding: 20, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)", display: "flex", flexDirection: "column", gap: 12 }}>
-              <h3 style={{ margin: 0, fontSize: "var(--font-size-lg)" }}> {t("dashboard.quick_actions", "Быстрые действия")}</h3>
-              <div style={{ display: "grid", gap: 8 }}>
-                <Link to="/tutors" className="btn-primary" style={{ textDecoration: "none", justifyContent: "center" }}> {t("dashboard.find_tutors", "Найти репетитора")}</Link>
-                <Link to="/dashboard/requests" className="btn-secondary" style={{ textDecoration: "none", justifyContent: "center", position: "relative" }}>
-                   {t("navigation.requests", "Мои обращения")}
-                  {unreadCount > 0 && (
-                    <span style={{ marginLeft: 8, background: "var(--color-danger)", color: "#fff", fontSize: "var(--font-size-xs)", fontWeight: 700, minWidth: 18, height: 18, borderRadius: 9, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{unreadCount > 99 ? "99+" : unreadCount}</span>
-                  )}
-                </Link>
-                {hasResume ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <Link to="/dashboard/resume" className="btn-secondary" style={{ textDecoration: "none", justifyContent: "center" }}>{t("common.view", "Открыть резюме")}</Link>
-                    <Link to="/become-tutor" className="btn-secondary" style={{ textDecoration: "none", justifyContent: "center" }}>{t("common.edit", "Редактировать")}</Link>
-                  </div>
-                ) : (
-                  <Link to="/become-tutor" className="btn-secondary" style={{ textDecoration: "none", justifyContent: "center" }}>{t("marketplace.create_resume", "Создать резюме")}</Link>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-                <Link to="/dashboard/profile" className="btn-ghost" style={{ textDecoration: "none", fontSize: "var(--font-size-sm)" }}>{t("navbar.profile", "Профиль")}</Link>
-                <Link to="/dashboard/settings" className="btn-ghost" style={{ textDecoration: "none", fontSize: "var(--font-size-sm)" }}>{t("navbar.settings", "Настройки")}</Link>
-              </div>
-            </div>
-          </section>
-
-          {/* Recent requests */}
-          <section className="card" style={{ padding: 16, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)" }} aria-labelledby="dashboard-recent">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <h3 id="dashboard-recent" style={{ margin: 0, fontSize: "var(--font-size-lg)" }}>{t("dashboard.recent_requests", "Последние обращения")}</h3>
-              <Link to="/dashboard/requests" className="btn-ghost" style={{ textDecoration: "none", fontSize: "var(--font-size-sm)" }}>{t("common.view", "Все")}</Link>
-            </div>
-
-            {requestsQuery.isLoading || conversationsQuery.isLoading ? (
-              <div style={{ marginTop: 16, display: "grid", gap: 8 }}>
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="skeleton" style={{ height: 72, borderRadius: "var(--radius-lg)" }} aria-hidden="true" />
-                ))}
-              </div>
-            ) : requestsQuery.isError && conversationsQuery.isError ? (
-              <div style={{ marginTop: 16 }}>
-                <ErrorState message={(requestsQuery.error as Error)?.message || (conversationsQuery.error as Error)?.message || t("common.error", "Ошибка") as string} onRetry={() => { void requestsQuery.refetch(); void conversationsQuery.refetch(); }} />
-              </div>
-            ) : !hasRecentData ? (
-              <div style={{ marginTop: 16 }}>
-                <EmptyState
-                  title={t("student_requests.empty", "Пока нет обращений") as string}
-                  hint={t("dashboard.requests_empty_hint", "Когда вы отправите или получите обращение, оно появится здесь.") as string}
-                  action={<Link to="/tutors" className="btn-primary">{t("dashboard.find_tutors", "Найти репетитора")}</Link>}
-                />
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: 8, marginTop: 16 }}>
-                {/* Prefer conversations for richer display if we have them, else requests */}
-                {(recentConversationsForDisplay.length > 0 ? recentConversationsForDisplay : []).length > 0 ? (
-                  recentConversationsForDisplay.map((c) => {
-                    // try to find matching request for status
-                    const matchedRequest = requests.find((r) => String(r.id) === String(c.requestId));
-                    const name = (c.counterpart_name as string | null) || matchedRequest?.studentName || t("common.user", "User") as string;
-                    const subject = matchedRequest?.tutorProfileSlug || (c as unknown as Record<string, unknown>)["tutorProfileSlug"] as string | undefined || "";
-                    const lastMessage = (c.last_message as string | null) || matchedRequest?.message || "";
-                    const time = formatTime((c.last_message_at as string | null) || (c.updated_at as string | null) || matchedRequest?.createdAt);
-                    const status = matchedRequest?.status || null;
-                    const unread = c.unread_count ?? 0;
-                    return (
-                      <button
-                        key={String(c.id)}
-                        type="button"
-                        onClick={() => void handleRecentClick({ id: String(c.id) })}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 12,
-                          padding: 12,
-                          background: unread > 0 ? "var(--color-primary-light)" : "var(--color-bg-secondary)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: "var(--radius-lg)",
-                          textAlign: "left",
-                          cursor: "pointer",
-                          width: "100%",
-                        }}
-                      >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text)" }}>{name}{subject ? ` · ${subject}` : ""}</div>
-                          <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>{lastMessage ? lastMessage.slice(0, 80) + (lastMessage.length > 80 ? "…" : "") : t("marketplace.no_message", "Без сообщения") as string}</div>
-                          <div style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", marginTop: 4 }}>{time}</div>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
-                          {status && <Badge status={status}>{status}</Badge>}
-                          {unread > 0 && <span style={{ background: "var(--color-danger)", color: "#fff", fontSize: "var(--font-size-xs)", fontWeight: 700, minWidth: 18, height: 18, borderRadius: 9, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{unread > 99 ? "99+" : unread}</span>}
-                        </div>
-                      </button>
-                    );
-                  })
-                ) : (
-                  recentRequestsForDisplay.map((r) => {
-                    const matchedConv = conversations.find((c) => String((c as unknown as Record<string, unknown>)["requestId"]) === String(r.id) || String(c.id) === String(r.id));
-                    const name = r.studentName || (matchedConv?.counterpart_name as string | null) || t("common.user", "User") as string;
-                    const subject = r.tutorProfileSlug || "";
-                    const lastMessage = (matchedConv?.last_message as string | null) || r.message || "";
-                    const time = formatTime((matchedConv?.last_message_at as string | null) || r.createdAt);
-                    const unread = matchedConv?.unread_count ?? 0;
-                    return (
-                      <button
-                        key={String(r.id)}
-                        type="button"
-                        onClick={() => void handleRecentClick({ id: String(r.id) })}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 12,
-                          padding: 12,
-                          background: unread > 0 ? "var(--color-primary-light)" : "var(--color-bg-secondary)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: "var(--radius-lg)",
-                          textAlign: "left",
-                          cursor: "pointer",
-                          width: "100%",
-                        }}
-                      >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text)" }}>{name}{subject ? ` → ${subject}` : ""}</div>
-                          <div style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>{lastMessage ? lastMessage.slice(0, 80) + (lastMessage.length > 80 ? "…" : "") : t("marketplace.no_message", "Без сообщения") as string}</div>
-                          <div style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", marginTop: 4 }}>{time}</div>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
-                          <Badge status={r.status}>{r.status}</Badge>
-                          {unread > 0 && <span style={{ background: "var(--color-danger)", color: "#fff", fontSize: "var(--font-size-xs)", fontWeight: 700, minWidth: 18, height: 18, borderRadius: 9, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{unread > 99 ? "99+" : unread}</span>}
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
+        {/* Search row — sticky convenient */}
+        <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: 8, alignItems: "center", maxWidth: 720, width: "100%" }}>
+          <div style={{ position: "relative", flex: "1 1 220px", minWidth: 0 }}>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={handlers.handleSearchChange}
+              placeholder={t("marketplace.search_placeholder", "математика, англ, питон, ОРТ...") as string}
+              aria-label={t("common.search", "Поиск") as string}
+              style={{ width: "100%", minHeight: 44, padding: "10px 36px 10px 14px", borderRadius: 12, border: "1px solid var(--color-border)", background: "var(--color-surface)", fontSize: 16 }}
+            />
+            {searchQuery.trim() && (
+              <button type="button" onClick={() => handlers.setSearchQuery("")} aria-label="clear" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "var(--color-bg-secondary)", border: "none", borderRadius: 9999, width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--color-text-muted)" }}>×</button>
             )}
-          </section>
+          </div>
+          <button type="submit" className="btn-primary" style={{ minHeight: 44, padding: "0 18px", borderRadius: 12, whiteSpace: "nowrap", fontWeight: 700, flexShrink: 0 }}>
+            {t("common.search", "Поиск")}
+          </button>
+          {/* Mobile filter trigger */}
+          <button type="button" className="tutors-filter-mobile-btn" onClick={() => setFilterOpen(true)} style={{ display: "none", minHeight: 44, padding: "0 14px", borderRadius: 12, border: "1px solid var(--color-border)", background: hasActiveFilters ? "var(--color-primary)" : "var(--color-surface)", color: hasActiveFilters ? "#fff" : "var(--color-text)", fontWeight: 600, flexShrink: 0, position: "relative" }}>
+            Фильтры{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}
+          </button>
+        </form>
+
+        {activeChips.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            {activeChips.map((chip, idx) => (
+              <span key={idx} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 9999, background: "var(--color-bg-secondary)", border: "1px solid var(--color-border)", fontSize: 13 }}>
+                {chip.label}
+                <button type="button" onClick={chip.onClear} style={{ background: "transparent", border: "none", cursor: "pointer", fontWeight: 700 }}>×</button>
+              </span>
+            ))}
+            <button type="button" className="btn-ghost" onClick={resetAll} style={{ fontSize: 13 }}>{t("search.reset_all", "Сбросить всё")}</button>
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 13, color: "var(--color-text-muted)" }}>
+          <span>{totalResults} результатов</span>
+          <span className="tutors-support-hint" style={{ fontSize: 12 }}>Поддержка: математика / матем / питон / python / англ / ОРТ</span>
+        </div>
+      </div>
+
+      <div className="tutors-layout" style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 16, alignItems: "start", marginTop: 14 }}>
+        <aside className="tutors-filters-desktop" style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 16, padding: 16, position: "sticky", top: 132, display: "block", alignSelf: "start" }}>
+          <TutorFilters filters={filters} onApply={(patch) => handlers.applyFilters(patch as never)} totalResults={totalResults} />
+        </aside>
+        <section style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+          {loading && <Spinner label={t("search.loading", "Загрузка...") as string} />}
+          {!loading && error && <ErrorState message={error} onRetry={() => handlers.handlePageChange(filters.page)} />}
+          {!loading && !error && tutors.length === 0 && (
+            <EmptyState title={t("search.no_courses", "Не нашли подходящего репетитора") as string} hint={<div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}><p style={{ margin: 0, color: "var(--color-text-muted)" }}>{t("marketplace.no_results_hint", "Попробуйте изменить предмет, город или формат.")}</p><button type="button" className="btn-secondary" onClick={resetAll}>{t("search.reset_all", "Сбросить всё")}</button></div>} />
+          )}
+          {!loading && tutors.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {tutors.map((tutor) => {
+                const tRec = tutor as unknown as Record<string, unknown>;
+                return <TutorResumeCard key={String(tRec["id"])} tutor={tRec} />;
+              })}
+            </div>
+          )}
+          {!loading && totalPages > 1 && (
+            <div style={{ marginTop: 8 }}>
+              <Pagination page={filters.page} totalPages={totalPages} onChange={handlers.handlePageChange} />
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* Mobile filter drawer */}
+      {filterOpen && (
+        <>
+          <div onClick={() => setFilterOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50 }} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 51, background: "var(--color-surface, #fff)", borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "88dvh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 32px rgba(0,0,0,0.12)" }}>
+            <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--color-border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Фильтры{activeFilterCount ? ` · ${activeFilterCount}` : ""}</h3>
+              <button type="button" onClick={() => setFilterOpen(false)} style={{ width: 36, height: 36, borderRadius: 9999, border: "1px solid var(--color-border)", background: "var(--color-surface)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>×</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: 16, WebkitOverflowScrolling: "touch" }}>
+              <TutorFilters filters={filters} onApply={(patch) => handlers.applyFilters(patch as never)} totalResults={totalResults} />
+            </div>
+            <div style={{ padding: 16, borderTop: "1px solid var(--color-border)", display: "flex", gap: 8, flexShrink: 0, paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}>
+              <button type="button" className="btn-ghost" onClick={resetAll} style={{ flex: 1, minHeight: 44 }}>Сбросить</button>
+              <button type="button" className="btn-primary" onClick={() => setFilterOpen(false)} style={{ flex: 2, minHeight: 44 }}>Показать · {totalResults}</button>
+            </div>
+          </div>
         </>
       )}
+
+      <style>{`
+        @media (max-width: 767px){
+          .tutors-layout{grid-template-columns:1fr !important}
+          .tutors-filters-desktop{display:none !important}
+          .tutors-filter-mobile-btn{display:inline-flex !important; align-items:center; justify-content:center}
+          .tutors-sticky-header{top:56px !important; margin: 0 -16px !important; padding-left:16px !important; padding-right:16px !important}
+          .tutors-support-hint{display:none !important}
+        }
+        @media (min-width: 768px){
+          .tutors-filter-mobile-btn{display:none !important}
+        }
+      `}</style>
     </div>
   );
 }

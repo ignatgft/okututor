@@ -72,7 +72,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse create(UUID userId, TutorProfileCreateRequest req) {
         User user = userRepository.findById(userId).orElseThrow(() -> ApiException.notFound("User not found"));
         if (user.isBlocked()) {
@@ -147,7 +147,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public void deleteByUserId(UUID userId) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         if (p.getStatus() == TutorProfileStatus.DELETED) {
@@ -159,7 +159,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse archive(UUID userId) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
@@ -210,7 +210,7 @@ public class TutorProfileService {
         return TutorProfileMapper.toResponse(p, subjects, levels, langs, false);
     }
 
-    @org.springframework.cache.annotation.CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     @Transactional
     public void incrementViews(UUID profileId) {
         profileRepository.incrementViews(profileId);
@@ -224,7 +224,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse update(UUID userId, TutorProfileUpdateRequest req) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         if (p.getUser() != null && p.getUser().isBlocked()) {
@@ -310,7 +310,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse submit(UUID userId, UUID actorId) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         if (p.getUser() != null && p.getUser().isBlocked()) {
@@ -329,7 +329,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse approve(UUID profileId, UUID actorId) {
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         try { p.approve(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
@@ -342,7 +342,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse reject(UUID profileId, String reason, UUID actorId) {
         if (reason == null || reason.isBlank()) throw new com.okututor.backend.common.error.FieldValidationException(java.util.Map.of("reason", "reason is required"));
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
@@ -355,7 +355,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse suspend(UUID profileId, String reason, UUID actorId) {
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         try { p.suspend(reason); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
@@ -366,7 +366,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse restore(UUID profileId, UUID actorId) {
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         try { p.restore(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
@@ -377,7 +377,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse hide(UUID userId) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
@@ -388,7 +388,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse unhide(UUID userId) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
@@ -399,7 +399,7 @@ public class TutorProfileService {
     }
 
     @Transactional
-    @CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse renew(UUID userId) {
         TutorProfile p = profileRepository.findByUserId(userId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
         if (!p.getUser().getId().equals(userId)) throw ApiException.forbidden("Not your profile");
@@ -458,7 +458,7 @@ public class TutorProfileService {
         return new org.springframework.data.domain.PageImpl<>(mapped, pr, result.getTotalElements());
     }
 
-    @Cacheable(value = "tutorPopular", key = "#limit", unless = "#result == null")
+    @Cacheable(value = "tutorPopular:v2", key = "#limit", unless = "#result == null")
     @Transactional(readOnly = true)
     public List<TutorProfileResponse> getPopular(int limit) {
         int capped = Math.min(Math.max(limit, 1), 20);
@@ -481,9 +481,15 @@ public class TutorProfileService {
                 .toList();
     }
 
-    @Cacheable(value = "tutorPublicList", key = "#page + '-' + #size + '-' + #tutorType + '-' + #cityId + '-' + #districtId + '-' + #online + '-' + #offline + '-' + #priceFrom + '-' + #priceTo", unless = "#result == null")
     @Transactional(readOnly = true)
     public Page<TutorProfileResponse> publicListing(int page, int size, String tutorType, UUID cityId, UUID districtId, Boolean online, Boolean offline, BigDecimal priceFrom, BigDecimal priceTo) {
+        return publicListingCached(page, size, tutorType, cityId, districtId, online, offline, priceFrom, priceTo).toPage();
+    }
+
+    @Cacheable(value = "tutorPublicList:v2", key = "T(com.okututor.backend.tutor.TutorCacheKey).of(#page,#size,#tutorType,#cityId,#districtId,#online,#offline,#priceFrom,#priceTo)", unless = "#result == null")
+    @Transactional(readOnly = true)
+    public com.okututor.backend.tutor.dto.TutorPageCacheDto publicListingCached(int page, int size, String tutorType, UUID cityId, UUID districtId, Boolean online, Boolean offline, BigDecimal priceFrom, BigDecimal priceTo) {
+        long overallStart = System.nanoTime();
         PageRequest pr = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
         Page<TutorProfile> basePage;
         if (tutorType == null && cityId == null && districtId == null && online == null && offline == null && priceFrom == null && priceTo == null) {
@@ -500,7 +506,7 @@ public class TutorProfileService {
                 .filter(p -> p.getUser() == null || !p.getUser().isBlocked())
                 .toList();
         if (filteredContent.isEmpty()) {
-            return new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList(), pr, basePage.getTotalElements());
+            return com.okututor.backend.tutor.dto.TutorPageCacheDto.from(new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList(), pr, basePage.getTotalElements()));
         }
         List<UUID> ids = filteredContent.stream().map(TutorProfile::getId).toList();
         var subjectMap = profileSubjectRepository.findByProfileIdIn(ids).stream()
@@ -509,6 +515,7 @@ public class TutorProfileService {
                 .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLevel::getLevel, java.util.stream.Collectors.toList())));
         var langMap = profileLanguageRepository.findByProfileIdIn(ids).stream()
                 .collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLanguage::getLanguage, java.util.stream.Collectors.toList())));
+        long mapStart = System.nanoTime();
         var responseList = filteredContent.stream()
                 .map(p -> TutorProfileMapper.toResponse(p,
                         subjectMap.getOrDefault(p.getId(), List.of()),
@@ -516,7 +523,45 @@ public class TutorProfileService {
                         langMap.getOrDefault(p.getId(), List.of()),
                         false))
                 .toList();
-        return new org.springframework.data.domain.PageImpl<>(responseList, pr, basePage.getTotalElements());
+        metrics.tutorListMappingDuration((System.nanoTime() - mapStart) / 1_000_000);
+        var pageResult = new org.springframework.data.domain.PageImpl<>(responseList, pr, basePage.getTotalElements());
+        metrics.tutorListDbDuration((System.nanoTime() - overallStart) / 1_000_000);
+        return com.okututor.backend.tutor.dto.TutorPageCacheDto.from(pageResult);
+    }
+
+    // Slice pagination — no COUNT, for infinite scroll
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Slice<TutorProfileResponse> publicSlice(int page, int size, String tutorType, UUID cityId, UUID districtId, Boolean online, Boolean offline, BigDecimal priceFrom, BigDecimal priceTo) {
+        int cappedSize = Math.min(Math.max(size, 1), 50);
+        var pageable = org.springframework.data.domain.PageRequest.of(Math.max(page, 0), cappedSize);
+        org.springframework.data.domain.Slice<TutorProfile> slice;
+        if (tutorType == null && cityId == null && districtId == null && online == null && offline == null && priceFrom == null && priceTo == null) {
+            slice = profileRepository.findPublishedSlice(pageable);
+        } else {
+            TutorType tt = null;
+            if (tutorType != null) try { tt = TutorType.valueOf(tutorType.toUpperCase()); } catch (IllegalArgumentException e) { throw ApiException.validation("Unknown tutor_type: " + tutorType); }
+            slice = profileRepository.findPublishedSliceWithFilters(tt, cityId, districtId, online, offline, priceFrom, priceTo, pageable);
+        }
+        if (slice.isEmpty()) return slice.map(p -> TutorProfileMapper.toResponse(p, List.of(), List.of(), List.of(), false));
+        List<UUID> ids = slice.getContent().stream().map(TutorProfile::getId).toList();
+        var subjectMap = profileSubjectRepository.findByProfileIdIn(ids).stream().collect(java.util.stream.Collectors.groupingBy(s -> s.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileSubject::getSubject, java.util.stream.Collectors.toList())));
+        var levelMap = profileLevelRepository.findByProfileIdIn(ids).stream().collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLevel::getLevel, java.util.stream.Collectors.toList())));
+        var langMap = profileLanguageRepository.findByProfileIdIn(ids).stream().collect(java.util.stream.Collectors.groupingBy(l -> l.getProfile().getId(), java.util.stream.Collectors.mapping(TutorProfileLanguage::getLanguage, java.util.stream.Collectors.toList())));
+        return slice.map(p -> TutorProfileMapper.toResponse(p, subjectMap.getOrDefault(p.getId(), List.of()), levelMap.getOrDefault(p.getId(), List.of()), langMap.getOrDefault(p.getId(), List.of()), false));
+    }
+
+    // Cursor pagination — keyset, no OFFSET, no COUNT (simplified: delegates to Slice for now)
+    @Transactional(readOnly = true)
+    public com.okututor.backend.tutor.dto.TutorSliceResponse<TutorProfileResponse> publicCursor(String cursor, int size, String tutorType, UUID cityId, UUID districtId, Boolean online, Boolean offline, BigDecimal priceFrom, BigDecimal priceTo) {
+        var slice = publicSlice(0, size, tutorType, cityId, districtId, online, offline, priceFrom, priceTo);
+        boolean hasNext = slice.hasNext();
+        String nextCursor = null;
+        if (hasNext && !slice.getContent().isEmpty()) {
+            var last = slice.getContent().get(slice.getContent().size() - 1);
+            String raw = last.publishedAt().toString() + "|" + last.id().toString();
+            nextCursor = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        return new com.okututor.backend.tutor.dto.TutorSliceResponse<>(slice.getContent(), 0, size, hasNext, nextCursor, true, !hasNext);
     }
 
     // helpers

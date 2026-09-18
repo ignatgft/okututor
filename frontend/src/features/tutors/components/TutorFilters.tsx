@@ -68,8 +68,8 @@ export default function TutorFilters({ filters, onApply }: Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <style>{`input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type="number"] { -moz-appearance: textfield; }`}</style>
-      <h3 style={{ fontSize: "var(--font-size-lg)", fontWeight: 600 }}>{t("search.filter_by", "Фильтры")}</h3>
+      <style>{`input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type="number"] { -moz-appearance: textfield; } .tutor-filters-title{font-size:var(--font-size-lg);font-weight:600;margin:0} @media(max-width:767px){.tutor-filters-title{display:none}}`}</style>
+      <h3 className="tutor-filters-title" style={{ fontSize: "var(--font-size-lg)", fontWeight: 600 }}>{t("search.filter_by", "Фильтры")}</h3>
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>{t("search.subject", "Предмет")}</span>

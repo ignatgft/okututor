@@ -58,7 +58,7 @@ export default function PgSettings() {
   };
 
   return (
-      <div className="settings-page">
+      <div className="settings-page" style={{ maxWidth: 760, margin: "0 auto", width: "100%", overflowX: "hidden" }}>
         <div className="settings-section">
           <h3>{t("settings.appearance", "Внешний вид")}</h3>
           <div className="settings-row">
@@ -75,17 +75,14 @@ export default function PgSettings() {
 
         <div className="settings-section">
           <h3>{t("settings.language", "Язык")}</h3>
-          <div className="settings-row">
-            <div className="settings-row-info">
-              <span className="settings-label">{t("settings.language", "Язык")}</span>
-              <span className="settings-value">{languages.find(l => l.code === i18n.language)?.label || "English"}</span>
-            </div>
-            <div className="language-selector-settings">
+          <div className="settings-row" style={{ borderBottom: "none" }}>
+            <div className="language-selector-settings" style={{ width: "100%", justifyContent: "center" }}>
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   className={`lang-btn ${i18n.language === lang.code ? "active" : ""}`}
                   onClick={() => handleLanguageChange(lang.code)}
+                  style={{ flex: 1, justifyContent: "center" }}
                 >
                   {lang.label}
                 </button>
@@ -96,26 +93,18 @@ export default function PgSettings() {
 
         <div className="settings-section">
           <h3>{t("settings.timezone", "Часовой пояс")}</h3>
-          <div className="settings-row">
-            <div className="settings-row-info">
-              <span className="settings-label">{t("settings.timezone", "Часовой пояс")}</span>
-              <span className="settings-value">
-                {timezone}
-                {savingTz && <span className="settings-saving"> …</span>}
-              </span>
-            </div>
-            <select
-              className="timezone-select"
-              value={timezone}
-              onChange={handleTimezoneChange}
-              aria-label={t("settings.timezone", "Часовой пояс")}
-            >
-              {IANA_TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
-              ))}
-            </select>
-          </div>
-          <p className="settings-hint">{t("settings.timezone_hint", "Times in schedules and lessons will be shown in the selected zone")}</p>
+          <p style={{ margin: "0 0 12px", fontSize: "0.875rem", color: "var(--color-text-muted)" }}>{t("settings.timezone_hint", "Время в расписании и уроках будет показываться в выбранном поясе")} — текущий: <strong>{timezone}</strong>{savingTz && " …"}</p>
+          <select
+            className="timezone-select"
+            value={timezone}
+            onChange={handleTimezoneChange}
+            aria-label={t("settings.timezone", "Часовой пояс")}
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--color-border)", background: "var(--color-surface)", fontSize: 14 }}
+          >
+            {IANA_TIMEZONES.map((tz) => (
+              <option key={tz} value={tz}>{tz}</option>
+            ))}
+          </select>
         </div>
 
         <div className="settings-section">
@@ -123,9 +112,15 @@ export default function PgSettings() {
           <div className="settings-row">
             <div className="settings-row-info">
               <span className="settings-label">{t("settings.email_notifications", "Уведомления по email")}</span>
-              <span className="settings-value">{t("settings.enabled", "Включены")}</span>
+              <span className="settings-value" style={{ color: "var(--color-success)", fontWeight: 600 }}>● {t("settings.enabled", "Включены")}</span>
             </div>
+            <label style={{ position: "relative", display: "inline-block", width: 44, height: 24 }}>
+              <input type="checkbox" defaultChecked style={{ opacity: 0, width: 0, height: 0 }} />
+              <span style={{ position: "absolute", inset: 0, background: "var(--color-primary)", borderRadius: 9999, transition: "0.2s" }} />
+              <span style={{ position: "absolute", top: 2, left: 2, width: 20, height: 20, background: "#fff", borderRadius: "50%", transition: "0.2s", transform: "translateX(20px)" }} />
+            </label>
           </div>
+          <p style={{ margin: "8px 0 0", fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>Получайте письма о новых заявках, сообщениях и модерации резюме.</p>
         </div>
       </div>
   );

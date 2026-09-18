@@ -180,3 +180,20 @@
   display: none;
   margin-bottom: 0;
 }
+
+@media (max-width: 768px) {
+  .attachment-image { max-width: 100%; max-height: 200px; }
+  .attachment-file-card { max-width: 100%; }
+  .attachment-lightbox { padding: var(--space-2); }
+}
+@media (max-width: 480px) {
+  .attachment-image { max-width: 100vw; max-height: 50vh; border-radius: var(--radius-md); }
+  .attachment-file-card { max-width: 100%; padding: var(--space-2); gap: var(--space-2); }
+  .attachment-lightbox-img { max-width: 95vw; max-height: 70vh; }
+  .attachment-file-download { min-height: var(--touch-target, 44px); padding: 8px 12px; font-size: var(--font-size-sm); }
+}
+
+@media (max-width: 768px) {
+  /* 768: touch-friendly paddings */
+  :root { --modal-padding: var(--space-4); }
+}

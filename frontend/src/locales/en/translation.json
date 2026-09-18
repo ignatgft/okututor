@@ -98,6 +98,8 @@
     "something_went_wrong": "Something went wrong",
     "reload_page": "Reload page",
     "network": "Network error",
+    "network_error": "Network error. Check your connection.",
+    "session_check_failed": "Unable to verify your session. Check your connection.",
     "not_found": "Page not found",
     "not_found_hint": "The page you're looking for doesn't exist or has been moved.",
     "forbidden": "Access denied",
@@ -149,7 +151,9 @@
     "reject_reason_hint": "Provide a reason for the applicant...",
     "email": "Email",
     "in_timezone": "({{tz}})",
-    "optional": "optional"
+    "optional": "optional",
+    "retry": "Retry",
+    "reload": "Reload page"
   },
   "messages": {
     "no_conversations": "No conversations yet",

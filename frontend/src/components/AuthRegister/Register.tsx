@@ -103,7 +103,7 @@ export default function Register({ isOpen, onClose }: Record<string, unknown>) {
         await init();
         onClose();
         if (getContactIntent()) return;
-        navigate("/dashboard", { replace: true });
+        navigate("/app/dashboard", { replace: true });
       }
     } catch (err: unknown) {
       const e = err as Error & { fieldErrors?: Record<string, string>; status?: number };
@@ -250,7 +250,7 @@ export default function Register({ isOpen, onClose }: Record<string, unknown>) {
           onClick={handleGoogleRegister}
           title={t("register.continue_google", "Continue with Google")}
         >
-          <img src={googleIcon} alt="Google" width={20} />
+          <img loading="lazy" decoding="async" src={googleIcon} alt="Google" width={20} />
           {t("register.continue_google", "Continue with Google")}
         </button>
 

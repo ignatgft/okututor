@@ -146,10 +146,22 @@ export function useTutorSearch(pageSize = 20): UseTutorSearchReturn {
         } else if (data && isRecord(data) && Array.isArray((data as Record<string, unknown>)["content"])) {
           const content = (data as Record<string, unknown>)["content"] as UserDTO[];
           setTutors(content);
-          const totalEl = ((data as Record<string, unknown>)["total_elements"] as number | undefined) ?? ((data as Record<string, unknown>)["totalElements"] as number | undefined) ?? content.length;
-          const totalPg = ((data as Record<string, unknown>)["total_pages"] as number | undefined) ?? ((data as Record<string, unknown>)["totalPages"] as number | undefined) ?? 0;
-          setTotalResults(totalEl);
-          setTotalPages(totalPg);
+          // Slice support: hasNext/last/has_next without totalElements (no COUNT)
+          const hasNextRaw = (data as Record<string, unknown>)["has_next"] ?? (data as Record<string, unknown>)["hasNext"] ?? (data as Record<string, unknown>)["has_next"] ;
+          const lastRaw = (data as Record<string, unknown>)["last"] as boolean | undefined;
+          const totalEl = ((data as Record<string, unknown>)["total_elements"] as number | undefined) ?? ((data as Record<string, unknown>)["totalElements"] as number | undefined);
+          const totalPg = ((data as Record<string, unknown>)["total_pages"] as number | undefined) ?? ((data as Record<string, unknown>)["totalPages"] as number | undefined);
+          if (totalEl !== undefined && totalPg !== undefined) {
+            setTotalResults(totalEl);
+            setTotalPages(totalPg);
+          } else if (hasNextRaw !== undefined || lastRaw !== undefined) {
+            const hasNext = hasNextRaw !== undefined ? Boolean(hasNextRaw) : lastRaw === false;
+            setTotalResults(hasNext ? (pageNum + 1) * pageSize + 1 : pageNum * pageSize + content.length);
+            setTotalPages(hasNext ? pageNum + 2 : pageNum + 1);
+          } else {
+            setTotalResults(content.length);
+            setTotalPages(content.length < pageSize ? pageNum + 1 : pageNum + 2);
+          }
         } else if (data && isRecord(data) && Array.isArray((data as Record<string, unknown>)["tutors"])) {
           const arr = (data as Record<string, unknown>)["tutors"] as UserDTO[];
           setTutors(arr);

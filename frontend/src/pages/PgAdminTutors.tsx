@@ -82,7 +82,7 @@ function ApplicationDrawer({ application, onClose }: { application: Record<strin
                 <>
                   <div style={{ padding: 16, display: "flex", gap: 12, alignItems: "flex-start" }}>
                     <div style={{ width: 72, height: 72, borderRadius: 16, overflow: "hidden", background: "var(--color-bg-secondary)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, color: "var(--color-primary)", border: "1px solid var(--color-border)" }}>
-                      {avatar ? <img src={String(avatar)} alt={fullName} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : fullName.slice(0,2).toUpperCase()}
+                      {avatar ? <img loading="lazy" decoding="async" src={String(avatar)} alt={fullName} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : fullName.slice(0,2).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800, fontSize: 16, color: "var(--color-text)", lineHeight: 1.2 }}>{fullName}</div>

@@ -5,10 +5,10 @@ describe("navigation", () => {
   it("getDashboardPath returns correct paths", () => {
     expect(getDashboardPath("ADMIN")).toBe("/admin");
     expect(getDashboardPath("SUPER_ADMIN")).toBe("/admin");
-    // USER hub: /dashboard (USER остаётся USER, RESUME определяет обращения)
-    expect(getDashboardPath("USER")).toBe("/dashboard");
-    expect(getDashboardPath("TUTOR")).toBe("/dashboard");
-    expect(getDashboardPath("STUDENT")).toBe("/dashboard");
+    // App hub: /app/dashboard (Public "/" is landing, authenticated -> /app)
+    expect(getDashboardPath("USER")).toBe("/app/dashboard");
+    expect(getDashboardPath("TUTOR")).toBe("/app/dashboard");
+    expect(getDashboardPath("STUDENT")).toBe("/app/dashboard");
     expect(getDashboardPath(undefined)).toBe("/");
     expect(getDashboardPath(null)).toBe("/");
   });

@@ -55,6 +55,15 @@ const DashboardLayout = ({ children, title, subtitle }) => {
     }
   }, [sidebarOpen]);
 
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "openSidebar") setSidebarOpen(true);
+      if (e.data?.type === "closeSidebar") setSidebarOpen(false);
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
   const showDrawerSidebar = isMobile;
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
@@ -82,7 +91,7 @@ const DashboardLayout = ({ children, title, subtitle }) => {
         )}
 
         <main className="dashboard-main" id="main-content">
-          {showDrawerSidebar && (
+          {showDrawerSidebar && location.pathname !== "/dashboard" && (
             <div className="dashboard-header-mobile">
               <button
                 className="sidebar-toggle"
@@ -103,7 +112,7 @@ const DashboardLayout = ({ children, title, subtitle }) => {
               )}
             </div>
           )}
-          <div className="dashboard-content-area">
+          <div className={`dashboard-content-area ${location.pathname === "/dashboard" ? "dashboard-content-area--flush" : ""}`}>
             {children || <Outlet />}
           </div>
         </main>

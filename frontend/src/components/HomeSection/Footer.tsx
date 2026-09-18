@@ -15,7 +15,7 @@ const Footer = () => {
       <div className="footer-container">
         {/* Логотип и заголовок - как на макете Image 3 */}
         <div className="footer-logo">
-          <img src={logoBlue} alt={t("footer.logo_alt", "Okututor Logo")} className="logo-image" style={{ height: 36 }} />
+          <img loading="lazy" decoding="async" src={logoBlue} alt={t("footer.logo_alt", "Okututor Logo")} className="logo-image" style={{ height: 36 }} />
           <div className="footer-logo-text">
             <p style={{ margin: 0, fontWeight: 700, fontSize: 18, color: "var(--color-text)" }}>Okututor</p>
             <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--color-text-secondary)" }}>{t("footer.learning_and_teaching")}</p>
@@ -31,12 +31,12 @@ const Footer = () => {
         <div className="social-icons">
           <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
             <div className="social-icon">
-              <img src={linkedIn} alt="LinkedIn" />
+              <img loading="lazy" decoding="async" src={linkedIn} alt="LinkedIn" />
             </div>
           </a>
           <a href="https://t.me/okututor" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
             <div className="social-icon">
-              <img src={telegram} alt="telegram" />
+              <img loading="lazy" decoding="async" src={telegram} alt="telegram" />
             </div>
           </a>
           <a
@@ -46,7 +46,7 @@ const Footer = () => {
             aria-label="Instagram"
           >
             <div className="social-icon">
-              <img src={instagram} alt="instagram" />
+              <img loading="lazy" decoding="async" src={instagram} alt="instagram" />
             </div>
           </a>
         </div>

@@ -4,9 +4,17 @@
 
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}${DB_URL_PARAMS:}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 25
+      minimum-idle: 5
+      connection-timeout: 5000
+      idle-timeout: 60000
+      max-lifetime: 280000
+      keepalive-time: 30000
+      validation-timeout: 1000
 
 app:
   jwt:

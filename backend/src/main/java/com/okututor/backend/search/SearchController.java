@@ -22,8 +22,12 @@ public class SearchController {
         this.tutorSearchService = tutorSearchService;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.okututor.backend.common.ratelimit.RateLimitService rateLimitService;
+
     @GetMapping("/tutors")
     public PageResponse<com.okututor.backend.tutor.dto.TutorProfileResponse> searchTutors(
+            jakarta.servlet.http.HttpServletRequest request,
             @RequestParam(required = false) @Size(max = 200) String q,
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) String level,
@@ -44,6 +48,12 @@ public class SearchController {
         String tt = tutorType != null ? tutorType : tutorTypeAlias;
         BigDecimal pf = minPrice != null ? minPrice : priceFrom;
         BigDecimal pt = maxPrice != null ? maxPrice : priceTo;
+        if (rateLimitService != null) {
+            try {
+                String ip = request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For").split(",")[0].trim() : request.getRemoteAddr();
+                rateLimitService.checkSearch(ip);
+            } catch (Exception ignored) {}
+        }
         var result = tutorSearchService.search(q, subject, city, tt, pf, pt, online, offline, language, level, district, sort, page, size);
         return PageResponse.of(result);
     }

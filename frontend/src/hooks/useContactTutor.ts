@@ -79,7 +79,7 @@ export default function useContactTutor(options: UseContactTutorOptions = {}) {
         const result = await mutation.mutateAsync(tutorId);
         setState("success");
         const convId = result.id;
-        navigate(`/conversations/${convId}`);
+        navigate(`/app/messages/${convId}`);
         return { needsAuth: false as const, conversationId: convId };
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Не удалось открыть чат";
@@ -93,7 +93,7 @@ export default function useContactTutor(options: UseContactTutorOptions = {}) {
             if (found) {
               const cid = String(found["id"] ?? "");
               if (cid) {
-                navigate(`/conversations/${cid}`);
+                navigate(`/app/messages/${cid}`);
                 setState("success");
                 return { needsAuth: false as const, conversationId: cid };
               }

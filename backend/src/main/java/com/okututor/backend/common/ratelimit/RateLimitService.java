@@ -76,6 +76,14 @@ public class RateLimitService {
         acquire("tutor-request-user:" + userId, 10, Duration.ofHours(1));
     }
 
+    public void checkSearch(String ip) {
+        acquire("search:" + ip, 60, Duration.ofMinutes(1));
+    }
+
+    public void checkPublicListing(String ip) {
+        acquire("public-listing:" + ip, 100, Duration.ofMinutes(1));
+    }
+
     public void checkVerifyReset(String ip) {
         acquire("verify-reset:" + ip, 10, Duration.ofMinutes(5));
     }

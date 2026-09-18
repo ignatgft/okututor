@@ -645,6 +645,9 @@ function TutorResumeCardInner({ tutor, onContact }: Props) {
           .tutor-resume-share-wrap { width: auto !important; }
           .tutor-resume-main { border-left: 1px solid var(--color-border, #e5e7eb); }
         }
+        [data-theme="dark"] .tutor-resume-card { background: #111111 !important; border-color: #222 !important; }
+        [data-theme="dark"] .tutor-resume-card .tutor-resume-top { border-color: #222 !important; }
+        [data-theme="dark"] .tutor-resume-btn-secondary { background: #1a1a1a !important; border-color: #2a2a2a !important; color: #e5e5e5 !important; }
       `}</style>
       <ContactAuthSheet isOpen={showAuthSheet} tutorName={fullName} onClose={() => setShowAuthSheet(false)} />
     </article>

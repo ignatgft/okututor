@@ -292,6 +292,34 @@ public class ObservabilityMetrics {
         Timer.builder("okututor_tutor_search_duration").register(registry).record(millis, TimeUnit.MILLISECONDS);
     }
 
+    public void tutorListDbDuration(long millis) {
+        Timer.builder("okututor_tutor_list_db_duration").register(registry).record(millis, TimeUnit.MILLISECONDS);
+    }
+
+    public void tutorListCacheGetDuration(long millis) {
+        Timer.builder("okututor_tutor_list_cache_get_duration").register(registry).record(millis, TimeUnit.MILLISECONDS);
+    }
+
+    public void tutorListMappingDuration(long millis) {
+        Timer.builder("okututor_tutor_list_mapping_duration").register(registry).record(millis, TimeUnit.MILLISECONDS);
+    }
+
+    public void tutorSearchDbDuration(long millis) {
+        Timer.builder("okututor_tutor_search_db_duration").register(registry).record(millis, TimeUnit.MILLISECONDS);
+    }
+
+    public void cacheHit(String cache) {
+        Counter.builder("okututor_cache_hit_total").tag("cache", cache).register(registry).increment();
+    }
+
+    public void cacheMiss(String cache) {
+        Counter.builder("okututor_cache_miss_total").tag("cache", cache).register(registry).increment();
+    }
+
+    public void cacheError(String cache, String op) {
+        Counter.builder("okututor_cache_error_total").tag("cache", cache).tag("op", op).register(registry).increment();
+    }
+
     // ---------------- errors ----------------
 
     public void error(String type) {

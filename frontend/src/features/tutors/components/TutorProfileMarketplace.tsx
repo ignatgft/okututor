@@ -11,10 +11,69 @@ import ContactAuthSheet from "../../../components/ContactAuthSheet";
 import { tutorTypeLabel, isStudentTutor } from "../../../constants/tutorTypes";
 import { applyTutorSeo, clearTutorSeo } from "../../../utils/seo";
 import { tutorSlug } from "../../../utils/slug";
+import { MARKETPLACE_SUBJECTS, MARKETPLACE_CITIES } from "../../../constants/cities";
+import { TUTOR_LANGUAGES } from "../../../constants/course";
 import "../../../styles/TutorProfile.css";
 
+const SUBJECT_MAP = new Map(MARKETPLACE_SUBJECTS.map((s) => [s.value.toLowerCase(), s.labelRu] as const));
+const CITY_MAP = new Map(MARKETPLACE_CITIES.map((c) => [c.value.toLowerCase(), c.labelRu] as const));
+const LEVEL_MAP: Record<string, string> = {
+  university: "ВУЗ",
+  school: "Школьный",
+  beginner: "Начинающий",
+  advanced: "Продвинутый",
+  ort: "ОРТ",
+  "grade-1-4": "1–4 класс",
+  "grade-5-6": "5–6 класс",
+  "grade-7-11": "7–11 класс",
+  adult: "Взрослые",
+};
+const LANG_MAP = new Map(TUTOR_LANGUAGES.map((l) => [l.value.toLowerCase(), l.value] as const));
+function mapSubject(slug: string): string {
+  const k = slug.toLowerCase().trim();
+  if (SUBJECT_MAP.has(k)) return SUBJECT_MAP.get(k)!;
+  for (const s of MARKETPLACE_SUBJECTS) if (s.synonyms?.some((syn) => syn.toLowerCase() === k)) return s.labelRu;
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+function mapCity(slug: string): string {
+  const k = slug.toLowerCase().trim();
+  return CITY_MAP.get(k) ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
+}
+function mapLevel(slug: string): string {
+  return LEVEL_MAP[slug.toLowerCase()] ?? slug;
+}
+function mapLanguage(v: string): string {
+  const k = v.toLowerCase().trim();
+  for (const l of TUTOR_LANGUAGES) if (l.value.toLowerCase() === k) return l.value === "Kyrgyz" ? "Кыргызский" : l.value === "Russian" ? "Русский" : l.value === "English" ? "Английский" : l.value === "Turkish" ? "Турецкий" : l.value === "Uzbek" ? "Узбекский" : l.value;
+  return v;
+}
+
+function getLocalizedName(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    return String(obj.nameRu ?? obj.name ?? obj.slug ?? obj.value ?? "");
+  }
+  return "";
+}
+
+function normalizeDisplayValue(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return (value as unknown[]).map(getLocalizedName).filter(Boolean).join(", ");
+  return getLocalizedName(value);
+}
+
 function getField(tutor: Record<string, unknown>, keys: string[]): string {
-  for (const k of keys) if (tutor[k] != null && String(tutor[k]).trim() !== "") return String(tutor[k]);
+  for (const k of keys) {
+    const v = tutor[k];
+    if (v == null) continue;
+    const normalized = normalizeDisplayValue(v);
+    if (normalized.trim() !== "") return normalized;
+    // fallback for primitives
+    const s = String(v).trim();
+    if (s !== "" && s !== "[object Object]") return s;
+  }
   return "";
 }
 
@@ -153,9 +212,9 @@ export default function TutorProfileMarketplace() {
       }
       toast.success(t("marketplace.request_sent", "Обращение отправлено!") as string);
       setContactOpen(false);
-      if (conversationId) navigate(`/dashboard/requests/${conversationId}`);
-      else if (requestId) navigate(`/dashboard/requests/${requestId}`); // fallback: requestId itself (ChatService will resolve)
-      else navigate("/dashboard/requests");
+      if (conversationId) navigate(`/app/messages/${conversationId}`);
+      else if (requestId) navigate(`/app/messages/${requestId}`); // fallback: requestId itself (ChatService will resolve)
+      else navigate("/app/messages");
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
@@ -199,7 +258,7 @@ export default function TutorProfileMarketplace() {
           <ol>
             <li><Link to="/">{t("search.breadcrumb_home", "Главная")}</Link></li>
             <li><Link to="/tutors">{t("search.breadcrumb_search", "Репетиторы")}</Link></li>
-            {subject && <li><Link to={`/tutors?subject=${encodeURIComponent(subjects[0] ?? subject)}`}>{subjects[0] ?? subject}</Link></li>}
+            {subject && <li><Link to={`/tutors?subject=${encodeURIComponent(subjects[0] ?? subject)}`}>{mapSubject(subjects[0] ?? subject)}</Link></li>}
             <li aria-current="page">{name}</li>
           </ol>
         </nav>
@@ -218,15 +277,15 @@ export default function TutorProfileMarketplace() {
             )}
 
             <div style={{ marginTop: 16, display: "grid", gap: 8, fontSize: "var(--font-size-base)", color: "var(--color-text-secondary)" }}>
-              {subjects.length > 0 && <p style={{ margin: 0 }}><strong>{t("profile.subjects", "Предметы")}:</strong> {subjects.join(", ")}</p>}
-              {levels.length > 0 && <p style={{ margin: 0 }}><strong>Уровни:</strong> {levels.join(", ")}</p>}
-              {city && <p style={{ margin: 0 }}><strong>{t("profile.location", "Город")}:</strong> {city}</p>}
+              {subjects.length > 0 && <p style={{ margin: 0 }}><strong>{t("profile.subjects", "Предметы")}:</strong> {subjects.map(mapSubject).join(", ")}</p>}
+              {levels.length > 0 && <p style={{ margin: 0 }}><strong>Уровни:</strong> {levels.map(mapLevel).join(", ")}</p>}
+              {city && <p style={{ margin: 0 }}><strong>{t("profile.location", "Город")}:</strong> {mapCity(city)}</p>}
               {format && <p style={{ margin: 0 }}><strong>Формат:</strong> {t(`search.${String(format).toLowerCase()}`, String(format))}</p>}
               {price && <p style={{ margin: 0 }}><strong>Цена:</strong> {price} {currency}/час</p>}
               {education && <p style={{ margin: 0 }}><strong>{t("profile.education", "Образование")}:</strong> {education}</p>}
               {university && <p style={{ margin: 0 }}><strong>ВУЗ:</strong> {university}</p>}
               {experience && <p style={{ margin: 0 }}><strong>{t("profile.experience", "Опыт")}:</strong> {experience} {t("profile.years", "лет")}</p>}
-              {languages.length > 0 && <p style={{ margin: 0 }}><strong>Языки:</strong> {languages.join(", ")}</p>}
+              {languages.length > 0 && <p style={{ margin: 0 }}><strong>Языки:</strong> {languages.map(mapLanguage).join(", ")}</p>}
               {achievements.length > 0 && <p style={{ margin: 0 }}><strong>Достижения:</strong> {achievements.join(", ")}</p>}
             </div>
 

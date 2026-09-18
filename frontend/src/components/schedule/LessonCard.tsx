@@ -87,7 +87,7 @@ export const LessonCard = memo(function LessonCard({
           <p className="lesson-card-tutor">
             <span className="tutor-avatar" aria-hidden="true">
               {isLessonDTO && lesson.tutorAvatar ? (
-                <img src={lesson.tutorAvatar} alt="" />
+                <img loading="lazy" decoding="async" src={lesson.tutorAvatar} alt="" />
               ) : (
                 (isLessonDTO ? lesson.tutorName : "tutorName" in lesson ? lesson.tutorName : "")?.charAt(0).toUpperCase() || "?"
               )}

@@ -161,3 +161,12 @@
 .calendar-cell.empty {
   pointer-events: none;
 }
+
+@media (max-width: 768px) {
+  .calendar-picker-trigger { min-height: var(--touch-target, 44px); padding: 10px 12px; font-size: var(--font-size-base); }
+  .calendar-picker-popover { max-width: calc(100vw - 32px); }
+}
+@media (max-width: 480px) {
+  .calendar-picker-popover { position: fixed; inset: auto 8px 8px 8px; max-width: none; width: auto; border-radius: var(--radius-lg); max-height: 85vh; overflow-y: auto; }
+  .calendar-picker-trigger { min-height: 48px; font-size: 1rem; }
+}

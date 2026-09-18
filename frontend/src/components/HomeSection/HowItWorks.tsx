@@ -42,7 +42,7 @@ const HowItWorks = () => {
           <div key={step.number} className="how-it-works-card">
             <div className="step-number">{step.number}</div>
             <div className="step-image">
-              <img src={step.image} alt={`Step ${step.number}`} />
+              <img loading="lazy" decoding="async" src={step.image} alt={`Step ${step.number}`} />
             </div>
             <div className="cart-content">
               <h3 className="step-title">{step.title}</h3>

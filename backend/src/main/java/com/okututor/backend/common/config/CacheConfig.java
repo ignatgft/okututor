@@ -48,27 +48,36 @@ public class CacheConfig extends org.springframework.cache.annotation.CachingCon
             mapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
             // tolerate lazy proxies / unknown types for cached DTOs
             mapper.configure(com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+            // Store DTOs only, never PageImpl — type-safe JSON
             GenericJackson2JsonRedisSerializer jsonSer = new GenericJackson2JsonRedisSerializer(mapper);
             RedisCacheConfiguration defaultCfg = RedisCacheConfiguration.defaultCacheConfig()
                     .entryTtl(Duration.ofMinutes(2))
                     .disableCachingNullValues()
                     .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jsonSer));
+            // jitter: base TTL + 0-15% to avoid thundering herd on expiry
+            java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
             return RedisCacheManager.builder(redisFactory.get())
                     .cacheDefaults(defaultCfg)
-                    .withCacheConfiguration("tutorPublicList", defaultCfg.entryTtl(Duration.ofMinutes(1)))
-                    .withCacheConfiguration("tutorSearch", defaultCfg.entryTtl(Duration.ofSeconds(45)))
-                    .withCacheConfiguration("tutorPopular", defaultCfg.entryTtl(Duration.ofMinutes(1)))
+                    .withCacheConfiguration("tutorPublicList:v2", defaultCfg.entryTtl(Duration.ofSeconds(60 + rnd.nextInt(10))))
+                    .withCacheConfiguration("tutorSearch:v2", defaultCfg.entryTtl(Duration.ofSeconds(45 + rnd.nextInt(8))))
+                    .withCacheConfiguration("tutorPopular:v2", defaultCfg.entryTtl(Duration.ofSeconds(60 + rnd.nextInt(10))))
                     .withCacheConfiguration("referenceData", defaultCfg.entryTtl(Duration.ofHours(1)))
                     .withCacheConfiguration("seoSitemap", defaultCfg.entryTtl(Duration.ofMinutes(10)))
                     .withCacheConfiguration("cities", defaultCfg.entryTtl(Duration.ofHours(1)))
                     .withCacheConfiguration("subjects", defaultCfg.entryTtl(Duration.ofHours(1)))
                     .withCacheConfiguration("levels", defaultCfg.entryTtl(Duration.ofHours(1)))
                     .withCacheConfiguration("tutorCard", defaultCfg.entryTtl(Duration.ofMinutes(5)))
+                    .enableStatistics()
                     .build();
         }
-        // fallback in-memory (dev without Redis) — TTL handled via manual evict, prevents OOM via no allEntries on views
-        ConcurrentMapCacheManager manager = new ConcurrentMapCacheManager(
-                "tutorPublicList", "tutorSearch", "tutorPopular", "referenceData", "seoSitemap", "cities", "subjects", "levels", "tutorCard");
-        return manager;
+        // fallback Caffeine in-memory (dev without Redis) — bounded, TTL, prevents OOM at 100k keys
+        com.github.benmanes.caffeine.cache.Caffeine<Object, Object> caffeine = com.github.benmanes.caffeine.cache.Caffeine.newBuilder()
+                .maximumSize(2000)
+                .expireAfterWrite(Duration.ofMinutes(1))
+                .recordStats();
+        org.springframework.cache.caffeine.CaffeineCacheManager caffeineManager = new org.springframework.cache.caffeine.CaffeineCacheManager();
+        caffeineManager.setCaffeine(caffeine);
+        caffeineManager.setCacheNames(java.util.List.of("tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2", "referenceData", "seoSitemap", "cities", "subjects", "levels", "tutorCard"));
+        return caffeineManager;
     }
 }

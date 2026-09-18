@@ -15,14 +15,17 @@ public class RedisRateLimiter implements RateLimiter {
         this.redis = redis;
     }
 
+    private static final org.springframework.data.redis.core.script.DefaultRedisScript<Long> LUA =
+            new org.springframework.data.redis.core.script.DefaultRedisScript<>(
+                    "local c = redis.call('INCR', KEYS[1]); if c==1 then redis.call('PEXPIRE', KEYS[1], ARGV[2]) end; return c;", Long.class);
+
     @Override
     public boolean tryAcquire(String key, int limit, Duration window) {
         String redisKey = "rl:" + key;
-        String bucketKey = redisKey + ":" + (System.currentTimeMillis() / window.toMillis());
-        Long count = redis.opsForValue().increment(bucketKey);
-        if (count != null && count == 1L) {
-            redis.expire(bucketKey, window);
-        }
+        // hash PII (email) to avoid plaintext in Redis MONITOR/KEYS
+        String safeKey = redisKey.length() > 200 ? "rl:hash:" + org.springframework.util.DigestUtils.md5DigestAsHex(key.getBytes()) : redisKey;
+        String bucketKey = safeKey + ":" + (System.currentTimeMillis() / window.toMillis());
+        Long count = redis.execute(LUA, java.util.List.of(bucketKey), String.valueOf(limit), String.valueOf(window.toMillis()));
         return count == null || count <= limit;
     }
 }

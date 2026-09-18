@@ -76,9 +76,9 @@ export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unkn
       onClose();
       if (onSuccess) onSuccess();
       // if contact intent pending, let RestoreContactIntent handle navigation to chat,
-      // otherwise go to dashboard
+      // otherwise go to app dashboard
       if (getContactIntent()) return;
-      navigate("/dashboard", { replace: true });
+      navigate("/app/dashboard", { replace: true });
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -171,7 +171,7 @@ export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unkn
         <div className="auth-divider"><span>{t("auth.or", "или")}</span></div>
 
         <button className="google-btn" onClick={handleGoogleLogin} type="button">
-          <img src={googleIcon} alt="Google" width={20} />
+          <img loading="lazy" decoding="async" src={googleIcon} alt="Google" width={20} />
           {t("register.continue_google", "Продолжить через Google")}
         </button>
 

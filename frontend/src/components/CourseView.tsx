@@ -243,7 +243,7 @@ const CourseView = () => {
 
       <div className="course-meta">
             <div className="tutor-avatar">
-              <img
+              <img loading="lazy" decoding="async"
                 src={teacherAvatar || getDefaultAvatar(teacherName)}
                 alt={teacherName}
                 className="course-avatar"
@@ -409,7 +409,7 @@ const CourseView = () => {
           reviews.map((r) => (
             <div key={r.id ?? r._id ?? r.student_name} className="review-box">
               <div className="review-header">
-                <img
+                <img loading="lazy" decoding="async"
                   src={r.student_avatar || getDefaultAvatar(r.student_name || "Student")}
                   alt={r.student_name || "Student"}
                   className="review-avatar"

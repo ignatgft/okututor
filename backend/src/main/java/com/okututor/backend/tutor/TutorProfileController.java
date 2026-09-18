@@ -56,6 +56,7 @@ public class TutorProfileController {
     // Spec alias: GET /api/tutors/resumes — Instagram feed
     @GetMapping({"/tutors", "/tutors/resumes", "/tutor-profiles", "/tutors/resumes/"})
     public Page<TutorProfileResponse> listing(@RequestParam(required = false) String q,
+                                              jakarta.servlet.http.HttpServletRequest request,
                                               @RequestParam(required = false) String subject,
                                               @RequestParam(required = false) String level,
                                               @RequestParam(required = false) String city,
@@ -76,8 +77,13 @@ public class TutorProfileController {
                                               @RequestParam(required = false) UUID district_id,
                                               @RequestParam(required = false) BigDecimal price_from,
                                               @RequestParam(required = false) BigDecimal price_to,
-                                              @RequestParam(defaultValue = "0") int page,
-                                              @RequestParam(defaultValue = "20") int size) {
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "20") int size) {
+        // rate limiting public listing 100/min per IP
+        try {
+            String ip = request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For").split(",")[0].trim() : request.getRemoteAddr();
+            rateLimitService.checkPublicListing(ip);
+        } catch (Exception ignored) {}
         // unify aliases
         String tutorType = tutorTypeParam != null ? tutorTypeParam : (tutorTypeAlias != null ? tutorTypeAlias : tutor_type);
         BigDecimal priceFrom = minPrice != null ? minPrice : (priceFromAlias != null ? priceFromAlias : price_from);
@@ -99,6 +105,32 @@ public class TutorProfileController {
         }
         // legacy path without q
         return service.publicListing(page, size, tutorType, city_id, district_id, online, offline, priceFrom, priceTo);
+    }
+
+    // Slice pagination — no COUNT, for infinite scroll (hasNext + offset still, но без total)
+    @GetMapping({"/tutors/slice", "/tutor-profiles/slice"})
+    public org.springframework.data.domain.Slice<TutorProfileResponse> slice(
+            @RequestParam(required = false) String tutor_type,
+            @RequestParam(required = false) UUID city_id,
+            @RequestParam(required = false) UUID district_id,
+            @RequestParam(required = false) Boolean online,
+            @RequestParam(required = false) Boolean offline,
+            @RequestParam(required = false) BigDecimal price_from,
+            @RequestParam(required = false) BigDecimal price_to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        int capped = Math.min(Math.max(size, 1), 50);
+        if (tutor_type != null) tutor_type = tutor_type.trim();
+        return service.publicSlice(page, capped, tutor_type, city_id, district_id, online, offline, price_from, price_to);
+    }
+
+    // Cursor pagination — keyset, no OFFSET, no COUNT, deterministic order publishedAt DESC, id DESC
+    @GetMapping({"/tutors/cursor", "/tutor-profiles/cursor"})
+    public com.okututor.backend.tutor.dto.TutorSliceResponse<TutorProfileResponse> cursor(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        int capped = Math.min(Math.max(size, 1), 50);
+        return service.publicCursor(cursor, capped, null, null, null, null, null, null, null);
     }
 
     // Популярные репетиторы — для блока "Самые популярные репетиторы" на главной
@@ -243,7 +275,7 @@ public class TutorProfileController {
     }
 
     // ---- Фото резюме (отдельно от аватара, PROFILE kind) ----
-    @org.springframework.cache.annotation.CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     @PostMapping(value = {"/tutors/me/photo", "/tutor-profiles/me/photo"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, String> uploadResumePhoto(@AuthenticationPrincipal UserPrincipal principal,
                                                  @RequestParam("file") MultipartFile file) {
@@ -259,7 +291,7 @@ public class TutorProfileController {
         return Map.of("photoUrl", url, "photo_url", url, "url", url);
     }
 
-    @org.springframework.cache.annotation.CacheEvict(value = {"tutorPublicList", "tutorSearch", "tutorPopular"}, allEntries = true)
+    @org.springframework.cache.annotation.CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     @DeleteMapping({"/tutors/me/photo", "/tutor-profiles/me/photo"})
     public ResponseEntity<Void> deleteResumePhoto(@AuthenticationPrincipal UserPrincipal principal) {
         requireAuth(principal);

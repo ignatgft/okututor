@@ -58,7 +58,7 @@ export default function PgResumePreview(): JSX.Element {
   return (
     <div style={{ display: "grid", gap: 16, maxWidth: 1000, margin: "0 auto", width: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "space-between" }}>
-        <Link to="/dashboard/resume" className="btn-ghost" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
+        <Link to="/app/resumes" className="btn-ghost" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
           <ArrowLeft size={16} /> {t("common.back", "Назад")}
         </Link>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

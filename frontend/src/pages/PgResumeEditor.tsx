@@ -224,7 +224,7 @@ export default function PgResumeEditor(): JSX.Element {
         queryClient.invalidateQueries({ queryKey: ["admin", "tutorProfiles"] }),
         refetch(),
       ]);
-      navigate("/dashboard/resume");
+      navigate("/app/resumes");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err));
     } finally {
@@ -265,7 +265,7 @@ export default function PgResumeEditor(): JSX.Element {
 
       {activeSection && (
         <div style={{ marginBottom: "var(--space-4)", display: "flex", alignItems: "center", gap: 8 }}>
-          <button type="button" onClick={() => navigate("/dashboard/resume/edit")} className="btn btn-ghost" style={{ fontSize: 13 }}>← {t("common.all_sections", "Все разделы") as string}</button>
+          <button type="button" onClick={() => navigate("/app/resumes/edit")} className="btn btn-ghost" style={{ fontSize: 13 }}>← {t("common.all_sections", "Все разделы") as string}</button>
           <span style={{ fontSize: 13, color: "var(--color-text-muted)", textTransform: "capitalize" }}>{activeSection}</span>
         </div>
       )}
@@ -483,7 +483,7 @@ export default function PgResumeEditor(): JSX.Element {
         </div>
 
         <div className="resume-footer">
-          <button type="button" onClick={() => navigate("/dashboard/resume")} className="btn btn-secondary">
+          <button type="button" onClick={() => navigate("/app/resumes")} className="btn btn-secondary">
             <X size={16} /> Отмена
           </button>
           <button type="submit" disabled={saving} className="btn btn-primary" style={{ opacity: saving ? 0.7 : 1 }}>

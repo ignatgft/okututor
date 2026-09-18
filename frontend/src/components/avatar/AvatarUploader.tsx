@@ -95,7 +95,7 @@ export default function AvatarUploader({ src, name, onSaved, onRemoved }: Record
     <div className="avatar-uploader">
       <div className="avatar-uploader-preview">
         {src ? (
-          <img className="avatar-uploader-img" src={src} alt={t("profile.avatar_alt", "User avatar")} />
+          <img loading="lazy" decoding="async" className="avatar-uploader-img" src={src} alt={t("profile.avatar_alt", "User avatar")} />
         ) : (
           <span className="avatar-uploader-fallback" aria-hidden="true">{getInitials(name) || "?"}</span>
         )}

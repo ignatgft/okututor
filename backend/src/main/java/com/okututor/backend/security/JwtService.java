@@ -27,11 +27,14 @@ public class JwtService {
     public String generateAccessToken(UUID userId, String email, Role role) {
         Instant now = Instant.now();
         return Jwts.builder()
+                .issuer("okututor")
+                .audience().add("okututor-api").and()
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role.name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(accessTtl)))
+                .id(UUID.randomUUID().toString())
                 .signWith(key)
                 .compact();
     }
@@ -43,6 +46,8 @@ public class JwtService {
     public Claims parse(String token) {
         return Jwts.parser()
                 .verifyWith(key)
+                .requireIssuer("okututor")
+                .requireAudience("okututor-api")
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

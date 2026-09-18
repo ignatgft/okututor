@@ -4,7 +4,7 @@
  * Uses existing API client + React Query, not Zustand for messages
  */
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useConversations } from "../features/chat/hooks/useConversations";
 import { useMessages, useSendMessage, useMarkConversationRead } from "../features/chat/hooks/useMessages";
@@ -53,11 +53,13 @@ export default function PgMarketplaceChat(): JSX.Element {
   }, [activeId, activeConversation, messages.length, markRead]);
 
   const handleSelect = (c: { id: string }) => {
-    navigate(`/dashboard/requests/${c.id}`);
+    const prefix = window.location.pathname.startsWith("/app") ? "/app/messages" : "/dashboard/requests";
+    navigate(`${prefix}/${c.id}`);
   };
 
   const handleBack = () => {
-    navigate("/dashboard/requests");
+    const prefix = window.location.pathname.startsWith("/app") ? "/app/messages" : "/dashboard/requests";
+    navigate(prefix);
   };
 
   const handleSend = async (body: string) => {
@@ -67,9 +69,14 @@ export default function PgMarketplaceChat(): JSX.Element {
     // polling will refetch, but we also invalidate via hook
   };
 
-  // Responsive: desktop shows both, mobile shows list or chat
-  // We use CSS to handle desktop 2-pane vs mobile single; JS also decides initial view
-  const isMobileView = typeof window !== "undefined" ? window.innerWidth < 768 : false;
+  // Responsive: desktop shows both, mobile shows list OR chat (исправлено — реактивно)
+  const [isMobileView, setIsMobileView] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  useEffect(() => {
+    const h = () => setIsMobileView(window.innerWidth < 768);
+    h();
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
   const showList = !isMobileView || !activeId;
   const showChat = !isMobileView || Boolean(activeId);
 

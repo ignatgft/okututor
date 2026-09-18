@@ -23,7 +23,7 @@ export default function RestoreContactIntent(): null {
           const convId = (data as Record<string, unknown>)["id"] as string;
           clearContactIntent();
           if (convId) {
-            navigate(`/conversations/${convId}`);
+            navigate(`/app/messages/${convId}`);
             return;
           }
         }

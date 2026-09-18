@@ -1,10 +1,13 @@
 /* Wizard — matches Image 1 (personal) + Image 2 (photo) */
 .wizard-page {
-  max-width: 560px;
+  max-width: 640px;
   margin: 0 auto;
   padding: 24px 16px 32px;
   min-height: 100vh;
   background: var(--color-background, #F7F9FC);
+}
+.wizard-page.wizard-page--wide {
+  max-width: 720px;
 }
 .wizard-back {
   display: inline-flex;
@@ -122,7 +125,23 @@
   width: 100%;
 }
 .wizard-field input::placeholder { color: #9AA3B2; font-weight: 400; }
-.wizard-field select { cursor: pointer; }
+.wizard-field select { cursor: pointer; background: var(--color-surface, #fff); }
+.wizard-field select option {
+  background: #fff;
+  color: #101727;
+  padding: 10px 14px;
+  font-size: 15px;
+}
+[data-theme="dark"] .wizard-field select,
+[data-theme="dark"] .wizard-field select option {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+/* Красивый dropdown для городов — исправлен черный фон */
+.wizard-field select:focus option:checked {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
 .wizard-field--error { border-color: var(--color-danger, #EF4444) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.10) !important; }
 .wizard-field-error { font-size: 12px; color: var(--color-danger, #EF4444); margin-top: 4px; font-weight: 500; }
 
@@ -178,8 +197,15 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+.wizard-options-grid--expanded {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 768px) {
+  .wizard-options-grid--expanded { grid-template-columns: 1fr 1fr; }
+}
 @media (max-width: 480px) {
   .wizard-options-grid { grid-template-columns: 1fr; }
+  .wizard-options-grid--expanded { grid-template-columns: 1fr; }
 }
 .wizard-option {
   display: flex;

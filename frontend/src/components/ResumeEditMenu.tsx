@@ -92,7 +92,7 @@ export default function ResumeEditMenu({ onClose, resumeId }: Props) {
   }, [open]);
 
   const handleSelect = (section: string) => {
-    const base = resumeId ? `/dashboard/resume/edit?section=${section}` : `/dashboard/resume/edit?section=${section}`;
+    const base = resumeId ? `/app/resumes/edit?section=${section}` : `/app/resumes/edit?section=${section}`;
     navigate(base);
     onClose?.();
     setOpen(false);
@@ -197,7 +197,7 @@ export default function ResumeEditMenu({ onClose, resumeId }: Props) {
         </div>
 
         <div style={{ marginTop: "var(--space-2)", paddingTop: "var(--space-2)", borderTop: "1px solid var(--color-border-light)", display: "flex", gap: "var(--space-2)" }}>
-          <button type="button" onClick={() => { navigate("/dashboard/resume/edit"); onClose?.(); }} className="btn btn-ghost" style={{ flex: 1, fontSize: "var(--font-size-sm)", minHeight: 36 }}>
+          <button type="button" onClick={() => { navigate("/app/resumes/edit"); onClose?.(); }} className="btn btn-ghost" style={{ flex: 1, fontSize: "var(--font-size-sm)", minHeight: 36 }}>
             {t("resume_edit.full_editor", "Полный редактор")}
           </button>
           <button type="button" onClick={() => setOpen(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: "var(--font-size-sm)", minHeight: 36 }}>
@@ -250,7 +250,7 @@ export default function ResumeEditMenu({ onClose, resumeId }: Props) {
               onClose?.();
               try { queryClient.invalidateQueries({ queryKey: ["tutorProfile", "me"] }); } catch {}
               try { queryClient.removeQueries({ queryKey: ["tutorProfile", "me"] }); } catch {}
-              navigate("/dashboard/resume");
+              navigate("/app/resumes");
             } else {
               const msg = (res.data as Record<string, unknown>)?.["message"] as string | undefined
                   ?? (res.data as Record<string, unknown>)?.["error"] as string | undefined
@@ -262,7 +262,7 @@ export default function ResumeEditMenu({ onClose, resumeId }: Props) {
                 onClose?.();
                 try { queryClient.invalidateQueries({ queryKey: ["tutorProfile", "me"] }); } catch {}
                 try { queryClient.removeQueries({ queryKey: ["tutorProfile", "me"] }); } catch {}
-                navigate("/dashboard/resume");
+                navigate("/app/resumes");
               } else {
                 toast.error(msg);
               }
@@ -275,7 +275,7 @@ export default function ResumeEditMenu({ onClose, resumeId }: Props) {
               setOpen(false);
               onClose?.();
               try { queryClient.invalidateQueries({ queryKey: ["tutorProfile", "me"] }); } catch {}
-              navigate("/dashboard/resume");
+              navigate("/app/resumes");
             } else {
               toast.error(msg);
             }

@@ -48,6 +48,7 @@ export function setAnalyticsConsent(granted: boolean): void {
 }
 
 const PRIVATE_PREFIXES = [
+  "/app",
   "/admin",
   "/student",
   "/dashboard",
@@ -62,6 +63,7 @@ const PRIVATE_PREFIXES = [
   "/verify-email",
   "/reset-password",
   "/oauth",
+  "/conversations",
 ];
 
 // Public marketplace: /tutors, /repetitors, /repetitor, /tutor/:slug are public

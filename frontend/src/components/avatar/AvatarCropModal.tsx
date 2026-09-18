@@ -121,7 +121,7 @@ export default function AvatarCropModal({ imageSrc, onCancel, onConfirm }: Recor
             role="img"
             aria-label={t("profile.crop_drag_hint", "Drag to position the photo")}
           >
-            <img
+            <img loading="lazy" decoding="async"
               ref={imgRef}
               className="avatar-crop-image"
               src={imageSrc}

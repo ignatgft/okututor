@@ -21,7 +21,15 @@ const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { openAuth, openRegister } = useUIStore();
 
-  const toggleMenu = () => setIsOpen(!isOpen);
+  const toggleMenu = () => {
+    if (typeof window !== "undefined" && window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: isOpen ? "closeSidebar" : "openSidebar" }, "*");
+      } catch {}
+      return;
+    }
+    setIsOpen(!isOpen);
+  };
   const toggleLanguageDropdown = () => setLanguageOpen((prev) => !prev);
 
   const handleScrollLink = (section) => {
@@ -89,6 +97,23 @@ const Navbar = () => {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
+
+  // AppLayout/PublicLayout already provide headers — hide legacy Navbar everywhere to avoid duplicate headers
+  if (
+    location.pathname.startsWith("/app") ||
+    location.pathname.startsWith("/admin") ||
+    location.pathname === "/" ||
+    location.pathname.startsWith("/tutors") ||
+    location.pathname.startsWith("/tutor") ||
+    location.pathname.startsWith("/repetitor") ||
+    location.pathname.startsWith("/subjects") ||
+    location.pathname.startsWith("/cities") ||
+    location.pathname.startsWith("/search") ||
+    location.pathname.startsWith("/become-tutor") ||
+    location.pathname.startsWith("/legal") ||
+    location.pathname.startsWith("/share")
+  )
+    return null;
 
   return (
     <>
@@ -301,7 +326,7 @@ const Navbar = () => {
                     aria-label={t("navbar.profile", "Profile")}
                   >
                     {user.avatar ? (
-                      <img src={user.avatar} alt={user.full_name} />
+                      <img loading="lazy" decoding="async" src={user.avatar} alt={user.full_name} />
                     ) : (
                       <span>{user.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"}</span>
                     )}
@@ -314,6 +339,12 @@ const Navbar = () => {
                         onClick={() => { setUserMenuOpen(false); navigate("/profile"); }}
                       >
                         {t("navbar.profile", "Мой профиль")}
+                      </button>
+                      <button
+                        className="user-dropdown-item"
+                        onClick={() => { setUserMenuOpen(false); navigate("/dashboard/settings"); }}
+                      >
+                        {t("navbar.settings", "Настройки")}
                       </button>
                       <button
                         className="user-dropdown-item"

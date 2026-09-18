@@ -11,15 +11,22 @@ spring:
     import: optional:file:.env[.properties]
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:okututor}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:okututor}${DB_URL_PARAMS:}
     username: ${DB_USER:okututor}
     password: ${DB_PASSWORD:okututor}
+    replica:
+      url: ${DB_REPLICA_URL:}
+      username: ${DB_REPLICA_USER:${DB_USER:okututor}}
+      password: ${DB_REPLICA_PASSWORD:${DB_PASSWORD:okututor}}
+      enabled: ${DB_REPLICA_ENABLED:false}
     hikari:
-      maximum-pool-size: 20
+      maximum-pool-size: 25
       minimum-idle: 5
-      connection-timeout: 2000
-      idle-timeout: 300000
-      max-lifetime: 600000
+      connection-timeout: 5000
+      idle-timeout: 60000
+      max-lifetime: 280000
+      keepalive-time: 30000
+      validation-timeout: 1000
       leak-detection-threshold: 10000
 
   jpa:
@@ -35,6 +42,8 @@ spring:
         jdbc.fetch_size: 100
         query.in_clause_parameter_padding: true
         query.plan_cache_max_size: 4096
+        jdbc.statement_timeout: 5000
+        transaction.timeout: 10
 
   flyway:
     enabled: true
@@ -47,12 +56,16 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       # пусто = без авторизации (локальный Redis); в prod задаётся REDIS_PASSWORD
       password: ${REDIS_PASSWORD:}
-      timeout: 2000ms
+      timeout: 400ms
+      connect-timeout: 400ms
       lettuce:
         pool:
           max-active: 16
           max-idle: 8
-          max-wait: 1000ms
+          max-wait: 250ms
+        cluster:
+          refresh:
+            adaptive: true
 
   servlet:
     multipart:
@@ -91,6 +104,19 @@ server:
   # корректное завершение in-flight запросов при деплое
   shutdown: graceful
   forward-headers-strategy: native
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
+  tomcat:
+    threads:
+      max: 100
+      min-spare: 20
+    accept-count: 100
+    max-connections: 500
+    connection-timeout: 5s
+    keep-alive-timeout: 10s
+    max-keep-alive-requests: 100
 
 management:
   endpoints:

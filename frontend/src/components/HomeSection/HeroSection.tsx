@@ -39,7 +39,7 @@ const HeroSection = () => {
         </div>
 
         <div className="hero-image-container">
-          <img src={heroSection} alt={t("hero.image_alt", "Student with books")} className="hero-image" fetchpriority="high" decoding="async" />
+          <img loading="eager" src={heroSection} alt={t("hero.image_alt", "Student with books")} className="hero-image" fetchpriority="high" decoding="async" />
         </div>
       </div>
     </section>

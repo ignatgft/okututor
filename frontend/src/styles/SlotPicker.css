@@ -50,3 +50,13 @@
   border-radius: var(--radius-md, 8px);
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .slot-picker { gap: var(--space-2); padding: var(--space-2); max-height: 160px; }
+  .slot-chip { min-width: 60px; padding: 10px 12px; font-size: var(--font-size-sm); }
+}
+@media (max-width: 480px) {
+  .slot-picker { gap: var(--space-1, 6px); padding: var(--space-1); max-height: 140px; }
+  .slot-chip { min-width: 56px; padding: 12px 10px; font-size: 0.9375rem; min-height: var(--touch-target, 44px); }
+  .slot-picker-empty { padding: var(--space-3); font-size: var(--font-size-sm); }
+}

@@ -8,7 +8,6 @@ import { useUIStore } from "../store/uiStore";
 import { tutorsApi } from "../api/tutors.api";
 import { TUTOR_LANGUAGES as LANGUAGES } from "../constants/course";
 import { MARKETPLACE_SUBJECTS, MARKETPLACE_CITIES } from "../constants/cities";
-import Navbar from "../components/Navbar";
 import PhotoDropzone from "../components/photo/PhotoDropzone";
 import { apiClient } from "../api/http";
 import "../styles/Dashboard.css";
@@ -54,6 +53,7 @@ export default function PgBecomeTutor(): JSX.Element {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [customSubject, setCustomSubject] = useState("");
 
   const [form, setForm] = useState({
     full_name: "",
@@ -84,7 +84,11 @@ export default function PgBecomeTutor(): JSX.Element {
     switch (key) {
       case "personal":
         if (!form.full_name.trim()) return t("become_tutor.error_name", "Укажите ФИО") as string;
-        if (form.phone && form.phone.replace(/\D/g, "").length < 9) return "Укажите корректный телефон";
+        if (form.phone) {
+          const digits = form.phone.replace(/\D/g, "");
+          const withoutCountry = digits.startsWith("996") ? digits.slice(3) : digits;
+          if (withoutCountry.length < 9) return "Укажите корректный телефон +996 XXX XXX XXX";
+        }
         return "";
       case "subjects":
         return form.subjects.length > 0 ? "" : (t("become_tutor.error_subjects", "Выберите хотя бы один предмет") as string);
@@ -167,12 +171,10 @@ export default function PgBecomeTutor(): JSX.Element {
   const meta = STEP_META[currentKey];
   const isPreview = currentKey === "preview" || currentKey === "submit";
 
-  // Sales landing — §11
+  // Sales landing — public, PublicLayout already provides header (§11)
   if (!showWizard) {
     return (
-      <>
-        <Navbar />
-        <main id="main-content" style={{ maxWidth: 900, margin: "0 auto", padding: "calc(var(--header-height,64px) + 24px) var(--space-4) var(--space-8)" }}>
+      <main id="main-content" style={{ maxWidth: 900, margin: "0 auto", padding: "24px var(--space-4) var(--space-8)" }}>
           <section style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-xl)", padding: "var(--space-8)", textAlign: "center" }}>
             <h1 style={{ fontSize: "clamp(1.75rem, 4vw, 2.25rem)", marginBottom: 12 }}>{t("become_tutor.title", "Стать репетитором")}</h1>
             <p style={{ fontSize: "var(--font-size-lg)", color: "var(--color-text-secondary)", marginBottom: 8 }}>{t("marketplace.become_sales1", "Ты студент?")}</p>
@@ -208,13 +210,12 @@ export default function PgBecomeTutor(): JSX.Element {
             <button type="button" className="btn-secondary" onClick={() => { if (isAuthenticated) setShowWizard(true); else openAuth(); }}>{t("common.next", "Далее")} → анкета репетитора</button>
           </p>
         </main>
-      </>
     );
   }
 
-  // Wizard shell — matches Image 1 / Image 2
+  // Wizard shell — matches Image 1 / Image 2 — расширен для предметов
   return (
-    <div className="wizard-page">
+    <div className={`wizard-page ${currentKey === "subjects" ? "wizard-page--wide" : ""}`}>
       <button type="button" onClick={() => setShowWizard(false)} className="wizard-back">
         <ArrowLeft size={18} /> Назад
       </button>
@@ -248,7 +249,7 @@ export default function PgBecomeTutor(): JSX.Element {
                     <input
                       id="bt-full_name"
                       type="text"
-                      placeholder="Горборуков Игнат"
+                      placeholder="Например, Асан Усенов"
                       value={form.full_name}
                       onChange={(e) => set({ full_name: e.target.value })}
                       autoComplete="name"
@@ -262,9 +263,17 @@ export default function PgBecomeTutor(): JSX.Element {
                     <input
                       id="bt-phone"
                       type="tel"
-                      placeholder="+7 (___) ___-__-__"
+                      placeholder="+996 (___) ___-___"
                       value={form.phone}
-                      onChange={(e) => set({ phone: e.target.value })}
+                      onChange={(e) => {
+                        let v = e.target.value.replace(/[^0-9+]/g, "");
+                        if (!v.startsWith("+996")) {
+                          if (v.startsWith("996")) v = "+" + v;
+                          else if (v.startsWith("0")) v = "+996" + v.slice(1);
+                          else if (!v.startsWith("+")) v = "+996 " + v.replace(/^\+?996/, "");
+                        }
+                        set({ phone: v });
+                      }}
                       inputMode="tel"
                     />
                   </div>
@@ -289,16 +298,73 @@ export default function PgBecomeTutor(): JSX.Element {
             )}
 
             {currentKey === "subjects" && (
-              <div className="wizard-options-grid">
-                {MARKETPLACE_SUBJECTS.map((s) => {
-                  const selected = form.subjects.includes(s.labelRu);
-                  return (
-                    <label key={s.value} className={`wizard-option ${selected ? "active" : ""}`}>
-                      <input type="checkbox" checked={selected} onChange={() => toggleIn("subjects", s.labelRu)} />
-                      <span>{t(s.labelKey, s.labelRu)}</span>
-                    </label>
-                  );
-                })}
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.5 }}>
+                  Выберите предметы, которые вы преподаёте. Можно выбрать несколько. Если вашего предмета нет в списке — добавьте свой.
+                </p>
+                <div className="wizard-options-grid wizard-options-grid--expanded">
+                  {MARKETPLACE_SUBJECTS.map((s) => {
+                    const selected = form.subjects.includes(s.labelRu);
+                    return (
+                      <label key={s.value} className={`wizard-option ${selected ? "active" : ""}`}>
+                        <input type="checkbox" checked={selected} onChange={() => toggleIn("subjects", s.labelRu)} />
+                        <span>{t(s.labelKey, s.labelRu)}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
+                  <input
+                    type="text"
+                    placeholder="Свой предмет, например: Дизайн"
+                    value={customSubject}
+                    onChange={(e) => setCustomSubject(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const v = customSubject.trim();
+                        if (v && !form.subjects.includes(v)) {
+                          setForm((prev) => ({ ...prev, subjects: [...prev.subjects, v] }));
+                          setCustomSubject("");
+                        }
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "12px 14px",
+                      border: "1.5px solid var(--color-border, #E5E9F0)",
+                      borderRadius: 12,
+                      fontSize: 15,
+                      outline: "none",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = customSubject.trim();
+                      if (v && !form.subjects.includes(v)) {
+                        setForm((prev) => ({ ...prev, subjects: [...prev.subjects, v] }));
+                        setCustomSubject("");
+                      }
+                    }}
+                    className="wizard-btn wizard-btn-secondary"
+                    style={{ minHeight: 44, padding: "0 18px", whiteSpace: "nowrap" }}
+                  >
+                    Добавить
+                  </button>
+                </div>
+                {form.subjects.filter((s) => !MARKETPLACE_SUBJECTS.some((m) => m.labelRu === s)).length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {form.subjects
+                      .filter((s) => !MARKETPLACE_SUBJECTS.some((m) => m.labelRu === s))
+                      .map((s) => (
+                        <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 9999, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1D4ED8", fontSize: 13 }}>
+                          {s}
+                          <button type="button" onClick={() => toggleIn("subjects", s)} style={{ background: "none", border: "none", cursor: "pointer", color: "#1D4ED8", fontWeight: 700 }}>×</button>
+                        </span>
+                      ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -373,14 +439,21 @@ export default function PgBecomeTutor(): JSX.Element {
                     <input id="bt-price" type="number" min={0} value={form.price_per_hour} onChange={(e) => set({ price_per_hour: e.target.value })} placeholder="500" />
                     <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>KGS</span>
                   </div>
+                  <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.4 }}>Укажите среднюю стоимость одного часа. Можно изменить позже в резюме.</p>
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
-                  {LANGUAGES.map((l) => (
-                    <label key={l.value} className={`wizard-option ${form.languages.includes(l.value) ? "active" : ""}`} style={{ flex: "1 1 140px" }}>
-                      <input type="checkbox" checked={form.languages.includes(l.value)} onChange={() => toggleIn("languages", l.value)} />
-                      <span>{t(l.labelKey, l.value)}</span>
-                    </label>
-                  ))}
+                <div style={{ marginTop: 4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>На каких языках вы преподаёте?</div>
+                  <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.4 }}>
+                    Ученики смогут фильтровать репетиторов по языку преподавания. Выберите все языки, на которых вы ведёте занятия.
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                    {LANGUAGES.map((l) => (
+                      <label key={l.value} className={`wizard-option ${form.languages.includes(l.value) ? "active" : ""}`} style={{ flex: "1 1 140px" }}>
+                        <input type="checkbox" checked={form.languages.includes(l.value)} onChange={() => toggleIn("languages", l.value)} />
+                        <span>{t(l.labelKey, l.value)}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -427,7 +500,7 @@ export default function PgBecomeTutor(): JSX.Element {
           <p className="wizard-card-desc">Так увидят ваше резюме ученики.</p>
           <div className="wizard-preview-card">
             { (photoPreview || photoUrl) && (
-              <img src={(photoPreview || photoUrl) as string} alt="Фото" style={{ width: 96, height: 96, borderRadius: 16, objectFit: "cover", border: "1px solid var(--color-border)" }} />
+              <img loading="lazy" decoding="async" src={(photoPreview || photoUrl) as string} alt="Фото" style={{ width: 96, height: 96, borderRadius: 16, objectFit: "cover", border: "1px solid var(--color-border)" }} />
             )}
             <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>{form.full_name || (user?.full_name as string) || "—"} {form.location ? `· ${form.location}` : ""}</p>
             {form.bio && <p style={{ margin: 0, color: "var(--color-text-secondary)", lineHeight: 1.5 }}>{form.bio}</p>}

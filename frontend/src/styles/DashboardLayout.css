@@ -145,6 +145,11 @@
   }
 }
 
+/* Flush for Overview iframe — no padding, no duplicate header */
+.dashboard-content-area--flush {
+  padding: 0 !important;
+}
+
 /* ===== DESKTOP: ≥1200px — Full sidebar ===== */
 @media (min-width: 1200px) {
   .dashboard-layout {
@@ -153,6 +158,10 @@
 
   .dashboard-content-area {
     padding: var(--space-7);
+  }
+
+  .dashboard-content-area--flush {
+    padding: 0 !important;
   }
 
   .page-title {

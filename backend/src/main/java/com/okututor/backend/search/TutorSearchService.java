@@ -89,9 +89,27 @@ public class TutorSearchService {
         return search(q, subjectSlug, citySlug, tutorType, priceFrom, priceTo, online, offline, language, null, null, null, page, size);
     }
 
-    @Cacheable(value = "tutorSearch", key = "#q + '|' + #subjectSlug + '|' + #citySlug + '|' + #tutorType + '|' + #priceFrom + '|' + #priceTo + '|' + #online + '|' + #offline + '|' + #language + '|' + #levelSlug + '|' + #districtSlug + '|' + #sort + '|' + #page + '|' + #size", unless = "#result == null")
     @Transactional(readOnly = true)
     public Page<TutorProfileResponse> search(String q,
+                                             String subjectSlug,
+                                             String citySlug,
+                                             String tutorType,
+                                             BigDecimal priceFrom,
+                                             BigDecimal priceTo,
+                                             Boolean online,
+                                             Boolean offline,
+                                             String language,
+                                             String levelSlug,
+                                             String districtSlug,
+                                             String sort,
+                                             int page,
+                                             int size) {
+        return searchCached(q, subjectSlug, citySlug, tutorType, priceFrom, priceTo, online, offline, language, levelSlug, districtSlug, sort, page, size).toPage();
+    }
+
+    @org.springframework.cache.annotation.Cacheable(value = "tutorSearch:v2", key = "T(com.okututor.backend.tutor.TutorCacheKey).search(#q,#subjectSlug,#citySlug,#tutorType,#priceFrom,#priceTo,#online,#offline,#language,#levelSlug,#districtSlug,#sort,#page,#size)", unless = "#result == null")
+    @Transactional(readOnly = true)
+    public com.okututor.backend.tutor.dto.TutorPageCacheDto searchCached(String q,
                                              String subjectSlug,
                                              String citySlug,
                                              String tutorType,
@@ -112,7 +130,7 @@ public class TutorSearchService {
             if (city != null) cityId = city.getId();
             else {
                 // unknown city → empty result (strict)
-                return Page.empty(PageRequest.of(page, size));
+                return com.okututor.backend.tutor.dto.TutorPageCacheDto.from(Page.empty(PageRequest.of(page, size)));
             }
         }
         // resolve district (P1: SQL filter via district_id)
@@ -122,7 +140,7 @@ public class TutorSearchService {
             var districtOpt = districtRepository.findBySlug(dSlug);
             // if not found but slug was given, return empty (strict) — avoids false positives
             if (districtOpt.isEmpty()) {
-                return Page.empty(PageRequest.of(page, size));
+                return com.okututor.backend.tutor.dto.TutorPageCacheDto.from(Page.empty(PageRequest.of(page, size)));
             }
             districtId = districtOpt.get().getId();
         }
@@ -207,7 +225,7 @@ public class TutorSearchService {
             metrics.tutorSearchDuration(searchMs);
         } catch (Exception ignored) {}
 
-        return new PageImpl<>(content, pr, total);
+        return com.okututor.backend.tutor.dto.TutorPageCacheDto.from(new PageImpl<>(content, pr, total));
     }
 
     private static String normalizeSort(String sort) {

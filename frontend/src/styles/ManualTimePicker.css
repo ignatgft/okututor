@@ -52,3 +52,8 @@
   .manual-time__header{margin:-12px -12px 0 -12px;padding:12px}
   .manual-time__input{font-size:20px;padding:12px 0}
 }
+
+@media (max-width: 768px) {
+  /* 768: touch-friendly paddings */
+  :root { --modal-padding: var(--space-4); }
+}

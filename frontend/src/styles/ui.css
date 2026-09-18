@@ -180,3 +180,13 @@
 
 .datetime-picker-date { flex: 1 1 60%; }
 .datetime-picker-time { flex: 1 1 40%; }
+
+@media (max-width: 768px) {
+  .loading-state { padding: var(--space-6) var(--space-4); gap: var(--space-2); }
+  .empty-state, .error-state { padding: var(--space-6) var(--space-4); }
+}
+@media (max-width: 480px) {
+  .loading-state { padding: var(--space-4); min-height: 30vh; }
+  .empty-state { padding: var(--space-4); }
+  .error-state button { min-height: var(--touch-target, 44px); width: 100%; }
+}

@@ -93,7 +93,7 @@ export default function ConversationItem({ conversation, active, onSelect }: Pro
         }}
       >
         {avatarUrl ? (
-          <img src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <img loading="lazy" decoding="async" src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
         ) : (
           initials(name)
         )}

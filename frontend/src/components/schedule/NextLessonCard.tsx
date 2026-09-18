@@ -79,7 +79,7 @@ export const NextLessonCard = memo(function NextLessonCard({ lesson, onJoin, onV
             <span className="next-lesson-tutor">
               <span className="tutor-avatar" aria-hidden="true">
                 {lesson.tutorAvatar ? (
-                  <img src={lesson.tutorAvatar} alt="" />
+                  <img loading="lazy" decoding="async" src={lesson.tutorAvatar} alt="" />
                 ) : (
                   lesson.tutorName?.charAt(0).toUpperCase() || "?"
                 )}

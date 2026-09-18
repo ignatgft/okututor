@@ -57,7 +57,7 @@ export function AttachmentLightbox({ attachment, onClose }) {
       >
         ✕
       </button>
-      <img
+      <img loading="lazy" decoding="async"
         className="attachment-lightbox-img"
         src={a.url}
         alt={a.name}

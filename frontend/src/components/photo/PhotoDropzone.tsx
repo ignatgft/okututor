@@ -119,7 +119,7 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
         >
           {displayValue ? (
             <>
-              <img src={displayValue} alt="Фото резюме" className="photo-dropzone-compact-thumb" />
+              <img loading="lazy" decoding="async" src={displayValue} alt="Фото резюме" className="photo-dropzone-compact-thumb" />
               <div className="photo-dropzone-compact-info">
                 <p className="photo-dropzone-compact-title">
                   {hint ? "Фото загружено" : "Загрузите чёткое фото"}
@@ -184,7 +184,7 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
         </div>
       ) : (
         <div className="photo-dropzone-preview">
-          <img src={displayValue} alt="Фото" className="photo-dropzone-preview-img" />
+          <img loading="lazy" decoding="async" src={displayValue} alt="Фото" className="photo-dropzone-preview-img" />
           <div className="photo-dropzone-preview-overlay">
             <button type="button" className="photo-dropzone-preview-btn" onClick={handleEditExisting}>
               <Pencil size={16} /> Редактировать

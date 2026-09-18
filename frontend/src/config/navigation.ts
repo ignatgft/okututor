@@ -38,12 +38,12 @@ export const MARKETPLACE_ENABLED = true;
 
 export const SIDEBAR_ITEMS: Record<RoleKey, NavItem[]> = {
   user: [
-    { id: "overview", labelKey: "dashboard.overview", icon: Home, path: "/dashboard" },
-    { id: "requests", labelKey: "navigation.requests", icon: ClipboardList, path: "/dashboard/requests" },
-    { id: "resume", labelKey: "tutor.resume", icon: FileText, path: "/dashboard/resume" },
-    { id: "favorites", labelKey: "favorites.title", icon: Heart, path: "/dashboard/favorites" },
-    { id: "support", labelKey: "navbar.support", icon: LifeBuoy, path: "/support" },
-    { id: "profile", labelKey: "navbar.profile", icon: User, path: "/dashboard/profile" },
+    { id: "overview", labelKey: "dashboard.overview", icon: Home, path: "/app/dashboard" },
+    { id: "requests", labelKey: "navigation.requests", icon: ClipboardList, path: "/app/messages" },
+    { id: "resume", labelKey: "tutor.resume", icon: FileText, path: "/app/resumes" },
+    { id: "favorites", labelKey: "favorites.title", icon: Heart, path: "/app/favorites" },
+    { id: "support", labelKey: "navbar.support", icon: LifeBuoy, path: "/app/support" },
+    { id: "profile", labelKey: "navbar.profile", icon: User, path: "/app/profile" },
   ],
   student: [
     { id: "home", labelKey: "navbar.home", icon: Home, path: "/" },
@@ -103,33 +103,29 @@ export const SIDEBAR_ITEMS_LEGACY: Record<RoleKey, NavItem[]> = {
   ],
 };
 
-// §16 mobile — marketplace bottom nav: Главная/Поиск/Обращения/Профиль (без Избранного fake)
-// USER: Главная (homepage), Поиск, Обращения, Профиль — unified marketplace (spec §14)
-// FIX: Главная теперь ведёт на "/" , а не на пустой "Мои заявки" ("/student/dashboard" удалён из основной навигации)
+// §16 mobile — marketplace bottom nav: Главная теперь каталог репетиторов, отдельный Поиск удалён
+// USER: Главная (=/tutors), Резюме, Избранное, Обращения, Профиль — 5 иконок вместо 6 (нет обрезки "Найти репе...")
 export const BOTTOMNAV_ITEMS: Record<RoleKey, NavItem[]> = {
   user: [
     { id: "home", path: "/", labelKey: "navbar.home", icon: Home },
-    { id: "search", path: "/tutors", labelKey: "navbar.find_tutor", icon: Search },
-    { id: "resume", path: "/dashboard/resume", labelKey: "tutor.resume", icon: BookOpen },
-    { id: "favorites", path: "/dashboard/favorites", labelKey: "favorites.title", icon: Heart },
-    { id: "requests", path: "/dashboard/requests", labelKey: "navigation.requests", icon: Inbox },
-    { id: "profile", path: "/profile", labelKey: "navbar.profile", icon: Users },
+    { id: "resume", path: "/app/resumes", labelKey: "tutor.resume", icon: BookOpen },
+    { id: "favorites", path: "/app/favorites", labelKey: "favorites.title", icon: Heart },
+    { id: "requests", path: "/app/messages", labelKey: "navigation.requests", icon: Inbox },
+    { id: "profile", path: "/app/profile", labelKey: "navbar.profile", icon: Users },
   ],
   student: [
     { id: "home", path: "/", labelKey: "navbar.home", icon: Home },
-    { id: "search", path: "/tutors", labelKey: "navbar.find_tutor", icon: Search },
-    { id: "resume", path: "/dashboard/resume", labelKey: "tutor.resume", icon: BookOpen },
-    { id: "favorites", path: "/dashboard/favorites", labelKey: "favorites.title", icon: Heart },
-    { id: "requests", path: "/dashboard/requests", labelKey: "navigation.requests", icon: Inbox },
-    { id: "profile", path: "/profile", labelKey: "navbar.profile", icon: Users },
+    { id: "resume", path: "/app/resumes", labelKey: "tutor.resume", icon: BookOpen },
+    { id: "favorites", path: "/app/favorites", labelKey: "favorites.title", icon: Heart },
+    { id: "requests", path: "/app/messages", labelKey: "navigation.requests", icon: Inbox },
+    { id: "profile", path: "/app/profile", labelKey: "navbar.profile", icon: Users },
   ],
   tutor: [
     { id: "home", path: "/", labelKey: "navbar.home", icon: Home },
-    { id: "search", path: "/tutors", labelKey: "navbar.find_tutor", icon: Search },
-    { id: "resume", path: "/dashboard/resume", labelKey: "tutor.resume", icon: BookOpen },
-    { id: "favorites", path: "/dashboard/favorites", labelKey: "favorites.title", icon: Heart },
-    { id: "requests", path: "/dashboard/requests", labelKey: "navigation.requests", icon: Inbox },
-    { id: "profile", path: "/profile", labelKey: "navbar.profile", icon: Users },
+    { id: "resume", path: "/app/resumes", labelKey: "tutor.resume", icon: BookOpen },
+    { id: "favorites", path: "/app/favorites", labelKey: "favorites.title", icon: Heart },
+    { id: "requests", path: "/app/messages", labelKey: "navigation.requests", icon: Inbox },
+    { id: "profile", path: "/app/profile", labelKey: "navbar.profile", icon: Users },
   ],
   admin: [
     { id: "dashboard", path: "/admin", labelKey: "navbar.home", icon: Home },
@@ -143,11 +139,19 @@ export const BOTTOMNAV_ITEMS: Record<RoleKey, NavItem[]> = {
 export const PAGE_TITLES: Record<RoleKey, Record<string, string>> = {
   user: {
     "/dashboard": "dashboard.overview",
+    "/app/dashboard": "dashboard.overview",
     "/dashboard/requests": "navigation.requests",
+    "/app/messages": "navigation.requests",
     "/dashboard/resume": "tutor.resume",
+    "/app/resumes": "tutor.resume",
+    "/app/resumes/edit": "tutor.resume",
+    "/app/resumes/preview": "tutor.resume",
     "/dashboard/favorites": "favorites.title",
+    "/app/favorites": "favorites.title",
     "/dashboard/profile": "navbar.profile",
+    "/app/profile": "navbar.profile",
     "/dashboard/settings": "navbar.settings",
+    "/app/settings": "navbar.settings",
     "/profile": "navbar.profile",
     "/tutors": "navbar.find_tutor",
     "/tutor/:slug": "tutor_profile.title",
@@ -214,11 +218,9 @@ export const getPageTitle = (roleKey: string, pathname: string): string => {
 
 export const getDashboardPath = (role: unknown): string => {
   if (role === "ADMIN" || role === "SUPER_ADMIN") return "/admin";
-  // USER hub: /dashboard — единый dashboard для USER (не отдельный Tutor/Student Dashboard)
-  // Homepage "/" остаётся публичной, а кнопка "Главная" в шапке (navbar.dashboard) для авторизованного USER ведёт в дашборд
-  if (role === "USER" || role === "STUDENT" || role === "TUTOR") return "/dashboard";
-  // fallback for isUser-like strings
-  if (typeof role === "string" && ["USER", "STUDENT", "TUTOR"].includes(role)) return "/dashboard";
+  // App hub: /app/dashboard — Public "/" is landing, authenticated users go to /app
+  if (role === "USER" || role === "STUDENT" || role === "TUTOR") return "/app/dashboard";
+  if (typeof role === "string" && ["USER", "STUDENT", "TUTOR"].includes(role)) return "/app/dashboard";
   return "/";
 };
 

@@ -43,6 +43,8 @@ const Sidebar = ({ isOpen = false, onClose, collapsed = false }) => {
     if (path.includes("?")) {
       return location.pathname + location.search === path;
     }
+    // Только точное совпадение для /dashboard, иначе подсветятся и /dashboard/resume
+    if (path === "/dashboard") return location.pathname === "/dashboard";
     return location.pathname === path || location.pathname.startsWith(path + "/");
   };
 
@@ -217,7 +219,7 @@ const Sidebar = ({ isOpen = false, onClose, collapsed = false }) => {
             >
               <div className={`sidebar-avatar ${isRoleSuperAdmin ? "sidebar-avatar--super" : ""}`}>
                 {user?.avatar ? (
-                  <img src={user.avatar} alt={user.full_name} />
+                  <img loading="lazy" decoding="async" src={user.avatar} alt={user.full_name} />
                 ) : (
                   <span>{getUserInitials()}</span>
                 )}
@@ -237,7 +239,7 @@ const Sidebar = ({ isOpen = false, onClose, collapsed = false }) => {
             aria-label={t("navbar.profile")}
           >
             <div className={`sidebar-avatar ${isRoleSuperAdmin ? "sidebar-avatar--super" : ""}`}>
-              {user?.avatar ? <img src={user.avatar} alt={user.full_name} /> : <span>{getUserInitials()}</span>}
+              {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt={user.full_name} /> : <span>{getUserInitials()}</span>}
             </div>
           </button>
         )}

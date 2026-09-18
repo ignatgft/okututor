@@ -127,3 +127,8 @@
     width: 100%;
   }
 }
+
+@media (max-width: 768px) {
+  /* 768: touch-friendly paddings */
+  :root { --modal-padding: var(--space-4); }
+}

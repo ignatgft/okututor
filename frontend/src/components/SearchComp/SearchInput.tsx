@@ -80,7 +80,7 @@ export default function SearchInput({
   return (
     <form className="search-wrapper" onSubmit={onSubmit}>
       <div className="search-input-wrapper">
-        <img src={searchIcon} alt="" className="search-icon" />
+        <img loading="lazy" decoding="async" src={searchIcon} alt="" className="search-icon" />
         <input
           type="search"
           placeholder={t("search.placeholder")}

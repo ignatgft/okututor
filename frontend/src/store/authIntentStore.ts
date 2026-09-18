@@ -42,7 +42,7 @@ export function navigateWithIntent(
   intent: Omit<ContactIntent, "createdAt">
 ): void {
   saveContactIntent({ ...intent, createdAt: Date.now() });
-  navigate("/login");
+  navigate(`/login?from=${encodeURIComponent(intent.returnUrl)}`);
 }
 
 export function restoreAuthIntent(_navigate: (to: string) => void): ContactIntent | null {

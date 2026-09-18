@@ -120,17 +120,17 @@ export default function PgDashboardResume(): JSX.Element {
             </span>
           }
           action={
-            <Link to="/become-tutor" className="btn-primary" style={{ textDecoration: "none" }}>
+            <button type="button" onClick={() => navigate("/app/resumes/edit")} className="btn-primary">
               {t("marketplace.create_resume", "Создать резюме")}
-            </Link>
+            </button>
           }
         />
         <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link to="/tutors" className="btn-secondary" style={{ textDecoration: "none" }}>
+          <Link to="/app/dashboard" className="btn-secondary" style={{ textDecoration: "none" }}>
             {t("dashboard.find_tutors", "Найти репетитора")}
           </Link>
-          <Link to="/dashboard/requests" className="btn-secondary" style={{ textDecoration: "none" }}>
-            {t("navigation.requests", "Обращения")}
+          <Link to="/app/messages" className="btn-secondary" style={{ textDecoration: "none" }}>
+            {t("navigation.requests", "Заявки")}
           </Link>
         </div>
       </div>
@@ -310,7 +310,7 @@ export default function PgDashboardResume(): JSX.Element {
             publishedAt={resumePublishedAt}
             expiresAt={resumeExpiresAt}
             expiringSoon={Boolean(resumeExpiringSoon)}
-            onEdit={() => navigate(resume ? "/dashboard/resume/edit" : "/become-tutor")}
+            onEdit={() => navigate(resume ? "/app/resumes/edit" : "/app/resumes/edit")}
             onHide={handleHide}
             onRenew={handleRenew}
             onRestore={handleRestore}
@@ -352,7 +352,7 @@ export default function PgDashboardResume(): JSX.Element {
           }}
         >
           <Link
-            to="/dashboard/resume/preview"
+            to="/app/resumes/preview"
             className="btn btn-secondary"
             style={{
               flex: "1 1 160px",
@@ -377,7 +377,7 @@ export default function PgDashboardResume(): JSX.Element {
             </span>
           </span>
           <Link
-            to="/tutors"
+            to="/app/dashboard"
             className="btn btn-primary"
             style={{
               flex: "1.2 1 180px",
@@ -426,7 +426,7 @@ export default function PgDashboardResume(): JSX.Element {
         <div style={{ fontSize: "var(--font-size-sm)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-text-primary)", marginBottom: "var(--space-3)" }}>{t("dashboard.quick_actions", "Быстрые действия")}</div>
         <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
           <Link
-            to="/dashboard"
+            to="/app/dashboard"
             className="btn btn-secondary"
             style={{
               textDecoration: "none",
@@ -444,7 +444,7 @@ export default function PgDashboardResume(): JSX.Element {
             <Home size={16} /> {t("dashboard.overview", "Обзор")}
           </Link>
           <Link
-            to="/dashboard/requests"
+            to="/app/messages"
             className="btn btn-secondary"
             style={{
               textDecoration: "none",
@@ -462,7 +462,7 @@ export default function PgDashboardResume(): JSX.Element {
             <Inbox size={16} /> {t("navigation.requests", "Заявки")}
           </Link>
           <Link
-            to="/dashboard/profile"
+            to="/app/profile"
             className="btn btn-secondary"
             style={{
               textDecoration: "none",

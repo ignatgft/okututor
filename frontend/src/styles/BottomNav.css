@@ -152,3 +152,26 @@
     padding: var(--space-1) 0;
   }
 }
+
+/* Dark theme — unified with Sidebar: soft bg + blue active */
+[data-theme="dark"] .bottom-nav {
+  background: #000000;
+  border-top-color: #1a1a1a;
+  box-shadow: 0 -1px 0 #1a1a1a;
+}
+
+[data-theme="dark"] .bottom-nav-item {
+  color: #a1a1aa;
+}
+
+[data-theme="dark"] .bottom-nav-item.active {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .bottom-nav-item.active .bottom-nav-indicator {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .bottom-nav-label {
+  color: inherit;
+}

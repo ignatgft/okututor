@@ -246,7 +246,7 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
             style={{ cursor: dragging ? "grabbing" : "grab", touchAction: "none" }}
           >
             {/* hidden img for canvas draw source — also visible */}
-            <img
+            <img loading="lazy" decoding="async"
               ref={imageRef}
               src={src}
               alt="preview"

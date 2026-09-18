@@ -349,7 +349,7 @@ export const LessonDetailsModal = function LessonDetailsModal({
             )}
 
             <div className="lesson-modal-meta">
-              <div className="lesson-modal-meta-row"><span className="meta-icon" aria-hidden="true"></span><span className="meta-label">{t("schedule.tutor","Тьютор")}:</span><span className="meta-value"><span className="tutor-avatar" aria-hidden="true">{lesson.tutorAvatar ? <img src={lesson.tutorAvatar} alt="" /> : lesson.tutorName?.charAt(0).toUpperCase()}</span>{lesson.tutorName}</span></div>
+              <div className="lesson-modal-meta-row"><span className="meta-icon" aria-hidden="true"></span><span className="meta-label">{t("schedule.tutor","Тьютор")}:</span><span className="meta-value"><span className="tutor-avatar" aria-hidden="true">{lesson.tutorAvatar ? <img loading="lazy" decoding="async" src={lesson.tutorAvatar} alt="" /> : lesson.tutorName?.charAt(0).toUpperCase()}</span>{lesson.tutorName}</span></div>
               <div className="lesson-modal-meta-row"><span className="meta-icon" aria-hidden="true"></span><span className="meta-label">{t("schedule.date","Дата")}:</span><span className="meta-value">{dateStr}</span></div>
               <div className="lesson-modal-meta-row"><span className="meta-icon" aria-hidden="true">🕐</span><span className="meta-label">{t("schedule.time","Время")}:</span><span className="meta-value">{timeStr} ({duration} {t("schedule.min","мин")})</span></div>
               <div className="lesson-modal-meta-row"><span className="meta-icon" aria-hidden="true">🌍</span><span className="meta-label">{t("schedule.timezone","Часовой пояс")}:</span><span className="meta-value">{tzLabel}</span></div>

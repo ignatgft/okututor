@@ -32,7 +32,7 @@ export default function PgFavorites(): JSX.Element {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: "calc(var(--bottom-nav-height,64px) + 16px)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{t("favorites.title", "Избранное")} <span style={{ fontWeight: 400, color: "var(--color-text-muted)", fontSize: 16 }}>· {favorites.length}</span></h2>
         <Link to="/tutors" className="btn-secondary" style={{ textDecoration: "none", fontSize: 13 }}>{t("favorites.find_tutors", "Найти репетитора")}</Link>

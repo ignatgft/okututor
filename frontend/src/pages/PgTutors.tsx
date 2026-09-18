@@ -9,6 +9,7 @@ import { useTutorSearch } from "../features/search/hooks/useTutorSearch";
 import Pagination from "../components/ui/Pagination";
 import { Spinner, ErrorState, EmptyState } from "../components/ui/Primitives";
 import { trackEvent } from "../utils/analytics";
+import { MARKETPLACE_SUBJECTS, MARKETPLACE_CITIES } from "../constants/cities";
 
 export default function PgTutors() {
   const { t } = useTranslation();
@@ -23,9 +24,11 @@ export default function PgTutors() {
     Boolean(filters.subject || filters.city || filters.price_min || filters.price_max || filters.format || filters.tutor_type || filters.level || searchQuery.trim())
   , [filters, searchQuery]);
 
+  const getSubjectLabel = (v: string) => MARKETPLACE_SUBJECTS.find((s) => s.value === v)?.labelRu ?? v;
+  const getCityLabel = (v: string) => MARKETPLACE_CITIES.find((c) => c.value === v)?.labelRu ?? v;
   const activeChips: { label: string; onClear: () => void }[] = [];
-  if (filters.subject) activeChips.push({ label: `Предмет: ${filters.subject}`, onClear: () => handlers.applyFilters({ subject: "" }) });
-  if (filters.city) activeChips.push({ label: `Город: ${filters.city}`, onClear: () => handlers.applyFilters({ city: "" }) });
+  if (filters.subject) activeChips.push({ label: `Предмет: ${getSubjectLabel(filters.subject)}`, onClear: () => handlers.applyFilters({ subject: "" }) });
+  if (filters.city) activeChips.push({ label: `Город: ${getCityLabel(filters.city)}`, onClear: () => handlers.applyFilters({ city: "" }) });
   if (filters.format) activeChips.push({ label: `Формат: ${filters.format}`, onClear: () => handlers.applyFilters({ format: "" }) });
   if (filters.tutor_type) activeChips.push({ label: `Тип: ${filters.tutor_type}`, onClear: () => handlers.applyFilters({ tutor_type: "" }) });
   if (filters.level) activeChips.push({ label: `Уровень: ${filters.level}`, onClear: () => handlers.applyFilters({ level: "" }) });
@@ -38,38 +41,40 @@ export default function PgTutors() {
 
   const qs = location.search || "";
 
+  const isApp = location.pathname.startsWith("/app");
   return (
     <>
-      <Navbar />
-      <main id="main-content" className="search-page-container" style={{ paddingTop: "var(--header-height, 64px)" }}>
+      <main id="main-content" className="search-page-container" style={{ paddingTop: isApp ? 0 : "var(--header-height, 64px)" }}>
         <section className="search-hero" style={{ paddingBottom: 8 }}>
           <h1>{t("marketplace.list_title", "Репетиторы в Кыргызстане")}</h1>
           <p>{t("marketplace.list_subtitle", "Найдите преподавателя по предмету, городу, формату и типу репетитора")}</p>
         </section>
 
-        {/* Search + filters — sticky to header (mobile + desktop) */}
+        {/* Search + filters — sticky to header (mobile + desktop) — исправлено для моб. верстки */}
         <div className="marketplace-search-sticky">
-          <form onSubmit={(e) => { handlers.handleSearchSubmit(e); if (searchQuery.trim()) trackEvent("search", { search_term: searchQuery.trim() }); }} style={{ maxWidth: 720, margin: "0 auto", display: "flex", gap: 8 }}>
+          <form onSubmit={(e) => { handlers.handleSearchSubmit(e); if (searchQuery.trim()) trackEvent("search", { search_term: searchQuery.trim() }); }} style={{ maxWidth: 720, margin: "0 auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
             <input
               type="search"
               value={searchQuery}
               onChange={handlers.handleSearchChange}
-              placeholder={t("marketplace.search_placeholder", "математика, англ, питон, ОРТ...")}
+              placeholder={t("marketplace.search_placeholder", "математика, англ, питон...")}
               aria-label={t("common.search", "Поиск")}
-              style={{ flex: 1, minHeight: 44 }}
+              style={{ flex: "1 1 220px", minWidth: 0, minHeight: 44 }}
             />
-            <button type="submit" className="btn-primary" style={{ minHeight: 44, whiteSpace: "nowrap" }}>
-              {t("common.search", "Поиск")}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary tutors-mobile-filter-btn"
-              onClick={() => setMobileFiltersOpen((v) => !v)}
-              aria-expanded={mobileFiltersOpen}
-              style={{ minHeight: 44 }}
-            >
-              {t("search.filters", "Фильтры")}
-            </button>
+            <div style={{ display: "flex", gap: 8, flex: "0 0 auto" }}>
+              <button type="submit" className="btn-primary" style={{ minHeight: 44, whiteSpace: "nowrap", flex: "1 1 auto" }}>
+                {t("common.search", "Поиск")}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary tutors-mobile-filter-btn"
+                onClick={() => setMobileFiltersOpen((v) => !v)}
+                aria-expanded={mobileFiltersOpen}
+                style={{ minHeight: 44, whiteSpace: "nowrap", flex: "1 1 auto" }}
+              >
+                {t("search.filters", "Фильтры")}
+              </button>
+            </div>
           </form>
           {/* Active filters — also sticky */}
           {activeChips.length > 0 && (
