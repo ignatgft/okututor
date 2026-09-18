@@ -19,8 +19,11 @@ export default function PgAdminTelegram(): JSX.Element {
     try {
       const { response, data } = await tgApi.list();
       if (response.ok && Array.isArray(data)) setList(data as Recipient[]);
-      else if (response.status === 403) setError("Доступ только для SUPER_ADMIN");
-      else setError("Failed to load");
+      else if (response.status === 403) setError("Доступ только для SUPER_ADMIN — проверь роль и токен");
+      else {
+        const msg = (data as Record<string, unknown>)?.["message"] as string || (data as Record<string, unknown>)?.["error"] as string || `HTTP ${response.status}`;
+        setError(`Failed to load: ${msg} — проверь backend /api/v1/admin/telegram/recipients, proxy и TG_BOT_TOKEN`);
+      }
     } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   };

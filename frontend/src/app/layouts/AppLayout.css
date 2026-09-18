@@ -54,20 +54,22 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--space-1);
+  padding: 0;
   min-width: var(--touch-target, 44px);
   min-height: var(--touch-target, 44px);
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .app-hamburger-line {
   display: block;
-  width: 22px;
-  height: 2px;
+  width: 20px;
+  height: 2.5px;
   background: var(--color-text);
-  margin: 4px 0;
-  border-radius: var(--radius-xs);
+  margin: 0;
+  border-radius: 2px;
 }
 
 .app-header-logo {

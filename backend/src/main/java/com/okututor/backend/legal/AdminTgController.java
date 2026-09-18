@@ -24,22 +24,25 @@ public class AdminTgController {
     }
 
     @GetMapping("/recipients")
-    public List<TgRecipient> list() { return recipientRepository.findAll(); }
+    public List<Map<String, Object>> list() {
+        return recipientRepository.findAll().stream().map(this::toDto).toList();
+    }
 
     @PostMapping("/recipients")
-    public TgRecipient create(@RequestBody Map<String, Object> body, @AuthenticationPrincipal UserPrincipal principal) {
-        return recipientService.create(
+    public Map<String, Object> create(@RequestBody Map<String, Object> body, @AuthenticationPrincipal UserPrincipal principal) {
+        TgRecipient r = recipientService.create(
                 (String) body.get("chatId"),
                 (String) body.get("username"),
                 (String) body.get("displayName"),
                 body.get("notifyCritical") != null ? (Boolean) body.get("notifyCritical") : null,
                 body.get("notifyWarning") != null ? (Boolean) body.get("notifyWarning") : null,
                 principal != null ? principal.id() : null);
+        return toDto(r);
     }
 
     @PutMapping("/recipients/{id}")
-    public TgRecipient update(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
-        return recipientService.update(
+    public Map<String, Object> update(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        TgRecipient r = recipientService.update(
                 id,
                 (String) body.get("chatId"),
                 (String) body.get("username"),
@@ -47,6 +50,20 @@ public class AdminTgController {
                 body.get("isActive") != null ? (Boolean) body.get("isActive") : null,
                 body.get("notifyCritical") != null ? (Boolean) body.get("notifyCritical") : null,
                 body.get("notifyWarning") != null ? (Boolean) body.get("notifyWarning") : null);
+        return toDto(r);
+    }
+
+    private Map<String, Object> toDto(TgRecipient r) {
+        return Map.of(
+                "id", r.getId().toString(),
+                "chatId", r.getChatId(),
+                "username", r.getUsername() != null ? r.getUsername() : "",
+                "displayName", r.getDisplayName() != null ? r.getDisplayName() : "",
+                "isActive", r.isActive(),
+                "notifyCritical", r.isNotifyCritical(),
+                "notifyWarning", r.isNotifyWarning(),
+                "createdAt", r.getCreatedAt() != null ? r.getCreatedAt().toString() : ""
+        );
     }
 
     @DeleteMapping("/recipients/{id}")

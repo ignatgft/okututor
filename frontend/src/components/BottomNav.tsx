@@ -18,7 +18,7 @@ const BottomNav = () => {
   const { data: unreadCount = 0 } = useUnreadCount(isAuthenticated);
 
   const p = location.pathname;
-  const isDetailPage = /^\/(course|lesson)\/[^/]+/.test(p) || /^\/tutor\/[^/]+/.test(p) || /^\/repetitor\/[^/]+\/[^/]+/.test(p);
+  const isDetailPage = /^\/(course|lesson)\/[^/]+/.test(p) || /^\/(app\/)?tutor\/[^/]+/.test(p) || /^\/repetitor\/[^/]+\/[^/]+/.test(p) || /^\/app\/repetitor\/[^/]+\/[^/]+/.test(p);
   // Показывать бар и на главной, прятать только на детальных страницах курса/урока
   if (isDetailPage) return null;
 
@@ -45,6 +45,9 @@ const BottomNav = () => {
       const [route, query] = path.split("?");
       return location.pathname === route && location.search === "?" + query;
     }
+    // Главная: для залогиненного /app/dashboard считается активной для таба "/" и наоборот
+    if (path === "/" && (location.pathname === "/app/dashboard" || location.pathname === "/app")) return true;
+    if (path === "/app/dashboard" && location.pathname === "/") return true;
     if (location.pathname === path) return true;
     if (location.pathname.startsWith(path + "/")) return true;
     if (path === "/tutors" && (location.pathname === "/repetitors" || location.pathname.startsWith("/repetitors/"))) return true;

@@ -104,6 +104,7 @@ export function AppRouter(): JSX.Element {
               <Route path="/app/repetitor/:slug" element={withBoundary(<PgTutorMarketplace />)} />
               <Route path="/app/search" element={withBoundary(<PgSearch />)} />
               <Route path="/app/resumes" element={withBoundary(<PgDashboardResume />)} />
+              <Route path="/app/resumes/new" element={withBoundary(<PgBecomeTutor />)} />
               <Route path="/app/resumes/edit" element={withBoundary(<PgResumeEditor />)} />
               <Route path="/app/resumes/preview" element={withBoundary(<PgResumePreview />)} />
               <Route path="/app/favorites" element={withBoundary(<PgFavorites />)} />

@@ -120,7 +120,7 @@ export default function PgDashboardResume(): JSX.Element {
             </span>
           }
           action={
-            <button type="button" onClick={() => navigate("/app/resumes/edit")} className="btn-primary">
+            <button type="button" onClick={() => navigate("/app/resumes/new")} className="btn-primary">
               {t("marketplace.create_resume", "Создать резюме")}
             </button>
           }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { User, Phone, MapPin, ArrowLeft, ArrowRight, Check } from "lucide-react";
@@ -42,11 +42,13 @@ const FORMATS: { value: string; label: string }[] = [
 export default function PgBecomeTutor(): JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuthStore();
   const { openAuth } = useUIStore();
 
-  const [showWizard, setShowWizard] = useState(false);
+  const isAppCreate = location.pathname === "/app/resumes/new";
+  const [showWizard, setShowWizard] = useState(isAppCreate);
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -158,7 +160,8 @@ export default function PgBecomeTutor(): JSX.Element {
       }
       await queryClient.invalidateQueries({ queryKey: ["tutorProfile", "me"] });
       await queryClient.invalidateQueries({ queryKey: ["tutorApplication"] });
-      navigate("/tutor/application");
+      await queryClient.invalidateQueries({ queryKey: ["tutorProfile"] });
+      navigate("/app/resumes");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || (t("become_tutor.error_submit", "Не удалось отправить анкету") as string));
@@ -216,7 +219,7 @@ export default function PgBecomeTutor(): JSX.Element {
   // Wizard shell — matches Image 1 / Image 2 — расширен для предметов
   return (
     <div className={`wizard-page ${currentKey === "subjects" ? "wizard-page--wide" : ""}`}>
-      <button type="button" onClick={() => setShowWizard(false)} className="wizard-back">
+      <button type="button" onClick={() => (isAppCreate ? navigate("/app/resumes") : setShowWizard(false))} className="wizard-back">
         <ArrowLeft size={18} /> Назад
       </button>
       <h1 className="wizard-title">{t("become_tutor.title", "Стать репетитором")}</h1>
