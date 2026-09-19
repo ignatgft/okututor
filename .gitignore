@@ -3,6 +3,15 @@
 .env
 *.env
 !*.env.example
+# Backup / temp env files with secrets — never commit (Neon, R2, TG tokens)
+.env.bak*
+.env.old*
+.env.neon*
+**/.env.bak*
+**/.env.old*
+*.bak
+backend-out.log
+backend-err.log
 
 # Docker
 infrastructure/postgres/

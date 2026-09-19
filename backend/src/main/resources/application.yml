@@ -20,8 +20,8 @@ spring:
       password: ${DB_REPLICA_PASSWORD:${DB_PASSWORD:okututor}}
       enabled: ${DB_REPLICA_ENABLED:false}
     hikari:
-      maximum-pool-size: 25
-      minimum-idle: 5
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:10}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:2}
       connection-timeout: 5000
       idle-timeout: 60000
       max-lifetime: 280000
@@ -171,8 +171,8 @@ app:
     enabled: ${APP_MAIL_ENABLED:false}
     from: ${MAIL_FROM:Okututor <no-reply@okututor.local>}
   rate-limit:
-    enabled: true
-    use-redis: false
+    enabled: ${APP_RATE_LIMIT_ENABLED:true}
+    use-redis: ${APP_RATE_LIMIT_USE_REDIS:false}
     login-per-minute: 10
     register-per-hour: 20
     verify-per-hour: 30

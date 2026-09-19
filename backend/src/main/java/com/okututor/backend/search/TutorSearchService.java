@@ -173,15 +173,19 @@ public class TutorSearchService {
                 subjectParam, levelParam, langParam, districtId, priceFrom, priceTo, sortParam, candidateLimit);
         long dbMs = (System.nanoTime() - dbStart) / 1_000_000;
 
-        // P1: correct total via count query (instead of candidates.size() which was capped to LIMIT)
+        // Perf: countCandidates is expensive (duplicate of searchCandidates WHERE); skip when candidates < limit (exact total)
         long total;
-        try {
-            total = profileRepository.countCandidates(
-                    ftsQuery, qTrgm, synRegex, reallyHasText, cityId, tutorTypeParam, online, offline,
-                    subjectParam, levelParam, langParam, districtId, priceFrom, priceTo);
-        } catch (Exception e) {
-            log.warn("countCandidates failed, fallback to candidates.size()", e);
+        if (candidates.size() < candidateLimit) {
             total = candidates.size();
+        } else {
+            try {
+                total = profileRepository.countCandidates(
+                        ftsQuery, qTrgm, synRegex, reallyHasText, cityId, tutorTypeParam, online, offline,
+                        subjectParam, levelParam, langParam, districtId, priceFrom, priceTo);
+            } catch (Exception e) {
+                log.warn("countCandidates failed, fallback to candidates.size()", e);
+                total = candidates.size();
+            }
         }
         int pageNum = Math.max(page, 0);
         int pageSize = Math.min(Math.max(size, 1), searchProperties.getMaxPageSize());

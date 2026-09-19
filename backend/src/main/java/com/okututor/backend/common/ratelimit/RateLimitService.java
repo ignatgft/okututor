@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class RateLimitService {
 
     private final RateLimiter delegate;
+    private final RateLimiter localLimiter;
     private final AppProperties properties;
     private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
@@ -34,6 +35,7 @@ public class RateLimitService {
         this.delegate = properties.getRateLimit().isUseRedis()
                 ? redisRateLimiter.orElse(null)
                 : null;
+        this.localLimiter = new LocalRateLimiter(localBuckets);
     }
 
     public void checkLogin(String ip) {
@@ -104,7 +106,7 @@ public class RateLimitService {
         if (!properties.getRateLimit().isEnabled()) {
             return;
         }
-        RateLimiter limiter = delegate != null ? delegate : new LocalRateLimiter(localBuckets);
+        RateLimiter limiter = delegate != null ? delegate : localLimiter;
         if (!limiter.tryAcquire(key, limit, window)) {
             metrics.securityEvent("rate_limit");
             throw ApiException.rateLimited("Too many requests. Please slow down.");

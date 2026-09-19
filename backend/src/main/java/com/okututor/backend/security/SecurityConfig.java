@@ -108,7 +108,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/tutors/applications", "/api/v1/tutors/applications/**", "/api/tutors/applications", "/api/tutors/applications/**").authenticated()
                         // websocket for chat presence/typing — auth via query token, handshake permitAll
                         .requestMatchers("/ws/**").permitAll()
-                        // prometheus scraped via internal docker network; permitAll for local dev, in prod via reverse-proxy ACL if needed
+                        // prometheus scraped via internal docker network; in prod restrict via AppProperties or reverse-proxy ACL
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/prometheus").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, PUBLIC_POST).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, publicGet.toArray(String[]::new)).permitAll()
