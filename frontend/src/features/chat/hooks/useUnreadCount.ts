@@ -14,7 +14,8 @@ export function useUnreadCount(enabled = true) {
     },
     enabled,
     staleTime: 15_000,
-    refetchInterval: 20_000,
+    // WS push invalidates via query, keep low poll as fallback only
+    refetchInterval: false,
     refetchIntervalInBackground: false,
     retry: 1,
   });

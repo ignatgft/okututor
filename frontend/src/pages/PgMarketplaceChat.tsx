@@ -4,10 +4,11 @@
  * Uses existing API client + React Query, not Zustand for messages
  */
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useConversations } from "../features/chat/hooks/useConversations";
 import { useMessages, useSendMessage, useMarkConversationRead } from "../features/chat/hooks/useMessages";
+import { useChatWebSocket } from "../features/chat/hooks/useChatWebSocket";
 import { usePageTitle } from "../components/pageTitleContext";
 import ConversationList from "../components/chat/ConversationList";
 import ChatWindow from "../components/chat/ChatWindow";
@@ -34,23 +35,18 @@ export default function PgMarketplaceChat(): JSX.Element {
   } = useMessages(activeId, Boolean(activeId));
 
   const sendMutation = useSendMessage(activeId);
-  const markRead = useMarkConversationRead();
+  const { mutateAsync: markReadAsync } = useMarkConversationRead();
+  const { isOnline, getTypingUser, sendTyping, sendMessageWs, markReadWs } = useChatWebSocket(true);
 
-  // mark as read when opening (spec §14)
+  // mark as read when opening (spec §14) — also via WS, debounced
   useEffect(() => {
-    if (activeId && activeConversation && (activeConversation as unknown as Record<string, unknown>)["unread_count"]) {
-      const unread = (activeConversation as unknown as Record<string, unknown>)["unread_count"] as number | undefined;
-      if (unread && unread > 0) {
-        void markRead.mutateAsync(activeId).catch(() => {});
-      }
+    if (!activeId) return;
+    const unread = (activeConversation as unknown as Record<string, unknown>)?.["unread_count"] as number | undefined;
+    if (unread && unread > 0) {
+      void markReadAsync(activeId).catch(() => {});
+      markReadWs(activeId);
     }
-    // also mark on messages load (backend source of truth)
-    if (activeId && messages.length > 0) {
-      // if any unread for viewer, mark read after short delay (stop polling when leave will auto stop)
-      const hasUnread = (activeConversation as unknown as Record<string, unknown>)?.["unread_count"];
-      if (hasUnread) void markRead.mutateAsync(activeId).catch(() => {});
-    }
-  }, [activeId, activeConversation, messages.length, markRead]);
+  }, [activeId, activeConversation, markReadAsync, markReadWs]);
 
   const handleSelect = (c: { id: string }) => {
     const prefix = window.location.pathname.startsWith("/app") ? "/app/messages" : "/dashboard/requests";
@@ -65,9 +61,26 @@ export default function PgMarketplaceChat(): JSX.Element {
   const handleSend = async (body: string) => {
     const trimmed = body.trim();
     if (!trimmed) throw new Error("Empty");
+    // try WS first for instant delivery (0ms vs 4s poll)
+    if (activeId && sendMessageWs(activeId, trimmed)) {
+      // optimistic: WS will broadcast back; also mark read
+      return;
+    }
     await sendMutation.mutateAsync(trimmed);
     // polling will refetch, but we also invalidate via hook
   };
+
+  const handleTyping = useCallback((isTyping: boolean) => {
+    if (!activeId) return;
+    sendTyping(activeId, isTyping);
+  }, [activeId, sendTyping]);
+
+  const typingUser = activeId ? getTypingUser(activeId) : null;
+  const counterpartId = (activeConversation as unknown as Record<string, unknown>)?.["counterpart_id"] as string | undefined
+    || (activeConversation as unknown as Record<string, unknown>)?.["other_participant_id"] as string | undefined
+    || (activeConversation as unknown as Record<string, unknown>)?.["counterpartId"] as string | undefined;
+  const online = isOnline(counterpartId);
+  const isTyping = !!typingUser;
 
   // Responsive: desktop shows both, mobile shows list OR chat (исправлено — реактивно)
   const [isMobileView, setIsMobileView] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
@@ -170,6 +183,9 @@ export default function PgMarketplaceChat(): JSX.Element {
             sending={sendMutation.isPending}
             sendError={sendMutation.error ? (sendMutation.error as Error).message : null}
             onBack={isMobileView && activeId ? handleBack : undefined}
+            isOnline={online}
+            isTyping={isTyping}
+            onTyping={handleTyping}
           />
         )}
       </div>

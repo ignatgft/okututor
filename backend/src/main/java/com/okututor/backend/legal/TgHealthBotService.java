@@ -32,7 +32,7 @@ public class TgHealthBotService {
     }
 
     public void sendTest(String chatId) {
-        send(chatId, "<b>Test OkuTutor</b>\nБот работает. ChatId: " + chatId, "INFO");
+        send(chatId, "<b>✅ Проверка OkuTutor</b>\nБот работает корректно.\nChatId: <code>" + escapeHtml(chatId) + "</code>\nВремя: " + java.time.Instant.now(), "INFO");
     }
 
     public void send(String chatId, String html, String severity) {
@@ -65,15 +65,24 @@ public class TgHealthBotService {
         for (var r : targets) send(r.getChatId(), html, severity);
     }
 
-    // Простой health чек раз в 60s — шлет в ТГ если бек падает (монолит, без внешнего Prometheus)
+    // Простой health чек раз в 60s — шлет в ТГ если БД недоступна (монолит, без внешнего Prometheus)
     @Scheduled(fixedDelay = 60000, initialDelay = 60000)
     public void scheduledHealth() {
         if (!enabled) return;
         try {
-            // внутренний health — проверяем DB через recipientRepository.count()
+            // внутренний health — проверяем БД через recipientRepository.count()
             recipientRepository.count();
         } catch (Exception e) {
-            broadcast("<b>CRITICAL — OkuTutor DB</b>\nDatabase unavailable: " + e.getMessage(), "CRITICAL");
+            broadcast("<b>🔴 КРИТИЧНО — OkuTutor · База данных</b>\n"
+                    + "⚠️ База данных недоступна\n"
+                    + "Детали: " + escapeHtml(e.getMessage()) + "\n"
+                    + "Время: " + java.time.Instant.now() + "\n"
+                    + "Действие: проверьте логи бэкенда и состояние БД", "CRITICAL");
         }
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

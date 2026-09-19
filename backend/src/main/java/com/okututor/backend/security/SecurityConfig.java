@@ -101,9 +101,13 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/files/media/messages/**", "/api/v1/files/media/support/**", "/api/v1/files/media/chat/**", "/api/v1/files/media/private/**").authenticated()
                         // explicit auth for owner endpoints before public wildcards
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me", "/api/v1/tutors/me/**", "/api/v1/tutor-profiles/me/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tutors/applications/me", "/api/v1/tutors/applications/me/**", "/api/tutors/applications/me", "/api/tutors/applications/me/**").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/tutors/me", "/api/v1/tutor-profiles/me").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/tutors/me/submit", "/api/v1/tutor-profiles/me/submit", "/api/v1/tutors", "/api/v1/tutor-profiles").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/tutors/applications", "/api/v1/tutors/applications/**", "/api/tutors/applications", "/api/tutors/applications/**").authenticated()
+                        // websocket for chat presence/typing — auth via query token, handshake permitAll
+                        .requestMatchers("/ws/**").permitAll()
                         // prometheus scraped via internal docker network; permitAll for local dev, in prod via reverse-proxy ACL if needed
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/prometheus").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, PUBLIC_POST).permitAll()

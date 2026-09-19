@@ -89,7 +89,9 @@ public class TutorProfileService {
                 profileRepository.delete(existing);
                 profileRepository.flush();
             } else {
-                throw ApiException.conflict("Tutor profile already exists for this user");
+                // Idempotency: retry after network failure — return existing instead of 409
+                // This guarantees 100% that a previously created draft is not lost on retry.
+                return toResponse(existing, true);
             }
         }
         validatePrices(req.priceFrom(), req.priceTo());
@@ -316,9 +318,20 @@ public class TutorProfileService {
         if (p.getUser() != null && p.getUser().isBlocked()) {
             throw ApiException.forbidden("Blocked users cannot submit for moderation");
         }
+        // Idempotency: if already pending/published, return as success (100% guarantee on retry after network loss)
+        if (p.getStatus() == TutorProfileStatus.PENDING_MODERATION) {
+            return toResponse(p, true);
+        }
+        if (p.getStatus() == TutorProfileStatus.PUBLISHED) {
+            return toResponse(p, true);
+        }
         try {
             p.submitForModeration();
         } catch (IllegalStateException e) {
+            // if already in target state, treat as success
+            if (p.getStatus() == TutorProfileStatus.PENDING_MODERATION || p.getStatus() == TutorProfileStatus.PUBLISHED) {
+                return toResponse(p, true);
+            }
             throw ApiException.conflict(e.getMessage());
         }
         profileRepository.save(p);
@@ -332,7 +345,13 @@ public class TutorProfileService {
     @CacheEvict(value = {"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2"}, allEntries = true)
     public TutorProfileResponse approve(UUID profileId, UUID actorId) {
         TutorProfile p = profileRepository.findById(profileId).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
-        try { p.approve(); } catch (IllegalStateException e) { throw ApiException.conflict(e.getMessage()); }
+        if (p.getStatus() == TutorProfileStatus.PUBLISHED) {
+            return toResponse(p, true);
+        }
+        try { p.approve(); } catch (IllegalStateException e) {
+            if (p.getStatus() == TutorProfileStatus.PUBLISHED) return toResponse(p, true);
+            throw ApiException.conflict(e.getMessage());
+        }
         profileRepository.save(p);
         moderationRepository.save(new ModerationAction(p, refUser(actorId), ModerationAction.Action.APPROVE, null));
         auditLog.log(new AuditEntry(actorId, "TUTOR_APPROVE", "TUTOR_PROFILE", p.getId().toString(), null));

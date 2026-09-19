@@ -168,12 +168,10 @@ public class TutorProfile {
         if (status != TutorProfileStatus.DRAFT && status != TutorProfileStatus.REJECTED) {
             throw new IllegalStateException("Can submit only from DRAFT or REJECTED, current: " + status);
         }
-        if (photoUrl == null || photoUrl.isBlank()) {
-            throw new IllegalStateException("Photo is required to submit for moderation");
-        }
-        if (isGooglePhoto(photoUrl)) {
+        if (photoUrl != null && !photoUrl.isBlank() && isGooglePhoto(photoUrl)) {
             throw new IllegalStateException("Google account photo cannot be used for resume");
         }
+        // фото теперь не обязательно на этапе подачи — можно добавить после (совместимость с wizard)
         status = TutorProfileStatus.PENDING_MODERATION;
         rejectionReason = null;
     }

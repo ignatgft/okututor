@@ -22,12 +22,31 @@ public class ReferenceDataController {
 
     @GetMapping("/subjects")
     public List<Map<String, Object>> subjects() {
-        return service.subjects().stream().map(this::subjectMap).collect(java.util.stream.Collectors.toList());
+        List<?> raw = service.subjects();
+        if (raw.isEmpty()) return List.of();
+        Object first = raw.get(0);
+        if (first instanceof Map<?,?>) {
+            // cache deserialized as LinkedHashMap (Redis JSON) — already maps
+            @SuppressWarnings("unchecked")
+            List<Map<String,Object>> cast = (List<Map<String,Object>>) (List<?>) raw;
+            return cast;
+        }
+        @SuppressWarnings("unchecked")
+        List<Subject> typed = (List<Subject>) raw;
+        return typed.stream().map(this::subjectMap).collect(java.util.stream.Collectors.toList());
     }
 
     @GetMapping("/levels")
     public List<Map<String, Object>> levels() {
-        return service.levels().stream().map(l -> {
+        List<?> raw = service.levels();
+        if (!raw.isEmpty() && raw.get(0) instanceof Map<?,?>) {
+            @SuppressWarnings("unchecked")
+            List<Map<String,Object>> cast = (List<Map<String,Object>>) (List<?>) raw;
+            return cast;
+        }
+        @SuppressWarnings("unchecked")
+        List<Level> typed = (List<Level>) raw;
+        return typed.stream().map(l -> {
             Map<String, Object> m = new java.util.LinkedHashMap<>();
             m.put("id", l.getId().toString());
             m.put("slug", l.getSlug());
@@ -40,7 +59,15 @@ public class ReferenceDataController {
 
     @GetMapping("/cities")
     public List<Map<String, Object>> cities() {
-        return service.cities().stream().map(c -> {
+        List<?> raw = service.cities();
+        if (!raw.isEmpty() && raw.get(0) instanceof Map<?,?>) {
+            @SuppressWarnings("unchecked")
+            List<Map<String,Object>> cast = (List<Map<String,Object>>) (List<?>) raw;
+            return cast;
+        }
+        @SuppressWarnings("unchecked")
+        List<City> typed = (List<City>) raw;
+        return typed.stream().map(c -> {
             Map<String, Object> m = new java.util.LinkedHashMap<>();
             m.put("id", c.getId().toString());
             m.put("slug", c.getSlug());

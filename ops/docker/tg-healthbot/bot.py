@@ -14,12 +14,17 @@ last_state = {}
 suppress = {} # alertname -> last_sent_ts
 
 def severity_of(problem:str)->str:
-    if any(x in problem.lower() for x in ["down","critical","disk >90","5xx >10"]): return "CRITICAL"
-    if any(x in problem.lower() for x in ["disk 80","p95","5xx","latency"]): return "WARNING"
+    if any(x in problem.lower() for x in ["down","critical","disk >90","5xx >10","недоступен"]): return "CRITICAL"
+    if any(x in problem.lower() for x in ["disk 80","p95","5xx","latency","задержка"]): return "WARNING"
     return "INFO"
 
+def severity_label(sev:str)->str:
+    if sev == "CRITICAL": return "🔴 КРИТИЧНО"
+    if sev == "WARNING": return "🟡 ВНИМАНИЕ"
+    if sev == "INFO": return "ℹ️ ИНФО"
+    return sev
+
 async def check_once():
-    now = time.time()
     checks = []
     # 1. Backend liveness
     try:
@@ -36,22 +41,27 @@ async def check_once():
             checks.append(("frontend", r.status_code==200, f"HTTP {r.status_code}"))
     except Exception as e:
         checks.append(("frontend", False, str(e)))
-    # 3. DB via backend health details? fallback to backend check already includes
     return checks
 
 async def send(msg:str, severity="CRITICAL"):
-    if not bot or not ADMIN_IDS: 
+    if not bot or not ADMIN_IDS:
         print(f"[{severity}] {msg}")
         return
     for cid in ADMIN_IDS:
         try:
             await bot.send_message(chat_id=int(cid) if cid.lstrip('-').isdigit() else cid, text=msg, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
         except Exception as e:
-            print("tg send fail", e)
+            print("ошибка отправки в Telegram", e)
 
 async def handle_alert(update, context):
-    # Alertmanager webhook → /alert POST
-    pass # implemented via aiohttp in main if needed
+    # Alertmanager webhook → /alert POST (реализовано через backend /api/v1/telegram/alert)
+    pass
+
+# Человекочитаемые названия сервисов на русском
+SERVICE_NAMES = {
+    "backend": "Бэкенд (API)",
+    "frontend": "Фронтенд",
+}
 
 async def loop():
     while True:
@@ -61,34 +71,72 @@ async def loop():
             was_down = last_state.get(name, False)
             last_state[name]=is_down
             if is_down and not was_down:
-                # cooldown 15m per alert
+                # cooldown 15м на алерт
                 last = suppress.get(key,0)
-                if now:=time.time() - last < 900:
+                if time.time() - last < 900:
                     continue
                 suppress[key]= time.time()
                 severity = "CRITICAL" if name=="backend" else "WARNING"
-                msg = f"<b>{severity} — OkuTutor Production</b>\nService: {name}\nProblem: {name} down\nDetail: {detail}\nGrafana: {GRAFANA}"
+                label = severity_label(severity)
+                svc = SERVICE_NAMES.get(name, name)
+                msg = (
+                    f"<b>{label} — OkuTutor Production</b>\n"
+                    f"Сервис: {svc}\n"
+                    f"Проблема: сервис недоступен\n"
+                    f"Детали: {detail}\n"
+                    f"Время: {time.strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
+                    f"Grafana: {GRAFANA}\n"
+                    f"Действие: проверьте логи и состояние сервиса"
+                )
                 await send(msg, severity)
             elif not is_down and was_down:
-                await send(f"<b>RESOLVED — OkuTutor</b>\nService: {name} recovered\nDetail: {detail}", "INFO")
+                svc = SERVICE_NAMES.get(name, name)
+                await send(
+                    f"<b>✅ ВОССТАНОВЛЕНО — OkuTutor</b>\n"
+                    f"Сервис: {svc} восстановлен\n"
+                    f"Детали: {detail}\n"
+                    f"Время: {time.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+                    "INFO"
+                )
         await asyncio.sleep(INTERVAL)
 
 if __name__=="__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
-    if not TOKEN: print("TG_BOT_TOKEN not set — running in log-only mode")
-    # commands
+    if not TOKEN: print("TG_BOT_TOKEN не задан — работа в режиме только логов")
+    # команды бота
     async def cmd_status(update, ctx):
-        txt = "<b>SYSTEM STATUS</b>\n"
-        for k,v in last_state.items():
-            txt+= f"{k}: {'🔴 down' if v else '🟢 healthy'}\n"
-        txt+= f"\nBackend: {BACKEND}\nFrontend: {FRONTEND}\nGrafana: {GRAFANA}"
+        txt = "<b>📊 СТАТУС СИСТЕМЫ — OkuTutor</b>\n\n"
+        if not last_state:
+            txt += "Пока нет данных — проверка ещё не выполнялась.\n"
+        else:
+            for k,v in last_state.items():
+                svc = SERVICE_NAMES.get(k, k)
+                txt+= f"{svc}: {'🔴 недоступен' if v else '🟢 работает'}\n"
+        txt+= f"\nBackend: {BACKEND}\nFrontend: {FRONTEND}\nGrafana: {GRAFANA}\n"
+        txt+= f"\nИнтервал проверки: {INTERVAL} сек"
         await update.message.reply_text(txt, parse_mode=ParseMode.HTML)
+
+    async def cmd_help(update, ctx):
+        txt = (
+            "<b>🤖 OkuTutor Health Bot — помощь</b>\n\n"
+            "/status — статус всех сервисов\n"
+            "/health — то же, что /status\n"
+            "/help — эта справка\n\n"
+            "Бот автоматически оповещает о проблемах:\n"
+            "🔴 Критично — бэкенд недоступен\n"
+            "🟡 Внимание — фронтенд недоступен\n"
+            "✅ Восстановлено — сервис снова работает"
+        )
+        await update.message.reply_text(txt, parse_mode=ParseMode.HTML)
+
     if bot:
         from telegram.ext import Application, CommandHandler
         app = Application.builder().token(TOKEN).build()
         app.add_handler(CommandHandler("status", cmd_status))
         app.add_handler(CommandHandler("health", cmd_status))
+        app.add_handler(CommandHandler("help", cmd_help))
+        app.add_handler(CommandHandler("start", cmd_help))
         # run bot + loop concurrently
         async def run():
             await app.initialize()

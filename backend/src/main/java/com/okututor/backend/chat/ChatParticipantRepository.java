@@ -23,6 +23,12 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
     @Query("select count(p) > 0 from ChatParticipant p where p.conversation.id = :conversationId and p.user.id = :userId")
     boolean isParticipant(@Param("conversationId") UUID conversationId, @Param("userId") UUID userId);
 
+    @Query("select p from ChatParticipant p join fetch p.user where p.conversation.id = :conversationId")
+    java.util.List<ChatParticipant> findByConversationIdWithUser(@Param("conversationId") UUID conversationId);
+
+    @Query("select p.user.id from ChatParticipant p where p.conversation.id = :conversationId")
+    java.util.List<UUID> findUserIdsByConversationId(@Param("conversationId") UUID conversationId);
+
     @Query("select p from ChatParticipant p where p.conversation.id in :conversationIds")
     java.util.List<ChatParticipant> findByConversationIdIn(@Param("conversationIds") java.util.Collection<UUID> conversationIds);
 

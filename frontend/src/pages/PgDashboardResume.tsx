@@ -109,8 +109,22 @@ export default function PgDashboardResume(): JSX.Element {
       return null;
     },
     enabled: !resume && !isLoading,
-    staleTime: 30_000,
+    staleTime: 5_000,
     retry: false,
+    refetchInterval: !resume ? 3000 : false,
+    refetchOnWindowFocus: true,
+  });
+  // 100% guarantee: poll combined status until hasProfile true
+  const { data: statusRaw } = useQuery({
+    queryKey: ["tutorStatus", "me"],
+    queryFn: async () => {
+      const res = await tutorProfileMarketplaceApi.status();
+      if (res.response.ok) return res.data as Record<string, unknown>;
+      return null;
+    },
+    enabled: !resume && !isLoading,
+    staleTime: 5_000,
+    refetchInterval: !resume ? 3000 : false,
   });
   const application = applicationRaw as unknown as Record<string, unknown> | null;
 
@@ -238,8 +252,8 @@ export default function PgDashboardResume(): JSX.Element {
     }
   };
 
-  const subjectsLabel = subjects.map((s) => String(s["nameRu"] ?? s["name_ru"] ?? "")).filter(Boolean).join(", ") || "—";
-  const cityLabel = String(city?.["nameRu"] ?? city?.["name_ru"] ?? "") || (isOnline ? "Online" : "—");
+  const subjectsLabel = subjects.map((s) => String(s["nameRu"] ?? s["name_ru"] ?? "")).filter(Boolean).join(", ") || t("common.not_found","—");
+  const cityLabel = String(city?.["nameRu"] ?? city?.["name_ru"] ?? "") || (isOnline ? t("search.online","Онлайн") : "—");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", maxWidth: 760, margin: "0 auto", width: "100%" }}>
@@ -382,9 +396,9 @@ export default function PgDashboardResume(): JSX.Element {
         {/* Action row */}
         <div
           style={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
             gap: "var(--space-3)",
-            flexWrap: "wrap",
             padding: "var(--space-4) var(--space-5)",
             borderTop: "1px solid var(--color-border-light)",
             background: "var(--color-bg-secondary)",
@@ -396,7 +410,7 @@ export default function PgDashboardResume(): JSX.Element {
             to="/app/resumes/preview"
             className="btn btn-secondary"
             style={{
-              flex: "1 1 160px",
+              width: "100%",
               textDecoration: "none",
               display: "inline-flex",
               alignItems: "center",
@@ -412,7 +426,7 @@ export default function PgDashboardResume(): JSX.Element {
           >
             <Eye size={18} /> {t("dashboard.preview_resume", "Предпросмотр")}
           </Link>
-          <span style={{ flex: "1 1 160px", display: "inline-flex" }}>
+          <span style={{ display: "inline-flex", width: "100%" }}>
             <span style={{ width: "100%" }}>
               <ResumeEditMenu resumeId={resume.id} />
             </span>
@@ -421,7 +435,7 @@ export default function PgDashboardResume(): JSX.Element {
             to="/app/dashboard"
             className="btn btn-primary"
             style={{
-              flex: "1.2 1 180px",
+              width: "100%",
               textDecoration: "none",
               display: "inline-flex",
               alignItems: "center",

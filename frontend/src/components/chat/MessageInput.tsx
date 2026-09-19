@@ -9,13 +9,16 @@ type Props = {
   onRetry?: () => void;
   initialValue?: string | null;
   onQuickDraftUsed?: () => void;
+  onTyping?: (isTyping: boolean) => void;
 };
 
-export default function MessageInput({ onSend, disabled, loading, error, onRetry, initialValue, onQuickDraftUsed }: Props): JSX.Element {
+export default function MessageInput({ onSend, disabled, loading, error, onRetry, initialValue, onQuickDraftUsed, onTyping }: Props): JSX.Element {
   const { t } = useTranslation();
   const [value, setValue] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const typingRef = useRef<number | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     if (initialValue) {
@@ -36,12 +39,22 @@ export default function MessageInput({ onSend, disabled, loading, error, onRetry
   const isEmpty = !trimmed;
   const canSend = !disabled && !loading && !isEmpty;
 
+  const emitTyping = useCallback((isTyping: boolean) => {
+    if (isTyping === isTypingRef.current) return;
+    isTypingRef.current = isTyping;
+    onTyping?.(isTyping);
+  }, [onTyping]);
+
+  useEffect(() => () => { if (typingRef.current) window.clearTimeout(typingRef.current); }, []);
+
   const handleSend = useCallback(async () => {
     if (!canSend) {
       if (isEmpty) setLocalError(t("chat.empty_message_error", "Сообщение не может быть пустым") as string);
       return;
     }
     setLocalError(null);
+    if (typingRef.current) window.clearTimeout(typingRef.current);
+    emitTyping(false);
     try {
       await onSend(trimmed);
       setValue("");
@@ -51,7 +64,7 @@ export default function MessageInput({ onSend, disabled, loading, error, onRetry
       const msg = e instanceof Error ? e.message : String(e);
       setLocalError(msg);
     }
-  }, [canSend, isEmpty, onSend, t, trimmed]);
+  }, [canSend, isEmpty, onSend, t, trimmed, emitTyping]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -59,6 +72,18 @@ export default function MessageInput({ onSend, disabled, loading, error, onRetry
       void handleSend();
     }
     // Shift+Enter → новая строка (default)
+  };
+
+  const handleChangeTyping = (next: string) => {
+    if (!onTyping) return;
+    if (next.trim().length > 0) {
+      emitTyping(true);
+      if (typingRef.current) window.clearTimeout(typingRef.current);
+      typingRef.current = window.setTimeout(() => emitTyping(false), 2000);
+    } else {
+      if (typingRef.current) window.clearTimeout(typingRef.current);
+      emitTyping(false);
+    }
   };
 
   return (
@@ -78,7 +103,7 @@ export default function MessageInput({ onSend, disabled, loading, error, onRetry
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => { const v=e.target.value; setValue(v); handleChangeTyping(v); }}
           onKeyDown={handleKeyDown}
           placeholder={t("chat.input_placeholder", "Написать сообщение...") as string}
           aria-label={t("chat.input_placeholder", "Написать сообщение...") as string}

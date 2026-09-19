@@ -8,12 +8,46 @@ import ConfirmModal from "../components/ui/ConfirmModal";
 import ReasonModal from "../components/ui/ReasonModal";
 import { Spinner, EmptyState, ErrorState } from "../components/ui/Primitives";
 import { useToast } from "../components/ui/Toast";
+import { MARKETPLACE_SUBJECTS, MARKETPLACE_CITIES } from "../constants/cities";
 import "../styles/Admin.css";
 
-function ApplicationDrawer({ application, onClose }: { application: Record<string, unknown>; onClose: () => void }) {
+const SUBJECT_RU: Record<string,string> = Object.fromEntries(MARKETPLACE_SUBJECTS.map(s=>[s.value,s.labelRu]));
+const CITY_RU: Record<string,string> = Object.fromEntries(MARKETPLACE_CITIES.map(c=>[c.value,c.labelRu]));
+function locSubject(v:string){ const k=v.toLowerCase().trim(); return SUBJECT_RU[k] || SUBJECT_RU[k.replace(/-/g,"_")] || v; }
+function locCity(v:string){ const k=v.toLowerCase().trim(); return CITY_RU[k] || v; }
+const LEVEL_RU:Record<string,string>={"grade-1-4":"1–4 класс","grade-5-6":"5–6 класс","grade-7-11":"7–11 класс","ort":"ОРТ","university":"ВУЗ","adult":"Взрослые","школьный":"7–11 класс","вуз":"ВУЗ","начинающий":"1–4 класс","продвинутый":"5–6 класс"};
+const LANG_RU:Record<string,string>={"kyrgyz":"Кыргызский","russian":"Русский","english":"Английский","turkish":"Турецкий","uzbek":"Узбекский","kyrgyzskiy":"Кыргызский","russkiy":"Русский","angliyskiy":"Английский"};
+const TUTOR_TYPE_RU:Record<string,string>={"STUDENT_TUTOR":"Студент","PROFESSIONAL_TUTOR":"Профи","TEACHER":"Преподаватель"};
+function locLevel(v:string){ return LEVEL_RU[v.toLowerCase().trim()]||v; }
+function locLang(v:string){ return LANG_RU[v.toLowerCase().trim()]||v; }
+function locTutorType(v:string){ return TUTOR_TYPE_RU[v.toUpperCase().trim()]||v; }
+
+function ApplicationDrawer({ application, onClose, onModerated }: { application: Record<string, unknown>; onClose: () => void; onModerated?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [chatLoading, setChatLoading] = useState(false);
+  const [actLoading, setActLoading] = useState(false);
+  const [showReject, setShowReject] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const toast = useToast();
+  const statusRaw = String(application["status"]||"");
+  const isPending = statusRaw==="PENDING_MODERATION" || statusRaw==="PENDING";
+  const isPublished = statusRaw==="PUBLISHED" || statusRaw==="APPROVED";
+
+  const handleApprove = async () => {
+    const id = String(application["id"]||"");
+    if(!id) return;
+    setActLoading(true);
+    try { await adminApi.approveTutor(id); toast.success(t("admin.tutor_approved","Репетитор одобрен")); onModerated?.(); onClose(); } catch(e){ const msg=(e as Error)?.message||t("errors.default","Ошибка"); toast.error(msg); } finally { setActLoading(false); }
+  };
+  const handleReject = async (reason:string) => {
+    const id = String(application["id"]||"");
+    if(!id) return;
+    const r=reason.trim();
+    if(!r){ toast.error(t("common.reject_reason_hint","Укажите причину")); return; }
+    setActLoading(true);
+    try { await adminApi.rejectTutor(id, r); toast.success(t("admin.tutor_rejected","Заявка отклонена")); onModerated?.(); setShowReject(false); setRejectReason(""); onClose(); } catch(e){ const msg=(e as Error)?.message||t("errors.default","Ошибка"); toast.error(msg); } finally { setActLoading(false); }
+  };
 
   const handleChat = async () => {
     const a = application;
@@ -67,11 +101,12 @@ function ApplicationDrawer({ application, onClose }: { application: Record<strin
               const lastName = String(get(["lastName","last_name"]) ?? String(s["full_name"]||"").split(" ").slice(1).join(" ") ?? "").trim();
               const fullName = `${firstName} ${lastName}`.trim() || String(s["full_name"]||s["slug"]||"—");
               const avatar = (s["photoUrl"] as string) || (s["photo_url"] as string) || (s["avatar"] as string) || null;
-              const city = ((s["city"] as Record<string, unknown>)?.["nameRu"] as string) || ((s["city"] as Record<string, unknown>)?.["slug"] as string) || s["location"] || "";
+              const cityRaw = ((s["city"] as Record<string, unknown>)?.["nameRu"] as string) || ((s["city"] as Record<string, unknown>)?.["slug"] as string) || (s["location"] as string) || (s["city"] as string) || "";
+              const city = cityRaw ? locCity(cityRaw) : "";
               const district = ((s["district"] as Record<string, unknown>)?.["nameRu"] as string) || "";
-              const subjects = Array.isArray(s["subjects"]) ? (s["subjects"] as unknown[]).map(x=> typeof x==="string"?x:((x as Record<string, unknown>)["nameRu"] as string)||((x as Record<string, unknown>)["slug"] as string)).join(", ") : String(s["subjects"]||"—");
-              const levels = Array.isArray(s["levels"]) ? (s["levels"] as unknown[]).map(x=> typeof x==="string"?x:((x as Record<string, unknown>)["nameRu"] as string)||((x as Record<string, unknown>)["slug"] as string)).join(", ") : (s["levels"]? String(s["levels"]) : "—");
-              const langs = Array.isArray(s["languages"]) ? (s["languages"] as unknown[]).join(", ") : String(s["languages"]||"—");
+              const subjects = Array.isArray(s["subjects"]) ? (s["subjects"] as unknown[]).map(x=>{ const raw= typeof x==="string"?x:((x as Record<string, unknown>)["nameRu"] as string)||((x as Record<string, unknown>)["slug"] as string)||""; return raw?locSubject(raw):"";}).filter(Boolean).join(", ") : String(s["subjects"]||"").split(",").map(v=>v.trim()).filter(Boolean).map(locSubject).join(", ") || "—";
+              const levels = Array.isArray(s["levels"]) ? (s["levels"] as unknown[]).map(x=>{ const raw= typeof x==="string"?x:((x as Record<string, unknown>)["nameRu"] as string)||((x as Record<string, unknown>)["slug"] as string)||""; return raw?locLevel(raw):"";}).filter(Boolean).join(", ") : (s["levels"]? String(s["levels"]).split(",").map(v=>v.trim()).filter(Boolean).map(locLevel).join(", ") : "—");
+              const langs = Array.isArray(s["languages"]) ? (s["languages"] as unknown[]).map(v=>locLang(String(v))).join(", ") : String(s["languages"]||"").split(",").map(v=>locLang(v.trim())).filter(Boolean).join(", ") || "—";
               const views = s["viewsCount"] ?? s["views_count"] ?? 0;
               const rating = s["rating"] ?? 0;
               const reviews = s["reviewsCount"] ?? s["reviews_count"] ?? 0;
@@ -95,12 +130,12 @@ function ApplicationDrawer({ application, onClose }: { application: Record<strin
                       </div>
                       <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginTop: 4 }}>{s["email"] as string || ((s["user"] as Record<string, unknown>)?.["email"] as string) || ""} {s["phone"] ? `· ${s["phone"]}` : ""}</div>
                     </div>
-                    <span style={{ padding: "6px 10px", borderRadius: 999, fontSize: 11, fontWeight: 800, background: String(s["status"])==="PUBLISHED"?"var(--color-success-soft)":"var(--color-warning-soft)", color: String(s["status"])==="PUBLISHED"?"var(--color-success)":"var(--color-warning)", border: "1px solid var(--color-border)" }}>{String(s["status"]||"")}</span>
+                    <span style={{ padding: "6px 10px", borderRadius: 999, fontSize: 11, fontWeight: 800, background: String(s["status"])==="PUBLISHED"?"var(--color-success-soft)":String(s["status"])==="REJECTED"?"var(--color-danger-soft)":"var(--color-warning-soft)", color: String(s["status"])==="PUBLISHED"?"var(--color-success)":String(s["status"])==="REJECTED"?"var(--color-danger)":"var(--color-warning)", border: "1px solid var(--color-border)" }}>{(()=>{ const st=String(s["status"]||""); if(st==="PUBLISHED") return t("admin.published","Опубликовано"); if(st==="PENDING_MODERATION"||st==="PENDING") return t("admin.pending","На рассмотрении"); if(st==="REJECTED") return t("admin.rejected","Отклонено"); if(st==="SUSPENDED") return t("admin.suspended","Приостановлено"); if(st==="DRAFT") return t("statuses.DRAFT","Черновик"); return st;})()}</span>
                   </div>
                   <div style={{ padding: "0 16px 12px", display: "grid", gap: 10, fontSize: 13 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                       <div><span style={{ color: "var(--color-text-muted)" }}>Город:</span> <strong>{city || "—"}{district ? `, ${district}` : ""}</strong></div>
-                      <div><span style={{ color: "var(--color-text-muted)" }}>Тип:</span> <strong>{String(s["tutorType"]||s["tutor_type"]||"—")}</strong></div>
+                      <div><span style={{ color: "var(--color-text-muted)" }}>Тип:</span> <strong>{locTutorType(String(s["tutorType"]||s["tutor_type"]||"—"))}</strong></div>
                       <div><span style={{ color: "var(--color-text-muted)" }}>Опыт:</span> <strong>{String(s["experienceYears"]||s["experience_years"]||"—")} лет</strong></div>
                       <div><span style={{ color: "var(--color-text-muted)" }}>Формат:</span> <strong>{s["online"] && s["offline"] ? "Очно / Онлайн" : s["online"] ? "Онлайн" : s["offline"] ? "Очно" : "—"}</strong></div>
                       <div><span style={{ color: "var(--color-text-muted)" }}>Ставка:</span> <strong>{String(priceFrom)}{priceTo ? `–${priceTo}` : ""} {(s["currency"] as string)||"KGS"}/час</strong></div>
@@ -127,20 +162,41 @@ function ApplicationDrawer({ application, onClose }: { application: Record<strin
           </div>
         </div>
 
-        <div className="admin-drawer-actions" style={{ display: "flex", gap: 8 }}>
+        <div className="admin-drawer-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "12px 16px", borderTop: "1px solid var(--color-border)", background: "var(--color-surface)", position: "sticky", bottom: 0 }}>
+          {isPending && (
+            <>
+              <button type="button" className="btn-primary" onClick={handleApprove} disabled={actLoading} style={{ flex: 1, minWidth: 120 }}>{actLoading? t("common.loading","Загрузка..."): t("admin.approve","Одобрить")}</button>
+              <button type="button" className="btn-secondary" onClick={()=>setShowReject(true)} disabled={actLoading} style={{ flex: 1, minWidth: 120, background:"var(--color-danger-soft)", color:"var(--color-danger)", borderColor:"var(--color-border)" }}>{t("admin.reject","Отклонить")}</button>
+            </>
+          )}
+          {isPublished && (
+            <button type="button" className="btn-secondary" onClick={()=>setShowReject(true)} disabled={actLoading} style={{ flex: 1, minWidth: 120, background:"var(--color-danger-soft)", color:"var(--color-danger)", borderColor:"var(--color-border)" }}>{t("admin.reject","Отклонить")}</button>
+          )}
           <button
             type="button"
             className="btn-primary"
             onClick={handleChat}
             disabled={chatLoading}
-            style={{ flex: 1 }}
+            style={{ flex: 1, minWidth: 120 }}
           >
             {chatLoading ? t("common.loading", "Загрузка...") : t("admin.chat_with_applicant", "Чат с заявителем")}
           </button>
-          <button type="button" className="btn-secondary" onClick={onClose} style={{ flex: 1 }}>
+          <button type="button" className="btn-secondary" onClick={onClose} style={{ flex: 1, minWidth: 80 }}>
             {t("common.close", "Закрыть")}
           </button>
         </div>
+        {showReject && (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+            <div style={{ background:"var(--color-surface)", borderRadius:16, padding:16, width:"100%", maxWidth:360, boxShadow:"var(--shadow-lg)" }}>
+              <h3 style={{ margin:"0 0 8px", fontSize:16 }}>{t("admin.reject_title","Отклонить заявку?")}</h3>
+              <textarea placeholder={t("common.reject_reason_hint","Укажите причину...")} value={rejectReason} onChange={(e)=>setRejectReason(e.target.value)} style={{ width:"100%", minHeight:80, padding:8, border:"1px solid var(--color-border)", borderRadius:8 }} />
+              <div style={{ display:"flex", gap:8, marginTop:12, justifyContent:"flex-end" }}>
+                <button type="button" className="btn-secondary" onClick={()=>{ setShowReject(false); setRejectReason(""); }}>{t("common.cancel","Отмена")}</button>
+                <button type="button" className="btn-primary" style={{ background:"var(--color-danger)", borderColor:"var(--color-danger)" }} disabled={actLoading || !rejectReason.trim()} onClick={()=> handleReject(rejectReason)}>{t("admin.reject","Отклонить")}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   );
@@ -363,7 +419,7 @@ export default function PgAdminTutors() {
                 <tr style={{ background: "var(--color-bg-secondary)", borderBottom: "1px solid var(--color-border)", textAlign: "left" }}>
                   <th style={{ padding: "12px 16px", fontWeight: 600, color: "var(--color-text-muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{t("admin.name", "Имя")}</th>
                   <th style={{ padding: "12px 16px", fontWeight: 600, color: "var(--color-text-muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{t("admin.email", "Эл. почта")}</th>
-                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "var(--color-text-muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{t("course.subject", "Предметы")}</th>
+                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "var(--color-text-muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{t("course.subject_label", "Предмет")}</th>
                   <th style={{ padding: "12px 16px", fontWeight: 600, color: "var(--color-text-muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{t("admin.status", "Статус")}</th>
                   <th style={{ padding: "12px 16px", fontWeight: 600, color: "var(--color-text-muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap", textAlign: "right" }}>{t("admin.actions", "Действия")}</th>
                 </tr>
@@ -374,7 +430,7 @@ export default function PgAdminTutors() {
                   const displayEmail = (a as Record<string, unknown>)["email"] as string || ((a as Record<string, unknown>)["user"] as Record<string, unknown> && ((a as Record<string, unknown>)["user"] as Record<string, unknown>)["email"] as string) || "—";
                   const subjectsVal = (a as Record<string, unknown>)["subjects"];
                   const subjectsList: string[] = Array.isArray(subjectsVal)
-                    ? (subjectsVal as unknown[]).map((s) => typeof s === "string" ? s : (s as Record<string,unknown>)["nameRu"] as string || (s as Record<string,unknown>)["slug"] as string || "").filter(Boolean)
+                    ? (subjectsVal as unknown[]).map((s) => { const raw = typeof s === "string" ? s : (s as Record<string,unknown>)["nameRu"] as string || (s as Record<string,unknown>)["slug"] as string || ""; return raw?locSubject(raw):"";}).filter(Boolean)
                     : typeof subjectsVal === "string" && subjectsVal ? subjectsVal.split(",").map(s=>s.trim()).filter(Boolean) : [];
                   const status = (a as Record<string, unknown>)["status"] as string;
                   const sb = statusBadge(status);
@@ -451,7 +507,7 @@ export default function PgAdminTutors() {
         onCancel={() => setRejectTarget(null)}
         onConfirm={reject}
       />
-      {detail && <ApplicationDrawer application={detail} onClose={() => setDetail(null)} />}
+      {detail && <ApplicationDrawer application={detail} onClose={() => setDetail(null)} onModerated={load} />}
     </div>
   );
 }

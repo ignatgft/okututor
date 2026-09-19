@@ -16,7 +16,10 @@ type Props = {
   sending?: boolean;
   sendError?: string | null;
   onBack?: () => void;
-  // for mobile/desktop layout control, parent decides visibility
+  isOnline?: boolean;
+  isTyping?: boolean;
+  typingUser?: string | null;
+  onTyping?: (isTyping: boolean) => void;
 };
 
 function avatarColor(name: string): string {
@@ -46,7 +49,7 @@ function normalizeAvatar(url?: string | null): string | null {
   return `/${s.replace(/^\/+/, "")}`;
 }
 
-function ChatHeader({ conversation, onBack }: { conversation: ChatConversation; onBack?: () => void }): JSX.Element {
+function ChatHeader({ conversation, onBack, isOnline, isTyping }: { conversation: ChatConversation; onBack?: () => void; isOnline?: boolean; isTyping?: boolean }): JSX.Element {
   const { t } = useTranslation();
   const name = (conversation.counterpart_name as string | null) || t("chat.counterpart", "Собеседник") as string;
   const avatarUrl = normalizeAvatar((conversation.counterpart_avatar as string | null) || (conversation.other_participant_avatar_url as string | null) || null);
@@ -138,8 +141,9 @@ function ChatHeader({ conversation, onBack }: { conversation: ChatConversation; 
           {name}
           {targetPath && <span style={{ marginLeft: 6, fontSize: 12, color: "var(--color-text-muted)" }}>↗</span>}
         </div>
-        <div style={{ fontSize: "0.75rem", color: "var(--color-success, #16a34a)", lineHeight: 1 }}>
-          {t("chat.online", "в сети")}
+        <div style={{ fontSize: "0.75rem", color: isOnline ? "var(--color-success, #16a34a)" : "var(--color-text-muted, #6B7280)", lineHeight: 1, display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ width: 6, height: 6, borderRadius: 999, background: isOnline ? "var(--color-success, #16a34a)" : "var(--color-border, #E5E7EB)", display: "inline-block" }} />
+          {isTyping ? t("chat.typing", "печатает...") : isOnline ? t("chat.online", "в сети") : t("chat.offline", "не в сети")}
         </div>
       </div>
       {/* More button placeholder */}
@@ -150,7 +154,7 @@ function ChatHeader({ conversation, onBack }: { conversation: ChatConversation; 
   );
 }
 
-export default function ChatWindow({ conversation, messages, messagesLoading, messagesError, onRetryMessages, onSend, sending, sendError, onBack }: Props): JSX.Element {
+export default function ChatWindow({ conversation, messages, messagesLoading, messagesError, onRetryMessages, onSend, sending, sendError, onBack, isOnline, isTyping, onTyping }: Props): JSX.Element {
   const { t } = useTranslation();
   const [quickDraft, setQuickDraft] = useState<string | null>(null);
 
@@ -186,7 +190,7 @@ export default function ChatWindow({ conversation, messages, messagesLoading, me
         minWidth: 0,
       }}
     >
-      <ChatHeader conversation={conversation} onBack={onBack} />
+      <ChatHeader conversation={conversation} onBack={onBack} isOnline={isOnline} isTyping={isTyping} />
 
       {messagesLoading ? (
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -225,7 +229,8 @@ export default function ChatWindow({ conversation, messages, messagesLoading, me
         <MessageList messages={messages} />
       )}
 
-      <MessageInput onSend={onSend} loading={sending} error={sendError} disabled={!conversation} initialValue={quickDraft} onQuickDraftUsed={() => setQuickDraft(null)} />
+      {isTyping && <div style={{ padding: "4px 16px", fontSize: 12, color: "var(--color-text-muted)", fontStyle: "italic" }}>{t("chat.typing", "печатает...")}</div>}
+      <MessageInput onSend={onSend} loading={sending} error={sendError} disabled={!conversation} initialValue={quickDraft} onQuickDraftUsed={() => setQuickDraft(null)} onTyping={onTyping} />
     </div>
   );
 }

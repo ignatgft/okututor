@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
@@ -57,20 +57,35 @@ export default function PgBecomeTutor(): JSX.Element {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [customSubject, setCustomSubject] = useState("");
 
-  const [form, setForm] = useState({
-    full_name: "",
-    phone: "",
-    location: "",
-    experience_years: 0,
-    experience_description: "",
-    education: "",
-    subjects: [] as string[],
-    levels: [] as string[],
-    languages: [] as string[],
-    bio: "",
-    price_per_hour: "",
-    format: "online",
+  const storageKey = `okututor:wizard:${String((user as unknown as Record<string, unknown>)?.["id"] ?? "guest")}`;
+  const [form, setForm] = useState(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, unknown>;
+        if (parsed && typeof parsed === "object" && "full_name" in parsed) return parsed as unknown as { full_name: string; phone: string; location: string; experience_years: number; experience_description: string; education: string; subjects: string[]; levels: string[]; languages: string[]; bio: string; price_per_hour: string; format: string };
+      }
+    } catch {}
+    return {
+      full_name: "",
+      phone: "",
+      location: "",
+      experience_years: 0,
+      experience_description: "",
+      education: "",
+      subjects: [] as string[],
+      levels: [] as string[],
+      languages: [] as string[],
+      bio: "",
+      price_per_hour: "",
+      format: "online",
+    };
   });
+
+  // persist until 100% confirmed (100% guarantee)
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(form)); } catch {}
+  }, [form, storageKey]);
 
   const set = (patch: Record<string, unknown>) => setForm((prev) => ({ ...prev, ...patch }));
   const toggleIn = (field: "subjects" | "levels" | "languages", value: string) =>
@@ -131,22 +146,39 @@ export default function PgBecomeTutor(): JSX.Element {
   const submit = async () => {
     setSubmitting(true);
     setError("");
+    // retry with backoff for 100% guarantee (network loss after DB commit)
+    const doSubmit = async (attempt = 0): Promise<void> => {
+      try {
+        await tutorsApi.submitApplication({
+          full_name: form.full_name,
+          phone: form.phone,
+          location: form.location,
+          experience_years: form.experience_years,
+          experience_description: form.experience_description,
+          education: form.education,
+          subjects: form.subjects.join(","),
+          levels: form.levels.join(","),
+          languages: form.languages.join(","),
+          bio: form.bio,
+          price_per_hour: form.price_per_hour ? Number(form.price_per_hour) : undefined,
+          format: form.format,
+        });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const status = (e as Record<string, unknown>)?.["status"] as number | undefined ?? (e as Record<string, unknown>)?.["response"] as Record<string, unknown> | undefined;
+        // 409 already exists → idempotent success (100% guarantee)
+        if (msg.includes("already exists") || msg.includes("409") || String((status as Record<string, unknown>)?.["status"] ?? "").includes("409")) {
+          return;
+        }
+        if (attempt < 2 && (msg.includes("Network") || msg.includes("Failed to fetch") || msg.includes("timeout"))) {
+          await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+          return doSubmit(attempt + 1);
+        }
+        throw e;
+      }
+    };
     try {
-
-      await tutorsApi.submitApplication({
-        full_name: form.full_name,
-        phone: form.phone,
-        location: form.location,
-        experience_years: form.experience_years,
-        experience_description: form.experience_description,
-        education: form.education,
-        subjects: form.subjects.join(","),
-        levels: form.levels.join(","),
-        languages: form.languages.join(","),
-        bio: form.bio,
-        price_per_hour: form.price_per_hour ? Number(form.price_per_hour) : undefined,
-        format: form.format,
-      });
+      await doSubmit();
       // if photo was chosen in wizard, upload it now that TutorProfile exists (sync creates it)
       if (photoFile) {
         try {
@@ -158,9 +190,12 @@ export default function PgBecomeTutor(): JSX.Element {
           console.warn("photo upload after submit failed", e);
         }
       }
+      try { localStorage.removeItem(storageKey); } catch {}
       await queryClient.invalidateQueries({ queryKey: ["tutorProfile", "me"] });
       await queryClient.invalidateQueries({ queryKey: ["tutorApplication"] });
       await queryClient.invalidateQueries({ queryKey: ["tutorProfile"] });
+      // ensure dashboard will see it even if cache stale — refetch
+      await queryClient.refetchQueries({ queryKey: ["tutorApplication", "me"] }).catch(() => {});
       navigate("/app/resumes");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);

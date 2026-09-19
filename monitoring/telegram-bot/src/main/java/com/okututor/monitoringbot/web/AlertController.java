@@ -61,22 +61,46 @@ public class AlertController {
                 String aStatus = a.has("status") ? a.get("status").asText(status) : status;
                 boolean resolved = "resolved".equalsIgnoreCase(aStatus);
 
-                String prefix = resolved ? "[RESOLVED] OkuTutor" : "[" + severity.toUpperCase() + "] OkuTutor";
+                // Перевод severity на русский + эмодзи (варнинги, ошибки, критика)
+                String sevRu;
+                String emoji;
+                String levelDesc;
+                String sevLower = severity.toLowerCase();
+                switch (sevLower) {
+                    case "critical" -> { sevRu = "КРИТИЧНО"; emoji = "🔴"; levelDesc = "Критический — требуется немедленное вмешательство"; }
+                    case "warning" -> { sevRu = "ВНИМАНИЕ"; emoji = "🟡"; levelDesc = "Предупреждение — проверьте при первой возможности"; }
+                    case "error" -> { sevRu = "ОШИБКА"; emoji = "❌"; levelDesc = "Ошибка — проверьте логи"; }
+                    case "info" -> { sevRu = "ИНФО"; emoji = "ℹ️"; levelDesc = "Инфо — к сведению"; }
+                    default -> { sevRu = severity.toUpperCase(); emoji = "🔔"; levelDesc = sevRu; }
+                }
+                String prefix = resolved ? "✅ ВОССТАНОВЛЕНО — OkuTutor" : emoji + " " + sevRu + " — OkuTutor";
                 String starts = a.has("startsAt") ? a.get("startsAt").asText("").substring(0, Math.min(16, a.get("startsAt").asText("").length())).replace("T", " ") : "";
                 String summary = ann != null && ann.has("summary") ? ann.get("summary").asText("") : "";
                 String description = ann != null && ann.has("description") ? ann.get("description").asText("") : "";
+                // человекочитаемое имя алерта на русском
+                String alertRu = translateAlert(alertname);
 
                 List<String> lines = new ArrayList<>();
-                lines.add(prefix);
+                lines.add("<b>" + prefix + "</b>");
                 lines.add("");
-                lines.add("Alert: " + alertname);
-                lines.add("Service: " + service);
-                lines.add("Environment: " + props.getEnvironment());
-                if (!summary.isBlank() && !summary.equals(alertname)) lines.add("\n" + summary);
-                if (!description.isBlank()) lines.add(description);
-                if (!resolved) lines.add("\nStarted: " + starts);
-                else lines.add("\nRecovered to normal.");
-                if (!props.getGrafanaUrl().isBlank()) lines.add("\nGrafana: " + props.getGrafanaUrl());
+                lines.add("🔔 <b>Тревога:</b> " + escapeHtml(alertRu) + " <code>(" + escapeHtml(alertname) + ")</code>");
+                lines.add("🖥️ <b>Сервис:</b> " + escapeHtml(service));
+                lines.add("🌍 <b>Окружение:</b> " + escapeHtml(props.getEnvironment()));
+                String sevLine = "⚡ <b>Уровень:</b> " + sevRu + " — " + levelDesc + (resolved ? " (восстановлено)" : "");
+                lines.add(sevLine);
+                if (!summary.isBlank()) lines.add("\n📝 <b>Кратко:</b> " + escapeHtml(summary));
+                if (!description.isBlank()) lines.add("ℹ️ <b>Детали:</b> " + escapeHtml(description));
+                if (!resolved) {
+                    if (!starts.isBlank()) lines.add("\n⏰ <b>Начало:</b> " + escapeHtml(starts) + " UTC");
+                    // совет по severity
+                    if ("critical".equals(sevLower)) lines.add("⚡ <b>Действие:</b> срочно проверьте логи, Grafana и состояние сервиса!");
+                    else if ("warning".equals(sevLower)) lines.add("🔍 <b>Совет:</b> проверьте метрики, если повторится — эскалируйте.");
+                    else lines.add("💡 <b>Совет:</b> к сведению, наблюдение.");
+                } else {
+                    lines.add("\n✅ <b>Восстановлено</b> — проблема устранена, действие не требуется.");
+                }
+                if (!props.getGrafanaUrl().isBlank()) lines.add("\n📈 Grafana: " + escapeHtml(props.getGrafanaUrl()));
+                lines.add("\n—\nКнопки: /status — статус, /test — тест, /help — помощь");
 
                 String text = String.join("\n", lines);
                 for (String rcpt : recipients) {
@@ -90,5 +114,28 @@ public class AlertController {
             log.error("alert webhook parse failed", e);
             return ResponseEntity.ok(Map.of("ok", false, "error", e.getMessage()));
         }
+    }
+
+    private String translateAlert(String name) {
+        if (name == null) return "Неизвестно";
+        return switch (name) {
+            case "InstanceDown" -> "Бэкенд недоступен";
+            case "PrometheusDown" -> "Prometheus недоступен";
+            case "BackendHighErrorRate" -> "Высокая доля ошибок 5xx";
+            case "BackendElevated4xx" -> "Повышенная доля ошибок 4xx";
+            case "BackendHighLatency" -> "Высокая задержка p95";
+            case "JvmHeapHigh" -> "Переполнение памяти JVM heap";
+            case "JvmGcOverhead" -> "Перегрузка сборщика мусора JVM";
+            case "DbPoolExhaustion" -> "Исчерпание пула БД";
+            case "DbPoolPendingHigh" -> "Очередь ожидания БД";
+            case "LokiDown" -> "Loki недоступен";
+            case "SimulatedCritical" -> "Тестовая критическая тревога";
+            default -> name;
+        };
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

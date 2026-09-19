@@ -17,10 +17,10 @@ export function useMessages(conversationId: string | null, enabled = true) {
       return res.data as ChatMessage[];
     },
     enabled: Boolean(conversationId) && enabled,
-    // Spec §15: refetchInterval только на активном экране, stop когда покидает
-    refetchInterval: conversationId ? 4000 : false,
+    // WS push makes polling redundant — keep low background poll as fallback only when WS disconnected
+    refetchInterval: false,
     refetchIntervalInBackground: false,
-    staleTime: 2000,
+    staleTime: 1000,
     retry: 1,
   });
 

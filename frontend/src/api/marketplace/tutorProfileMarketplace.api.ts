@@ -60,6 +60,9 @@ export const tutorProfileMarketplaceApi = {
   preview: (): Promise<HttpResult<TutorProfileMeResponse>> =>
     apiClient.get<TutorProfileMeResponse>("/api/v1/tutors/me/preview"),
 
+  status: (): Promise<HttpResult<Record<string, unknown>>> =>
+    apiClient.get<Record<string, unknown>>("/api/v1/tutors/me/status"),
+
   bySlug: (slug: string): Promise<HttpResult<TutorProfileMeResponse>> =>
     apiClient.get<TutorProfileMeResponse>(`/api/v1/tutors/${encodeURIComponent(slug)}`),
 

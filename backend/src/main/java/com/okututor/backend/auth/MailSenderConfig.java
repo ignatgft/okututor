@@ -20,25 +20,33 @@ class MailSenderConfig {
         return new AppMailSender() {
             @Override
             public void sendVerificationCode(String to, String code, String purpose) {
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(properties.getMail().getFrom());
-                message.setTo(to);
-                message.setSubject("Okututor confirmation code: " + code);
-                message.setText("""
-                        Your Okututor %s code is: %s
-                        The code expires in 10 minutes.
-                        """.formatted(purposeLabel(purpose), code));
-                mailSender.send(message);
+                try {
+                    SimpleMailMessage message = new SimpleMailMessage();
+                    message.setFrom(properties.getMail().getFrom());
+                    message.setTo(to);
+                    message.setSubject("Okututor confirmation code: " + code);
+                    message.setText("""
+                            Your Okututor %s code is: %s
+                            The code expires in 10 minutes.
+                            """.formatted(purposeLabel(purpose), code));
+                    mailSender.send(message);
+                } catch (Exception e) {
+                    log.warn("MAIL quota/failed to={}, code not sent but DB code kept for verify: {}", to, e.toString());
+                }
             }
 
             @Override
             public void sendPlainText(String to, String subject, String body) {
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(properties.getMail().getFrom());
-                message.setTo(to);
-                message.setSubject(subject);
-                message.setText(body);
-                mailSender.send(message);
+                try {
+                    SimpleMailMessage message = new SimpleMailMessage();
+                    message.setFrom(properties.getMail().getFrom());
+                    message.setTo(to);
+                    message.setSubject(subject);
+                    message.setText(body);
+                    mailSender.send(message);
+                } catch (Exception e) {
+                    log.warn("MAIL plain failed to={}: {}", to, e.toString());
+                }
             }
         };
     }

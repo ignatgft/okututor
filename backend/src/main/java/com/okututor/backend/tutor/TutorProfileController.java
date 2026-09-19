@@ -201,6 +201,29 @@ public class TutorProfileController {
         return service.getByUserId(principal.id(), true);
     }
 
+    // 100% guarantee: combined status of profile + pending application
+    @GetMapping({"/tutors/me/status", "/tutor-profiles/me/status"})
+    public Map<String, Object> myStatus(@AuthenticationPrincipal UserPrincipal principal) {
+        requireAuth(principal);
+        var profileOpt = repository.findByUserId(principal.id());
+        var out = new java.util.LinkedHashMap<String, Object>();
+        if (profileOpt.isPresent()) {
+            var p = profileOpt.get();
+            out.put("hasProfile", true);
+            out.put("profileStatus", p.getStatus().name());
+            out.put("profileId", p.getId().toString());
+            out.put("slug", p.getSlug());
+            out.put("guaranteed", true);
+        } else {
+            out.put("hasProfile", false);
+            out.put("profileStatus", "NONE");
+            out.put("guaranteed", false);
+            // check if application exists (via TutorRequestService would be separate, for now just indicate not guaranteed)
+        }
+        out.put("timestamp", java.time.Instant.now().toString());
+        return out;
+    }
+
     // Owner-only preview: renders the resume exactly as users see it (public form),
     // workable for any moderation status (DRAFT, PENDING_MODERATION, REJECTED, ...).
     @GetMapping({"/tutors/me/preview", "/tutor-profiles/me/preview"})

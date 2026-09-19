@@ -9,8 +9,8 @@ groups:
           severity: critical
           service: okututor-backend
         annotations:
-          summary: "OkuTutor backend is DOWN"
-          description: "Backend instance has been down for more than 2 minutes."
+          summary: "🔴 Бэкенд OkuTutor недоступен"
+          description: "Бэкенд не отвечает более 2 минут. Требуется срочная проверка."
 
       - alert: PrometheusDown
         expr: up{job="prometheus"} == 0
@@ -19,7 +19,8 @@ groups:
           severity: critical
           service: prometheus
         annotations:
-          summary: "Prometheus is DOWN"
+          summary: "🔴 Prometheus недоступен"
+          description: "Сервис мониторинга Prometheus не отвечает более 2 минут. Метрики не собираются."
 
   - name: okututor-errors
     interval: 30s
@@ -33,8 +34,8 @@ groups:
           severity: critical
           service: okututor-backend
         annotations:
-          summary: "High 5xx error rate (>5% for 5m)"
-          description: "5xx rate is {{ $value | humanizePercentage }} for 5 minutes."
+          summary: "🔴 Высокая доля ошибок 5xx (>5% за 5 минут)"
+          description: "Доля ответов 5xx составляет {{ $value | humanizePercentage }} за 5 минут. Проверьте логи бэкенда."
 
       - alert: BackendElevated4xx
         expr: |
@@ -45,7 +46,8 @@ groups:
           severity: warning
           service: okututor-backend
         annotations:
-          summary: "Elevated 4xx rate (>20% for 10m)"
+          summary: "🟡 Повышенная доля ошибок 4xx (>20% за 10 минут)"
+          description: "Доля ответов 4xx превышает 20% за 10 минут. Возможны проблемы с клиентами или валидацией."
 
   - name: okututor-latency
     interval: 30s
@@ -58,8 +60,8 @@ groups:
           severity: warning
           service: okututor-backend
         annotations:
-          summary: "High p95 latency (>1s for 5m)"
-          description: "p95 latency is {{ $value }}s"
+          summary: "🟡 Высокая задержка p95 (>1 сек за 5 минут)"
+          description: "Задержка p95 составляет {{ $value }} сек. Проверьте производительность БД и внешние зависимости."
 
   - name: okututor-jvm
     interval: 30s
@@ -72,7 +74,8 @@ groups:
           severity: warning
           service: okututor-backend
         annotations:
-          summary: "JVM heap usage >85% for 5m"
+          summary: "🟡 Высокое потребление памяти JVM heap (>85% за 5 минут)"
+          description: "Heap JVM заполнен более чем на 85%. Риск OOM — проверьте утечки памяти и нагрузку."
 
       - alert: JvmGcOverhead
         expr: |
@@ -82,7 +85,8 @@ groups:
           severity: warning
           service: okututor-backend
         annotations:
-          summary: "JVM GC pause overhead high"
+          summary: "🟡 Высокая нагрузка сборщика мусора JVM (GC pause >3 сек)"
+          description: "Суммарные паузы GC превысили 3 сек за 5 минут. Возможна деградация производительности."
 
   - name: okututor-database
     interval: 30s
@@ -95,7 +99,8 @@ groups:
           severity: warning
           service: okututor-backend
         annotations:
-          summary: "DB connection pool >85% active for 5m"
+          summary: "🟡 Пул соединений БД почти исчерпан (>85% за 5 минут)"
+          description: "Активных соединений >85% от максимума. Проверьте долгие транзакции и настройки пула."
 
       - alert: DbPoolPendingHigh
         expr: |
@@ -105,7 +110,8 @@ groups:
           severity: warning
           service: okututor-backend
         annotations:
-          summary: "DB pool pending connections >5"
+          summary: "🟡 Очередь ожидания соединений БД (>5 потоков)"
+          description: "Более 5 потоков ожидают соединения к БД. Возможна блокировка или нехватка коннектов."
 
   - name: okututor-monitoring
     interval: 30s
@@ -117,4 +123,5 @@ groups:
           severity: warning
           service: loki
         annotations:
-          summary: "Loki is DOWN"
+          summary: "🟡 Loki недоступен"
+          description: "Сервис сбора логов Loki не отвечает более 2 минут. Логи могут не сохраняться."
