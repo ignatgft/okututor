@@ -43,3 +43,9 @@ ops/monitoring/prometheus/data/
 ops/monitoring/loki/data/
 ops/monitoring/tempo/data/
 
+# Reports & audit
+/reports/
+/alert.json
+/frontend.zip
+/reports/security/
+
