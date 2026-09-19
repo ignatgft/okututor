@@ -22,7 +22,6 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
   const [rotation, setRotation] = useState(0);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [baseSize, setBaseSize] = useState({ w: 400, h: 400 });
-  const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -50,7 +49,6 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
     setImgError(false);
     const natW = img.naturalWidth;
     const natH = img.naturalHeight;
-    setNaturalSize({ w: natW, h: natH });
     const rect = container.getBoundingClientRect();
     const cw = rect.width || 400;
     const ch = rect.height || 320;

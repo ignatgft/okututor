@@ -64,7 +64,7 @@ export default function ResumeEditMenu({ onClose, resumeId }: Props) {
       top = Math.max(12, trig.top - menuH - 8);
       if (top !== coords.top) setCoords((c) => ({ ...c, top }));
     }
-  }, [open, coords.left, coords.width]);
+  }, [open, coords.left, coords.width, coords.top]);
 
   useEffect(() => {
     if (!open) return;

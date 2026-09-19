@@ -114,18 +114,6 @@ export default function PgDashboardResume(): JSX.Element {
     refetchInterval: !resume ? 3000 : false,
     refetchOnWindowFocus: true,
   });
-  // 100% guarantee: poll combined status until hasProfile true
-  const { data: statusRaw } = useQuery({
-    queryKey: ["tutorStatus", "me"],
-    queryFn: async () => {
-      const res = await tutorProfileMarketplaceApi.status();
-      if (res.response.ok) return res.data as Record<string, unknown>;
-      return null;
-    },
-    enabled: !resume && !isLoading,
-    staleTime: 5_000,
-    refetchInterval: !resume ? 3000 : false,
-  });
   const application = applicationRaw as unknown as Record<string, unknown> | null;
 
   const rec = resume as unknown as Record<string, unknown> | null;

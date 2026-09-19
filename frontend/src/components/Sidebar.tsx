@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useAuthStore from "../store/authStore";
-import { useTheme } from "../hooks/useTheme";
 import { isAdmin, isSuperAdmin, isUser } from "../constants/roles";
 import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import { SIDEBAR_ITEMS, getSectionPath } from "../config/navigation";
@@ -17,7 +16,6 @@ const Sidebar = ({ isOpen = false, onClose, collapsed = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { theme } = useTheme();
   const { data: chatUnread = 0 } = useUnreadCount(isAuthenticated);
 
   if (!isAuthenticated) return null;

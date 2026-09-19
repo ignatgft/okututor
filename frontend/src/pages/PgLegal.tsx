@@ -32,13 +32,13 @@ export default function PgLegal(): JSX.Element {
     return () => { cancelled = true; };
   }, [type]);
 
+  const rawContent = String((data as Record<string, unknown> | null)?.["content"] ?? "");
+  const isHtml = rawContent.includes("<");
+  const sanitized = useMemo(() => isHtml ? DOMPurify.sanitize(rawContent, { USE_PROFILES: { html: true }, FORBID_TAGS: ["style", "script", "iframe", "object", "embed", "form"], FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"] }) : "", [rawContent, isHtml]);
+
   if (loading) return <div style={{ maxWidth: 800, margin: "40px auto", padding: 16 }}><Spinner label="Загрузка..." /></div>;
   if (error) return <div style={{ maxWidth: 800, margin: "40px auto", padding: 16 }}><ErrorState message={error} onRetry={() => location.reload()} /></div>;
   if (!data) return null;
-
-  const rawContent = String(data["content"] ?? "");
-  const isHtml = rawContent.includes("<");
-  const sanitized = useMemo(() => isHtml ? DOMPurify.sanitize(rawContent, { USE_PROFILES: { html: true }, FORBID_TAGS: ["style", "script", "iframe", "object", "embed", "form"], FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"] }) : "", [rawContent, isHtml]);
   return (
     <div style={{ maxWidth: 800, margin: "40px auto", padding: 16 }}>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>{String(data["title"] ?? type)}</h1>

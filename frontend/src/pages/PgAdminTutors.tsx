@@ -277,27 +277,19 @@ export default function PgAdminTutors() {
     try {
       let queryStatus = statusFilter;
       if (queryStatus === "PENDING") queryStatus = "PENDING_MODERATION";
-      // Use new tutor-profiles endpoint when searching or for new statuses, fallback to legacy
-      const useNewApi = debouncedQuery || ["EXPIRED","HIDDEN","ARCHIVED","PUBLISHED","DRAFT","PENDING_MODERATION","REJECTED","SUSPENDED"].includes(queryStatus);
-      if (useNewApi) {
-        const { response, data } = await adminApi.tutorProfiles(queryStatus, debouncedQuery);
-        if (response.ok) {
-          const content = (data as Record<string, unknown>)["content"] ?? [];
-          // Map new API shape (TutorProfileResponse) to legacy display if needed
-          setApplications(Array.isArray(content) ? content as Record<string, unknown>[] : Array.isArray(data) ? data as Record<string, unknown>[] : []);
-        } else {
-          setError(String((data as Record<string, unknown>)["message"] ?? (data as Record<string, unknown>)["error"] ?? t("common.error")));
-        }
+      // Всегда используем новый endpoint tutor-profiles (унифицировано, без ломки API)
+      const { response, data } = await adminApi.tutorProfiles(queryStatus, debouncedQuery);
+      if (response.ok) {
+        const content = (data as Record<string, unknown>)["content"] ?? (data as Record<string, unknown>)["data"] ?? [];
+        const arr = Array.isArray(content) ? content as Record<string, unknown>[] : Array.isArray(data) ? data as Record<string, unknown>[] : [];
+        setApplications(arr);
       } else {
-        const { response, data } = await adminApi.tutorApplications(queryStatus);
-        if (response.ok) {
-          setApplications(Array.isArray(data) ? data as Record<string, unknown>[] : (data as Record<string, unknown>)["content"] as Record<string, unknown>[] ?? []);
-        } else {
-          setError(String((data as Record<string, unknown>)["message"] ?? (data as Record<string, unknown>)["error"] ?? t("common.error")));
-        }
+        setError(String((data as Record<string, unknown>)["message"] ?? (data as Record<string, unknown>)["error"] ?? t("common.error")));
+        setApplications([]);
       }
     } catch (e) {
       setError((e as Error).message);
+      setApplications([]);
     } finally {
       setLoading(false);
     }
@@ -340,13 +332,12 @@ export default function PgAdminTutors() {
   useEffect(() => { setPageTitle(t("admin.tutor_applications", "Tutor applications")); }, [setPageTitle, t]);
 
   const statusTabs: [string, string][] = [
-    ["", t("dashboard.all", "All")],
-    ["PENDING", t("admin.awaiting_response", "Ожидает ответа")],
+    ["", t("dashboard.all", "Все")],
+    ["PENDING_MODERATION", t("admin.awaiting_response", "Ожидает ответа")],
     ["PUBLISHED", t("admin.published", "Опубликовано")],
     ["REJECTED", t("admin.rejected", "Отклонено")],
     ["SUSPENDED", t("admin.suspended", "Приостановлено")],
     ["DRAFT", t("statuses.DRAFT", "Черновик")],
-    ["PENDING_MODERATION", t("admin.pending", "На рассмотрении")],
     ["EXPIRED", t("statuses.EXPIRED", "Истекло")],
     ["HIDDEN", t("statuses.HIDDEN", "Скрыто")],
     ["ARCHIVED", t("statuses.ARCHIVED", "Архив")],

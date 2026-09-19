@@ -20,11 +20,18 @@ export default function PgAdmin() {
     setLoading(true);
     setError("");
     try {
-      const { response, data } = await apiClient.get(endpoints.admin.stats);
-      if (response.ok) setStats(data);
-      else setError(data.error || t("errors.default", "Something went wrong."));
+      const [s1, s2] = await Promise.all([
+        apiClient.get(endpoints.admin.stats),
+        apiClient.get(endpoints.adminMetrics.overview),
+      ]);
+      const merged = {} as Record<string, unknown>;
+      if (s1.response.ok) Object.assign(merged, s1.data as Record<string, unknown>);
+      if (s2.response.ok) Object.assign(merged, s2.data as Record<string, unknown>);
+      // fallback to s1 if s2 fails
+      if (s1.response.ok || s2.response.ok) setStats(merged);
+      else setError((s1.data as Record<string, unknown>)?.["error"] as string || t("errors.default", "Something went wrong."));
     } catch (e) {
-      setError(t("errors.network", "Network error") + ": " + e.message);
+      setError(t("errors.network", "Network error") + ": " + (e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -43,10 +50,12 @@ export default function PgAdmin() {
       ) : (
         <>
           <div className="stats-grid">
-            <div className="stat-card"><h3>{(stats as Record<string, unknown>)["total_users"] as number || (stats as Record<string, unknown>)["totalUsers"] as number || 0}</h3><p>{t("admin.users", "Users")}</p></div>
-            <div className="stat-card"><h3>{(stats as Record<string, unknown>)["total_tutors"] as number || (stats as Record<string, unknown>)["totalTutors"] as number || (stats as Record<string, unknown>)["total_resumes"] as number || 0}</h3><p>{t("admin.tutor_applications", "Резюме")}</p></div>
-            <div className="stat-card"><h3>{(stats as Record<string, unknown>)["total_requests"] as number || (stats as Record<string, unknown>)["totalRequests"] as number || 0}</h3><p>{t("navigation.requests", "Обращения")}</p></div>
-            <div className="stat-card"><h3>{(stats as Record<string, unknown>)["active_users"] as number || (stats as Record<string, unknown>)["activeUsers"] as number || 0}</h3><p>{t("admin.metrics.active_users", "Active (24h)")}</p></div>
+            <div className="stat-card"><h3>{Number((stats as Record<string, unknown>)["total_users"] ?? (stats as Record<string, unknown>)["totalUsers"] ?? 0)}</h3><p>{t("admin.users", "Пользователи")}</p><small style={{color:"var(--color-text-muted)",fontSize:12}}>{t("admin.metrics.active_users","Активные (24ч)")}: {Number((stats as Record<string, unknown>)["active_users"] ?? 0)}</small></div>
+            <div className="stat-card"><h3>{Number((stats as Record<string, unknown>)["total_tutor_profiles"] ?? (stats as Record<string, unknown>)["total_tutors"] ?? (stats as Record<string, unknown>)["totalTutors"] ?? 0)}</h3><p>{t("admin.tutor_applications", "Резюме")}</p><small style={{color:"var(--color-text-muted)",fontSize:12}}>{t("admin.pending","На рассмотрении")}: {Number((stats as Record<string, unknown>)["pending_tutor_profiles"] ?? 0)} · {t("admin.published","Опубликовано")}: {Number((stats as Record<string, unknown>)["published_tutor_profiles"] ?? (stats as Record<string, unknown>)["active_tutor_profiles"] ?? 0)}</small></div>
+            <div className="stat-card"><h3>{Number((stats as Record<string, unknown>)["total_tutor_requests"] ?? (stats as Record<string, unknown>)["total_requests"] ?? 0)}</h3><p>{t("navigation.requests", "Заявки")}</p><small style={{color:"var(--color-text-muted)",fontSize:12}}>Активные: {Number((stats as Record<string, unknown>)["active_tutor_profiles"] ?? 0)}</small></div>
+            <div className="stat-card"><h3>{Number((stats as Record<string, unknown>)["total_reviews"] ?? 0)}</h3><p>Отзывы</p><small style={{color:"var(--color-text-muted)",fontSize:12}}>Скрыто: {Number((stats as Record<string, unknown>)["hidden_tutor_profiles"] ?? 0)} · Архив: {Number((stats as Record<string, unknown>)["archived_tutor_profiles"] ?? 0)}</small></div>
+            <div className="stat-card" style={{borderColor:"var(--color-warning)"}}><h3 style={{color:"var(--color-warning)"}}>{Number((stats as Record<string, unknown>)["expiring_soon_tutor_profiles"] ?? 0)}</h3><p>Истекают (7д)</p></div>
+            <div className="stat-card" style={{borderColor:"var(--color-danger)"}}><h3 style={{color:"var(--color-danger)"}}>{Number((stats as Record<string, unknown>)["expired_tutor_profiles"] ?? 0)}</h3><p>Истекло</p></div>
           </div>
 
           <div className="pending-section">

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import { legalApi } from "../api/legal.api";
 import { Spinner, ErrorState } from "../components/ui/Primitives";
