@@ -1140,6 +1140,7 @@
     "action_failed": "Action failed",
     "category_title": "Category",
     "priority_title": "Priority",
+    "status_title": "Status",
     "ticket_closed_banner": "This ticket is closed",
     "chat": "Chat",
     "type_message": "Type your message...",

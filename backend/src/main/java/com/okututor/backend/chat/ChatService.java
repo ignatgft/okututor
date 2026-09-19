@@ -177,7 +177,9 @@ public class ChatService {
         if (target.isBlocked()) {
             throw ApiException.notFound("Tutor not found");
         }
-        if (tutorProfile.getStatus() != com.okututor.backend.tutor.TutorProfileStatus.PUBLISHED) {
+        // Admin bypass: allow chat with any published or not, for moderation
+        boolean isAdmin = isAdmin(currentUserId);
+        if (!isAdmin && tutorProfile.getStatus() != com.okututor.backend.tutor.TutorProfileStatus.PUBLISHED) {
             String status = tutorProfile.getStatus().name();
             if ("PENDING_MODERATION".equals(status) || "DRAFT".equals(status)) {
                 throw ApiException.validation("Tutor profile is under moderation and not available for chat yet");
@@ -248,14 +250,20 @@ public class ChatService {
     @Transactional(readOnly = true)
     public Page<ChatConversationResponse> listConversations(UUID currentUserId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), Sort.by(Sort.Direction.DESC, "updatedAt"));
-        Page<ChatConversation> convPage = conversationRepository.findByParticipantUserId(currentUserId, pageable);
+        boolean admin = isAdmin(currentUserId);
+        Page<ChatConversation> convPage;
+        if (admin) {
+            convPage = conversationRepository.findAll(pageable);
+        } else {
+            convPage = conversationRepository.findByParticipantUserId(currentUserId, pageable);
+        }
         if (convPage.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);
         }
         List<UUID> ids = convPage.getContent().stream().map(ChatConversation::getId).toList();
 
-        // batch unread counts
-        Map<UUID, Long> unreadMap = messageRepository.countUnreadGrouped(ids, currentUserId).stream()
+        // batch unread counts (admin sees 0)
+        Map<UUID, Long> unreadMap = admin ? Map.of() : messageRepository.countUnreadGrouped(ids, currentUserId).stream()
                 .collect(Collectors.toMap(
                         arr -> (UUID) arr[0],
                         arr -> (Long) arr[1]
@@ -319,7 +327,7 @@ public class ChatService {
     public ChatConversationResponse getConversation(UUID conversationId, UUID currentUserId) {
         ChatConversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> ApiException.notFound("Conversation not found"));
-        if (!participantRepository.isParticipant(conversationId, currentUserId)) {
+        if (!isAdmin(currentUserId) && !participantRepository.isParticipant(conversationId, currentUserId)) {
             throw ApiException.forbidden("Not a participant of this conversation");
         }
         return toConversationResponse(conv, currentUserId);
@@ -327,7 +335,7 @@ public class ChatService {
 
     @Transactional(readOnly = true)
     public Page<ChatMessageResponse> listMessages(UUID conversationId, UUID currentUserId, int page, int size) {
-        if (!participantRepository.isParticipant(conversationId, currentUserId)) {
+        if (!isAdmin(currentUserId) && !participantRepository.isParticipant(conversationId, currentUserId)) {
             throw ApiException.forbidden("Not a participant of this conversation");
         }
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -360,7 +368,7 @@ public class ChatService {
         ChatConversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> ApiException.notFound("Conversation not found"));
 
-        if (!participantRepository.isParticipant(conversationId, senderId)) {
+        if (!isAdmin(senderId) && !participantRepository.isParticipant(conversationId, senderId)) {
             throw ApiException.forbidden("Not a participant of this conversation");
         }
 
@@ -411,7 +419,7 @@ public class ChatService {
 
     @Transactional
     public int markRead(UUID conversationId, UUID currentUserId) {
-        if (!participantRepository.isParticipant(conversationId, currentUserId)) {
+        if (!isAdmin(currentUserId) && !participantRepository.isParticipant(conversationId, currentUserId)) {
             throw ApiException.forbidden("Not a participant of this conversation");
         }
         return messageRepository.markReadForConversation(conversationId, currentUserId, Instant.now());
@@ -466,6 +474,15 @@ public class ChatService {
                 otherSlug,
                 tutorProfileId
         );
+    }
+
+    private boolean isAdmin(UUID userId) {
+        try {
+            User u = userRepository.findById(userId).orElse(null);
+            if (u == null) return false;
+            String r = String.valueOf(u.getRole());
+            return "ADMIN".equals(r) || "SUPER_ADMIN".equals(r);
+        } catch (Exception e) { return false; }
     }
 
     private String safeName(User user) {

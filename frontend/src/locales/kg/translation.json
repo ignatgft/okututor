@@ -1153,6 +1153,9 @@
       "other": "Башка"
     },
     "subject": "Тема",
+    "category_title": "Категория",
+    "priority_title": "Приоритет",
+    "status_title": "Статус",
     "description": "Сүрөттөмө",
     "priority": {
       "low": "Төмөн",

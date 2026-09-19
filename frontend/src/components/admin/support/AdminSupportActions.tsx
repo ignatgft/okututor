@@ -27,7 +27,7 @@ export default function AdminSupportActions({ ticket, onUpdated }: Record<string
   return (
     <div className="admin-support-actions">
       <div className="admin-support-action-group">
-        <label className="admin-support-filter-label">{t("support.status", "Status")}</label>
+        <label className="admin-support-filter-label">{t("support.status_title", "Status")}</label>
         <select
           className="admin-support-select"
           value={ticket.status}
@@ -39,7 +39,7 @@ export default function AdminSupportActions({ ticket, onUpdated }: Record<string
         </select>
       </div>
       <div className="admin-support-action-group">
-        <label className="admin-support-filter-label">{t("support.priority", "Priority")}</label>
+        <label className="admin-support-filter-label">{t("support.priority_title", "Priority")}</label>
         <select
           className="admin-support-select"
           value={ticket.priority}

@@ -1147,6 +1147,9 @@
       "other": "Другое"
     },
     "subject": "Тема",
+    "category_title": "Категория",
+    "priority_title": "Приоритет",
+    "status_title": "Статус",
     "description": "Описание",
     "priority": {
       "low": "Низкий",

@@ -26,17 +26,29 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ChatPresenceService presence;
     private final ChatService chatService;
     private final ChatParticipantRepository participantRepository;
+    private final com.okututor.backend.user.UserRepository userRepository;
 
     private final ConcurrentHashMap<String, UUID> sessionUser = new ConcurrentHashMap<>();
 
     public ChatWebSocketHandler(JwtService jwtService, ObjectMapper objectMapper,
                                 ChatPresenceService presence, ChatService chatService,
-                                ChatParticipantRepository participantRepository) {
+                                ChatParticipantRepository participantRepository,
+                                com.okututor.backend.user.UserRepository userRepository) {
         this.jwtService = jwtService;
         this.objectMapper = objectMapper;
         this.presence = presence;
         this.chatService = chatService;
         this.participantRepository = participantRepository;
+        this.userRepository = userRepository;
+    }
+
+    private boolean isAdmin(UUID userId) {
+        try {
+            var u = userRepository.findById(userId).orElse(null);
+            if (u == null) return false;
+            String r = String.valueOf(u.getRole());
+            return "ADMIN".equals(r) || "SUPER_ADMIN".equals(r);
+        } catch (Exception e) { return false; }
     }
 
     private UUID resolveUserId(WebSocketSession session) {
@@ -224,9 +236,16 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                     }
                 }
             }
-            // also echo to sender if exclude null (for message we want echo to all)
-            if (excludeUserId == null) {
-                // already sent to all participants including sender via loop above if we didn't exclude
+            // also broadcast to online admins (moderators may not be participants)
+            for (UUID adminId : presence.onlineUsers()) {
+                if (userIds.contains(adminId)) continue;
+                if (excludeUserId != null && adminId.equals(excludeUserId)) continue;
+                if (!isAdmin(adminId)) continue;
+                for (WebSocketSession s : presence.getSessions(adminId)) {
+                    if (s.isOpen()) {
+                        try { s.sendMessage(msg); } catch (Exception ignored) {}
+                    }
+                }
             }
         } catch (Exception e) {
             log.warn("WS broadcast failed {}", e.getMessage());

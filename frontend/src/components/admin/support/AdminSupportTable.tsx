@@ -19,9 +19,9 @@ export default function AdminSupportTable({ tickets }: Record<string, unknown>) 
             <th>{t("support.id", "ID")}</th>
             <th>{t("support.user", "User")}</th>
             <th>{t("support.subject", "Subject")}</th>
-            <th>{t("support.category", "Category")}</th>
-            <th>{t("support.priority", "Priority")}</th>
-            <th>{t("support.status", "Status")}</th>
+            <th>{t("support.category_title", "Category")}</th>
+            <th>{t("support.priority_title", "Priority")}</th>
+            <th>{t("support.status_title", "Status")}</th>
             <th>{t("support.assigned", "Assigned")}</th>
             <th>{t("support.updated", "Updated")}</th>
           </tr>

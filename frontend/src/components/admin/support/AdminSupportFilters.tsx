@@ -38,7 +38,7 @@ export default function AdminSupportFilters({ filters, onFiltersChange }: Record
       </div>
       <div className="admin-support-filter-row">
         <div className="admin-support-filter-group">
-          <label className="admin-support-filter-label">{t("support.status", "Status")}</label>
+          <label className="admin-support-filter-label">{t("support.status_title", "Status")}</label>
           <div className="admin-support-filter-tabs" role="tablist">
             {[
               { value: "", label: t("support.filter_all", "All") },
@@ -62,7 +62,7 @@ export default function AdminSupportFilters({ filters, onFiltersChange }: Record
           </div>
         </div>
         <div className="admin-support-filter-group">
-          <label className="admin-support-filter-label">{t("support.category", "Category")}</label>
+          <label className="admin-support-filter-label">{t("support.category_title", "Category")}</label>
           <select className="admin-support-select" value={filters.category || ""} onChange={handleCategory}>
             <option value="">{t("support.filter_all", "All")}</option>
             {["TECHNICAL", "PAYMENT", "ACCOUNT", "LESSON", "COURSE", "TUTOR", "STUDENT", "BUG", "OTHER"].map(c => (
@@ -71,7 +71,7 @@ export default function AdminSupportFilters({ filters, onFiltersChange }: Record
           </select>
         </div>
         <div className="admin-support-filter-group">
-          <label className="admin-support-filter-label">{t("support.priority", "Priority")}</label>
+          <label className="admin-support-filter-label">{t("support.priority_title", "Priority")}</label>
           <select className="admin-support-select" value={filters.priority || ""} onChange={handlePriority}>
             <option value="">{t("support.filter_all", "All")}</option>
             {["LOW", "NORMAL", "HIGH", "URGENT"].map(p => (
