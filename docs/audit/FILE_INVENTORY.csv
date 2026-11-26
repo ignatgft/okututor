@@ -253,7 +253,7 @@ frontend/src/api/endpoints/messaging.ts,API client service messaging,2 reference
 frontend/src/api/endpoints/users.ts,API client service users,60 references,NO,LOW,used
 frontend/src/api/endpoints.ts,API client service endpoints,154 references,NO,LOW,used
 frontend/src/api/favorites.api.ts,API client service favorites.api,1 references,NO,LOW,used
-frontend/src/api/http.ts,API client service http,46 references,NO,LOW,used
+frontend/src/api/http.ts,API client service http,59 references,NO,LOW,used
 frontend/src/api/index.ts,API client service index,25 references,NO,LOW,used
 frontend/src/api/legal.api.ts,API client service legal.api,5 references,NO,LOW,used
 frontend/src/api/marketplace/tutorProfileMarketplace.api.ts,API client service tutorProfileMarketplace.api,4 references,NO,LOW,used
@@ -310,7 +310,7 @@ frontend/src/components/HomeSection/PopTutor.tsx,UI component PopTutor,3 referen
 frontend/src/components/HomeSection/SubjectGrid.tsx,UI component SubjectGrid,3 references,NO,LOW,used
 frontend/src/components/LocationPicker.tsx,UI component LocationPicker,0 references,NO,LOW,dead
 frontend/src/components/messages/NewTicketModal.tsx,Modal dialog NewTicketModal,0 references,NO,LOW,dead
-frontend/src/components/Navbar.tsx,UI component Navbar,4 references,NO,LOW,used
+frontend/src/components/Navbar.tsx,UI component Navbar,2 references,NO,LOW,used
 frontend/src/components/pageTitleContext.tsx,UI component pageTitleContext,20 references,NO,LOW,used
 frontend/src/components/photo/PhotoCropModal.tsx,Modal dialog PhotoCropModal,6 references,NO,LOW,used
 frontend/src/components/photo/PhotoDropzone.tsx,UI component PhotoDropzone,8 references,NO,LOW,used
@@ -344,6 +344,7 @@ frontend/src/components/ui/Avatar.tsx,UI component Avatar,11 references,NO,LOW,u
 frontend/src/components/ui/CalendarPicker.tsx,UI component CalendarPicker,0 references,NO,LOW,dead
 frontend/src/components/ui/ConfirmDialog.tsx,UI component ConfirmDialog,0 references,NO,LOW,dead
 frontend/src/components/ui/ConfirmModal.tsx,Modal dialog ConfirmModal,21 references,NO,LOW,used
+frontend/src/components/ui/CustomSelect.tsx,UI component CustomSelect,11 references,YES,LOW,used
 frontend/src/components/ui/DateTimePicker.tsx,UI component DateTimePicker,0 references,NO,LOW,dead
 frontend/src/components/ui/Form.tsx,UI component Form,0 references,NO,MEDIUM,dead
 frontend/src/components/ui/LoadingState.tsx,UI component LoadingState,0 references,NO,LOW,dead
@@ -358,7 +359,9 @@ frontend/src/components/ui/ResendCodeButton.tsx,UI component ResendCodeButton,6 
 frontend/src/components/ui/ReviewModal.tsx,Modal dialog ReviewModal,0 references,NO,LOW,dead
 frontend/src/components/ui/Skeletons.tsx,UI component Skeletons,0 references,NO,LOW,dead
 frontend/src/components/ui/StatusBadge.tsx,UI component StatusBadge,0 references,NO,LOW,dead
+frontend/src/components/ui/SubjectIcon.tsx,UI component SubjectIcon,3 references,YES,LOW,used
 frontend/src/components/ui/Tabs.tsx,UI component Tabs,1 references,NO,LOW,used
+frontend/src/components/ui/ThemeSwitch.tsx,UI component ThemeSwitch,8 references,NO,LOW,used
 frontend/src/components/ui/Timeline.tsx,UI component Timeline,0 references,NO,LOW,dead
 frontend/src/components/ui/Toast.tsx,UI component Toast,23 references,NO,LOW,used
 frontend/src/components/ui/VerifiedBadge.tsx,UI component VerifiedBadge,0 references,NO,LOW,dead
@@ -392,7 +395,7 @@ frontend/src/hooks/useContactTutor.ts,React custom hook useContactTutor,6 refere
 frontend/src/hooks/useCountdown.ts,React custom hook useCountdown,3 references,YES,LOW,used
 frontend/src/hooks/useFavorites.ts,React custom hook useFavorites,4 references,NO,LOW,used
 frontend/src/hooks/useSeoSettings.ts,React custom hook useSeoSettings,3 references,NO,LOW,used
-frontend/src/hooks/useTheme.ts,React custom hook useTheme,6 references,NO,LOW,used
+frontend/src/hooks/useTheme.ts,React custom hook useTheme,9 references,NO,LOW,used
 frontend/src/hooks/useTutorAvailability.ts,React custom hook useTutorAvailability,0 references,NO,LOW,dead
 frontend/src/i18n.ts,Frontend module i18n,36 references,NO,LOW,used
 frontend/src/jsx-globals.d.ts,Frontend module jsx-globals.d,0 references,NO,LOW,dead
