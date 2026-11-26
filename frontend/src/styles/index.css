@@ -1466,9 +1466,13 @@ button, a, input, textarea, select, [role="button"], label {
   .public-mobile-toggle {
     display: block !important;
   }
+  .public-mobile-actions {
+    display: flex !important;
+  }
 }
 @media (min-width: 769px) {
-  .public-mobile-toggle {
+  .public-mobile-toggle,
+  .public-mobile-actions {
     display: none !important;
   }
 }

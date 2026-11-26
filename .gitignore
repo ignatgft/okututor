@@ -28,6 +28,7 @@ frontend/node_modules/
 
 # Agent pack
 okututor-agent-pack/
+okututor-kit/
 *.zip
 
 # Local scratch / archives

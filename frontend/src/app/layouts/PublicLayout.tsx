@@ -4,6 +4,7 @@ import { useState } from "react";
 import useAuthStore from "../../store/authStore";
 import { getDashboardPath } from "../../config/navigation";
 import Footer from "../../components/HomeSection/Footer";
+import ThemeSwitch from "../../components/ui/ThemeSwitch";
 
 export default function PublicLayout(): JSX.Element {
   const { t } = useTranslation();
@@ -16,34 +17,47 @@ export default function PublicLayout(): JSX.Element {
       <header style={{ position: "sticky", top: 0, zIndex: 40, background: "var(--color-surface, #fff)", borderBottom: "1px solid var(--color-border, #e5e7eb)" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <Link to="/" style={{ fontWeight: 800, fontSize: 20, color: "var(--color-text)", textDecoration: "none" }}>OkuTutor</Link>
+
+          {/* Desktop Navigation */}
           <nav style={{ display: "flex", gap: 16, alignItems: "center" }} className="public-nav-desktop">
             <Link to="/tutors" style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.find_tutor", "Найти репетитора")}</Link>
             <Link to="/become-tutor" style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.for_tutors", "Разместить резюме")}</Link>
+            <ThemeSwitch />
             {!isAuthenticated ? (
-              <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600 }}>{t("navbar.login", "Войти")}</button>
+              <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600, cursor: "pointer" }}>{t("navbar.login", "Войти")}</button>
             ) : (
-              <button onClick={() => navigate(getDashboardPath(user?.role))} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 9999, border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+              <button onClick={() => navigate(getDashboardPath(user?.role))} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 9999, border: "1px solid var(--color-border)", background: "var(--color-surface)", cursor: "pointer" }}>
                 {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{user?.full_name?.[0] ?? "U"}</span>}
                 <span style={{ fontWeight: 600, fontSize: 14 }}>{t("navbar.dashboard", "Моё приложение")}</span>
               </button>
             )}
           </nav>
-          <button className="public-mobile-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-label="menu" style={{ display: "none", background: "none", border: "none", cursor: "pointer" }}>
-            <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
-            <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
-            <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
-          </button>
+
+          {/* Mobile Right Controls: Theme switch + Hamburger */}
+          <div className="public-mobile-actions" style={{ display: "none", alignItems: "center", gap: 8 }}>
+            <ThemeSwitch />
+            <button className="public-mobile-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-label="menu" style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+              <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
+              <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
+              <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
         {mobileOpen && (
-          <div style={{ padding: "12px 16px", borderTop: "1px solid var(--color-border)", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ padding: "12px 16px", borderTop: "1px solid var(--color-border)", display: "flex", flexDirection: "column", gap: 12, background: "var(--color-surface)" }}>
             <Link to="/tutors" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.find_tutor", "Найти репетитора")}</Link>
             <Link to="/become-tutor" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.for_tutors", "Разместить резюме")}</Link>
+            <div style={{ padding: "4px 0" }}>
+              <ThemeSwitch showLabel />
+            </div>
             {!isAuthenticated ? (
-              <button onClick={() => { setMobileOpen(false); navigate("/login"); }} style={{ padding: "10px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600, width: "100%", textAlign: "center" }}>
+              <button onClick={() => { setMobileOpen(false); navigate("/login"); }} style={{ padding: "10px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600, width: "100%", textAlign: "center", cursor: "pointer" }}>
                 {t("navbar.login", "Войти")}
               </button>
             ) : (
-              <button onClick={() => { setMobileOpen(false); navigate(getDashboardPath(user?.role)); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-surface)", width: "100%" }}>
+              <button onClick={() => { setMobileOpen(false); navigate(getDashboardPath(user?.role)); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-surface)", width: "100%", cursor: "pointer" }}>
                 {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{user?.full_name?.[0] ?? "U"}</span>}
                 <span style={{ fontWeight: 600, fontSize: 14 }}>{t("navbar.dashboard", "Моё приложение")}</span>
               </button>
@@ -51,9 +65,11 @@ export default function PublicLayout(): JSX.Element {
           </div>
         )}
       </header>
-      <main id="main-content" style={{ flex: 1, maxWidth: 1400, margin: "0 auto", padding: "24px 16px", width: "100%", boxSizing: "border-box" }}>
+
+      <main id="main-content" style={{ flex: 1, width: "100%", boxSizing: "border-box" }}>
         <Outlet />
       </main>
+
       <Footer />
     </div>
   );
