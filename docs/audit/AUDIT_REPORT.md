@@ -142,7 +142,7 @@ flowchart TD
 | Интернационализация | Поддержка языков `ru`, `en`, `kg` | **Работает** | Локали в `frontend/src/locales/{ru,en,kg}/translation.json`, автодетекция | Полнота переводов проверена |
 | Тёмная тема | Переключение темы интерфейса | **Работает** | CSS-переменные в `frontend/src/styles/tokens.css` под атрибутом `[data-theme="dark"]` | Автосохранение выбора в `localStorage` |
 | Юнит-тесты Backend | Тестирование бизнес-логики и порогов статусов | **Работает** | Surefire Maven: `ResumeTimerViewsSyncTest` (5 тестов) + `TutorProfileStatusTest` (7 тестов) — 12 PASSED (0 failures) | Окно 7 дней `expiringSoon` доказано |
-| Тесты Frontend | Vitest компонентные и интеграционные тесты | **Работает** | Vitest: 29 тестовых файлов, 159 тестов — 159 PASSED (0 failures) за 6.48 сек | Покрыты хуки, карточки, таймеры, i18n, роутер |
+| Тесты Frontend | Vitest компонентные и интеграционные тесты | **Работает** | Vitest: 30 тестовых файлов, 163 теста — 163 PASSED (0 failures) за 6.13 сек | Покрыты хуки, карточки, таймеры, i18n, нормализация, валидация, роутер |
 
 ---
 
@@ -156,6 +156,10 @@ flowchart TD
 | BUG-04 | **P1** | Кэширование запроса резюме на фронтенде с `staleTime: 60_000` приводило к задержке отображения статуса после одобрения админом | `useDashboardResume.ts` | Одобрить резюме в админке → в кабинете репетитора статус обновлялся только через минуту | **ИСПРАВЛЕНО** в коммите `3f4eef2`. Установлен `staleTime: 0`, включен опрос `refetchInterval: 30_000` и фокус-рефетч. Проверено в `verify_stage3_scenarios.py`. |
 | BUG-05 | **P1** | Отсутствовал мониторинг и алерт на зависание задачи автоматического истечения резюме (`ResumeExpiryScheduler`) | `ResumeExpiryScheduler.java`, `ObservabilityMetrics.java`, `okututor-alerts.yml` | Остановка планировщика оставалась незамеченной | **ИСПРАВЛЕНО** в коммите `3f4eef2`. Введена метрика `okututor_expiry_last_run_timestamp_seconds` и критический алерт `ResumeExpirySchedulerStalled` (> 2 ч). Проверено в Prometheus API. |
 | BUG-06 | **P2** | Ошибка старта Spring Boot при пустом `GOOGLE_CLIENT_ID` в локальном dev-окружении | `application.yml`, `SecurityConfig.java` | Запуск бэкенда без переменных OAuth2 Google | **ИСПРАВЛЕНО** в коммите `2e485a5`. Задан fallback `disabled` и проверка `isGoogleConfigured` в `SecurityConfig`. Проверено стартом контейнера. |
+| BUG-07 | **P1** | Задвоение компонента футера на главной странице: одновременный рендеринг в `PublicLayout.tsx` и `PgMain.tsx` | `PgMain.tsx` | Открыть главную страницу лендинга | **ИСПРАВЛЕНО**. Удален дублирующий вызов `<Footer />` из `PgMain.tsx`, оставлен единый вызов в корневом макете `PublicLayout.tsx`. Проверено рендером в браузере и Vitest. |
+| BUG-08 | **P2** | Фон темной темы в `tokens.css` был задан как жесткий черный `#000000` вместо мягкого Apple Space Gray | `tokens.css` | Включить тёмную тему (`[data-theme="dark"]`) | **ИСПРАВЛЕНО**. Применены официальные токены Apple Space Gray (`#1C1C1E` / `#202023`), карточки `#242426` / `#2C2C2E`, разделители `#2C2C2E` / `#3A3A3C`. Проверено production build. |
+| BUG-09 | **P1** | Устаревшая аннотация `@PreAuthorize("hasRole('STUDENT')")` в `ReviewController` блокировала пользователей с ролью `USER` с ошибкой HTTP 403 | `ReviewController.java` | Запрос к эндпоинтам отзывов от имени авторизованного `USER` | **ИСПРАВЛЕНО**. Проверка расширена до `@PreAuthorize("hasAnyRole('USER','STUDENT')")`. Проверено тестами безопасности. |
+| BUG-10 | **P2** | Дефолтная роль в функции `normalizeUser` возвращала устаревшую роль `STUDENT` вместо канонической `USER` | `normalize.ts` | Вызов `normalizeUser({})` при отсутствии явного поля роли | **ИСПРАВЛЕНО**. Установлено значение по умолчанию `USER`. Проверено Vitest `normalize.test.js` (PASSED). |
 
 ---
 

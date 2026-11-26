@@ -65,7 +65,7 @@ backend/src/main/java/com/okututor/backend/common/error/ErrorCodes.java,коды
 backend/src/main/java/com/okututor/backend/common/error/FieldValidationException.java,422 VALIDATION_ERROR с ошибками по полям (карта `errors` для фронта).,26 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/common/error/GlobalExceptionHandler.java,маппит любую ошибку в контракт тела ошибки front_okututor:,0 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/common/ratelimit/RateLimiter.java,абстракция rate-limiter с фиксированным окном. Реализацию на Redis можно,6 references,NO,LOW,used
-backend/src/main/java/com/okututor/backend/common/ratelimit/RateLimitService.java,Инжектируем {@link RedisRateLimiter} как опциональный бин: если Redis,25 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/common/ratelimit/RateLimitService.java,Инжектируем {@link RedisRateLimiter} как опциональный бин: если Redis,26 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/common/ratelimit/RedisRateLimiter.java,Component / utility RedisRateLimiter,1 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/common/util/PhotoUrlUtils.java,Утилита для проверки Google-аватаров.,3 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/common/web/ClientIpResolver.java,Component / utility ClientIpResolver,4 references,NO,LOW,used
@@ -77,7 +77,6 @@ backend/src/main/java/com/okututor/backend/config/SeedData.java,Минималь
 backend/src/main/java/com/okututor/backend/favorite/Favorite.java,JPA Entity Favorite,7 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/favorite/FavoriteController.java,REST Controller for Favorite,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/favorite/FavoriteRepository.java,Spring Data JPA repository for Favorite,5 references,NO,HIGH,used
-backend/src/main/java/com/okututor/backend/tutor/TutorWizardController.java,10-step wizard controller creating canonical TutorProfile and submitting to moderation.,1 references,YES,MEDIUM,used
 backend/src/main/java/com/okututor/backend/legal/AdminLegalController.java,REST Controller for AdminLegal,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/legal/AdminTgController.java,REST Controller for AdminTg,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/legal/ConsentController.java,REST Controller for Consent,0 references,NO,MEDIUM,used
@@ -210,22 +209,23 @@ backend/src/main/java/com/okututor/backend/tutor/ResumeOrphanDetector.java,100% 
 backend/src/main/java/com/okututor/backend/tutor/TutorCacheConstants.java,Константы кешей для TutorProfile. Устраняет дублирование @CacheEvict в 11 местах.,0 references,NO,LOW,dead
 backend/src/main/java/com/okututor/backend/tutor/TutorCacheKey.java,Component / utility TutorCacheKey,2 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/tutor/TutorModerationController.java,REST Controller for TutorModeration,0 references,NO,MEDIUM,used
-backend/src/main/java/com/okututor/backend/tutor/TutorProfile.java,JPA Entity TutorProfile,126 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfile.java,JPA Entity TutorProfile,124 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/tutor/TutorProfileController.java,REST Controller for TutorProfile,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/tutor/TutorProfileEnricher.java,Вынесенная логика батч-загрузки связей профиля (subjects/levels/languages),0 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/tutor/TutorProfileLanguage.java,JPA Entity TutorProfileLanguage,16 references,NO,LOW,used
-backend/src/main/java/com/okututor/backend/tutor/TutorProfileLanguageRepository.java,Spring Data JPA repository for TutorProfileLanguage,16 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileLanguageRepository.java,Spring Data JPA repository for TutorProfileLanguage,15 references,NO,HIGH,used
 backend/src/main/java/com/okututor/backend/tutor/TutorProfileLevel.java,JPA Entity TutorProfileLevel,17 references,NO,LOW,used
-backend/src/main/java/com/okututor/backend/tutor/TutorProfileLevelRepository.java,Spring Data JPA repository for TutorProfileLevel,16 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileLevelRepository.java,Spring Data JPA repository for TutorProfileLevel,15 references,NO,HIGH,used
 backend/src/main/java/com/okututor/backend/tutor/TutorProfileMapper.java,Component / utility TutorProfileMapper,16 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/tutor/TutorProfileMedia.java,JPA Entity TutorProfileMedia,0 references,NO,LOW,used
-backend/src/main/java/com/okututor/backend/tutor/TutorProfileRepository.java,Spring Data JPA repository for TutorProfile,37 references,NO,HIGH,used
-backend/src/main/java/com/okututor/backend/tutor/TutorProfileService.java,Прокси самого себя: прямой вызов publicListingCached() обошёл бы @Cacheable.,10 references,NO,MEDIUM,used
-backend/src/main/java/com/okututor/backend/tutor/TutorProfileStatus.java,Component / utility TutorProfileStatus,108 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileRepository.java,Spring Data JPA repository for TutorProfile,36 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileService.java,Прокси самого себя: прямой вызов publicListingCached() обошёл бы @Cacheable.,9 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileStatus.java,Component / utility TutorProfileStatus,107 references,YES,LOW,used
 backend/src/main/java/com/okututor/backend/tutor/TutorProfileSubject.java,JPA Entity TutorProfileSubject,17 references,NO,LOW,used
-backend/src/main/java/com/okututor/backend/tutor/TutorProfileSubjectRepository.java,Spring Data JPA repository for TutorProfileSubject,16 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileSubjectRepository.java,Spring Data JPA repository for TutorProfileSubject,15 references,NO,HIGH,used
 backend/src/main/java/com/okututor/backend/tutor/TutorSearchProjection.java,Component / utility TutorSearchProjection,5 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/tutor/TutorType.java,Component / utility TutorType,13 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorWizardController.java,"Controller for the 10-step ""Become a Tutor"" registration wizard.",0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/user/dto/PublicUserResponse.java,публичные данные пользователя для карточек/профилей репетиторов (без phone/email/статусов).,9 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/user/dto/UpdateProfileRequest.java,тело PUT /users/me — зеркалит ключи formData из Profile.jsx.,4 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/user/dto/UserResponse.java,канонический payload пользователя:,14 references,NO,LOW,used
@@ -301,7 +301,7 @@ frontend/src/components/CookieBanner.tsx,UI component CookieBanner,3 references,
 frontend/src/components/DashboardLayout.tsx,UI component DashboardLayout,7 references,NO,LOW,used
 frontend/src/components/ErrorBoundary.tsx,UI component ErrorBoundary,12 references,NO,LOW,used
 frontend/src/components/HomeSection/Category.tsx,UI component Category,7 references,NO,LOW,used
-frontend/src/components/HomeSection/Footer.tsx,UI component Footer,6 references,NO,LOW,used
+frontend/src/components/HomeSection/Footer.tsx,UI component Footer,4 references,NO,LOW,used
 frontend/src/components/HomeSection/ForTutors.tsx,UI component ForTutors,3 references,NO,LOW,used
 frontend/src/components/HomeSection/HeroSection.tsx,UI component HeroSection,1 references,NO,LOW,used
 frontend/src/components/HomeSection/HowItWorks.tsx,UI component HowItWorks,3 references,NO,LOW,used
@@ -310,7 +310,7 @@ frontend/src/components/HomeSection/PopTutor.tsx,UI component PopTutor,3 referen
 frontend/src/components/HomeSection/SubjectGrid.tsx,UI component SubjectGrid,3 references,NO,LOW,used
 frontend/src/components/LocationPicker.tsx,UI component LocationPicker,0 references,NO,LOW,dead
 frontend/src/components/messages/NewTicketModal.tsx,Modal dialog NewTicketModal,0 references,NO,LOW,dead
-frontend/src/components/Navbar.tsx,UI component Navbar,5 references,NO,LOW,used
+frontend/src/components/Navbar.tsx,UI component Navbar,4 references,NO,LOW,used
 frontend/src/components/pageTitleContext.tsx,UI component pageTitleContext,20 references,NO,LOW,used
 frontend/src/components/photo/PhotoCropModal.tsx,Modal dialog PhotoCropModal,6 references,NO,LOW,used
 frontend/src/components/photo/PhotoDropzone.tsx,UI component PhotoDropzone,8 references,NO,LOW,used
