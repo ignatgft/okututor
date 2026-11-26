@@ -8,7 +8,6 @@ import SubjectGrid from "../components/HomeSection/SubjectGrid";
 import PopTutor from "../components/HomeSection/PopTutor";
 import HowItWorks from "../components/HomeSection/HowItWorks";
 import ForTutors from "../components/HomeSection/ForTutors";
-import Footer from "../components/HomeSection/Footer";
 
 function PgMain() {
   const location = useLocation();
@@ -22,7 +21,7 @@ function PgMain() {
     }
   }, [location.state, location.pathname, navigate]);
 
-  // Незарегистрированным — лендинг (PublicLayout уже даёт шапку, поэтому Navbar не дублируем)
+// Незарегистрированным — лендинг (PublicLayout уже даёт шапку и подвал Footer, поэтому не дублируем)
   if (!isAuthenticated) {
     return (
       <main id="main-content">
@@ -31,7 +30,7 @@ function PgMain() {
         <section id="find-tutor"><PopTutor /></section>
         <HowItWorks />
         <section id="for-tutors"><ForTutors /></section>
-        <section id="about-us"><Footer /></section>
+        <div id="about-us" />
       </main>
     );
   }
