@@ -118,7 +118,7 @@ export function normalizeUser(raw: unknown = {}): NormalizedUser {
     id: (r["id"] as string | number | undefined) ?? (r["_id"] as string | number | undefined) ?? null,
     full_name: getString(r, ["full_name", "fullName", "name"], ""),
     email: getString(r, ["email"], ""),
-    role: getString(r, ["role"], "STUDENT"),
+    role: getString(r, ["role"], "USER"),
     avatar: getString(r, ["avatar", "avatar_url"], ""),
     timezone: getValue<string | null>(r, ["timezone"], null),
     raw: r,
