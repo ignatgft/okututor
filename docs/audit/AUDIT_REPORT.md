@@ -1,12 +1,21 @@
 # Итоговый отчёт аудита OkuTutor
 
 **Дата:** 26-27 ноября 2026  
-**Ветка аудита:** `audit/2026-initial`  
-**Репозитории и зафиксированные коммиты:**  
-- **Монорепозиторий (origin):** `https://github.com/ignatgft/okututor.git` (HEAD `0dd5b7f`)  
-- **Backend (ig-back):** `https://github.com/ignatgft/okututor-backend.git` (HEAD `521d031`)  
-- **Frontend (ig-front):** `https://github.com/ignatgft/front_okututor.git` (HEAD `57e3cac`)  
-- **Monitoring (monitoring-remote):** `https://github.com/ignatgft/okututor-monitoring.git` (HEAD `87c9b28`)  
+**Ветка аудита:** `audit/2026-initial` (HEAD `dbdb3d0`)  
+
+### Исходные репозитории, ветки и зафиксированные коммиты (Этап 0):
+- **Монорепозиторий (origin):** `https://github.com/ignatgft/okututor.git`
+  - `origin/appmod/java-upgrade-20260817055013`: `0dd5b7f68db29e6f4d2248839b43e9f1f0776b26`
+  - `main`: `58527d7a7441b2977dda747374c65e81a5fb048d`
+- **Backend (ig-back):** `https://github.com/ignatgft/okututor-backend.git`
+  - `ig-back/main`: `521d0315b6442225e320b8b4c3a50e1013ab32e0`
+  - `ig-back/chore/cleanup-20260917`: `ccb5e770bd0b2b8f3ae0bd2d4ddbc4461004c28f`
+- **Frontend (ig-front):** `https://github.com/ignatgft/front_okututor.git`
+  - `ig-front/master`: `57e3cacdd6344fd82e3f49bcfde72aa8aa7ae104`
+  - `ig-front/main`: `2c72a0422595b845414e191105b02d65706f3d16`
+- **Monitoring (monitoring-remote):** `https://github.com/ignatgft/okututor-monitoring.git`
+  - `monitoring-remote/main`: `87c9b2871ea69b0818e0a4caacc2919e77750972`
+- **Рабочая ветка аудита:** `audit/2026-initial` (активна, прямые пуши в `main` и `develop` отсутствуют)  
 
 ---
 
