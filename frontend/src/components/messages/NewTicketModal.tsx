@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { supportApi } from "../../api/support.api";
 import { Spinner } from "../ui/Primitives";
 import { useToast } from "../ui/Toast";
+import type { SupportTicketDTO } from "../../types/api";
 import "../../styles/NewTicketModal.css";
 
 const CATEGORIES = [
@@ -20,7 +21,18 @@ const CATEGORIES = [
 
 const PRIORITIES = ["LOW", "NORMAL", "HIGH", "URGENT"];
 
-export default function NewTicketModal({ onClose, onCreated }: Record<string, unknown>) {
+interface NewTicketModalProps {
+  onClose?: () => void;
+  onCreated?: (ticket: SupportTicketDTO) => void;
+}
+
+interface NewTicketErrors {
+  category?: string;
+  subject?: string;
+  description?: string;
+}
+
+export default function NewTicketModal({ onClose, onCreated }: NewTicketModalProps) {
   const { t } = useTranslation();
   const toast = useToast();
   const [category, setCategory] = useState("");
@@ -28,10 +40,10 @@ export default function NewTicketModal({ onClose, onCreated }: Record<string, un
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("NORMAL");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<NewTicketErrors>({});
 
-  const validate = () => {
-    const e = {};
+  const validate = (): boolean => {
+    const e: NewTicketErrors = {};
     if (!category) e.category = t("support.error_category_required", "Category is required");
     if (!subject.trim()) e.subject = t("support.error_subject_required", "Subject is required");
     else if (subject.length > 120) e.subject = t("support.error_subject_max", "Subject must be 120 characters or less");
@@ -42,7 +54,7 @@ export default function NewTicketModal({ onClose, onCreated }: Record<string, un
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);

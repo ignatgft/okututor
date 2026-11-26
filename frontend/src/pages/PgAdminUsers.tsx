@@ -8,16 +8,18 @@ import ConfirmModal from "../components/ui/ConfirmModal";
 import { Spinner, EmptyState, ErrorState } from "../components/ui/Primitives";
 import { useToast } from "../components/ui/Toast";
 import { ROLES, ADMIN_ROLES } from "../constants/roles";
+import { extractError, errorText } from "../utils/apiHelpers";
+import type { PaginatedData, UserDTO } from "../types/api";
 import "../styles/Admin.css";
 
 export default function PgAdminUsers() {
   const { t } = useTranslation();
   const setPageTitle = usePageTitle();
   const toast = useToast();
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<UserDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [blockTarget, setBlockTarget] = useState(null);
+  const [blockTarget, setBlockTarget] = useState<UserDTO | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -32,11 +34,11 @@ export default function PgAdminUsers() {
     setError("");
     try {
       const q = debouncedQuery ? `?q=${encodeURIComponent(debouncedQuery)}` : "";
-      const { response, data } = await apiClient.get(`${endpoints.admin.users}${q}`);
+      const { response, data } = await apiClient.get<PaginatedData<UserDTO>>(`${endpoints.admin.users}${q}`);
       if (response.ok) setUsers(data.content || []);
-      else setError(data.error || t("errors.default", "Something went wrong."));
+      else setError(extractError(data) || t("errors.default", "Something went wrong."));
     } catch (e) {
-      setError(t("errors.network", "Network error") + ": " + e.message);
+      setError(t("errors.network", "Network error") + ": " + errorText(e));
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,7 @@ export default function PgAdminUsers() {
     loadUsers();
   }, [loadUsers]);
 
-  const runAction = async (action) => {
+  const runAction = async (action: () => Promise<unknown>) => {
     setActionLoading(true);
     try {
       await action();
@@ -54,16 +56,16 @@ export default function PgAdminUsers() {
       await loadUsers();
       toast.success(t("common.success", "Action completed"));
     } catch (e) {
-      toast.error(e.message || t("errors.default", "Something went wrong."));
+      toast.error(errorText(e) || t("errors.default", "Something went wrong."));
     } finally {
       setActionLoading(false);
     }
   };
 
-  const blockUser = (id) => runAction(() => apiClient.put(endpoints.admin.block(id)));
-  const unblockUser = (id) => runAction(() => apiClient.put(endpoints.admin.unblock(id)));
-  const verifyTutor = (id) => runAction(() => apiClient.put(endpoints.admin.verify(id)));
-  const changeRole = (id, role) => runAction(() => apiClient.put(endpoints.admin.role(id), { role }));
+  const blockUser = (id: string | number) => runAction(() => apiClient.put(endpoints.admin.block(id)));
+  const unblockUser = (id: string | number) => runAction(() => apiClient.put(endpoints.admin.unblock(id)));
+  const verifyTutor = (id: string | number) => runAction(() => apiClient.put(endpoints.admin.verify(id)));
+  const changeRole = (id: string | number, role: string) => runAction(() => apiClient.put(endpoints.admin.role(id), { role }));
 
   useEffect(() => { setPageTitle(t("admin.users", "Users")); }, [setPageTitle, t]);
 
@@ -75,7 +77,7 @@ export default function PgAdminUsers() {
           placeholder={t("admin.search_users", "Поиск по имени, email")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ flex: 1, minWidth: 200, maxWidth: 360, padding: "10px 12px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", background: "var(--color-surface)", minHeight: "var(--touch-target)" }}
+          style={{ flex: "1 1 240px", width: "100%", maxWidth: 440, padding: "10px 12px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", background: "var(--color-surface)", minHeight: "var(--touch-target)" }}
         />
         {debouncedQuery && <span style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>{users.length} {t("common.results", "результатов")}</span>}
       </div>
@@ -156,7 +158,7 @@ export default function PgAdminUsers() {
         confirmLabel={t("admin.block", "Block")}
         loading={actionLoading}
         onCancel={() => setBlockTarget(null)}
-        onConfirm={() => blockUser(blockTarget.id)}
+        onConfirm={() => { if (blockTarget) blockUser(blockTarget.id); }}
       />
     </>
   );

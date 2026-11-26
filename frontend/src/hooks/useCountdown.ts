@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import type { CountdownResult } from "../../types/schedule";
+import type { CountdownResult } from "../types/schedule";
+
+export type { CountdownResult };
 
 /**
  * Hook for real-time countdown to a target date

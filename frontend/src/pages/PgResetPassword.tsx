@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { authApi } from "../api/auth.api";
+import { authApi } from "../api/auth";
 import "../styles/AuthForms.css";
 
 export default function PgResetPassword() {

@@ -17,6 +17,27 @@ import "../../../styles/TutorProfile.css";
 
 const SUBJECT_MAP = new Map(MARKETPLACE_SUBJECTS.map((s) => [s.value.toLowerCase(), s.labelRu] as const));
 const CITY_MAP = new Map(MARKETPLACE_CITIES.map((c) => [c.value.toLowerCase(), c.labelRu] as const));
+const SUBJECT_KEYS = new Map(MARKETPLACE_SUBJECTS.map((s) => [s.value.toLowerCase(), s.labelKey] as const));
+const CITY_KEYS = new Map(MARKETPLACE_CITIES.map((c) => [c.value.toLowerCase(), c.labelKey] as const));
+const LEVEL_KEYS: Record<string, string> = {
+  university: "search.level_university",
+  school: "search.level_school",
+  beginner: "search.level_beginner",
+  advanced: "search.level_advanced",
+  ort: "search.level_ort",
+  "grade-1-4": "search.level_grade_1_4",
+  "grade-5-6": "search.level_grade_5_6",
+  "grade-7-11": "search.level_grade_7_11",
+  adult: "search.level_adult",
+};
+const LANG_KEYS: Record<string, string> = {
+  kyrgyz: "course.language.kyrgyz",
+  russian: "course.language.russian",
+  english: "course.language.english",
+  turkish: "course.language.turkish",
+  uzbek: "course.language.uzbek",
+};
+type TFn = (key: string, fallback: string) => string;
 const LEVEL_MAP: Record<string, string> = {
   university: "ВУЗ",
   school: "Школьный",
@@ -29,22 +50,43 @@ const LEVEL_MAP: Record<string, string> = {
   adult: "Взрослые",
 };
 const LANG_MAP = new Map(TUTOR_LANGUAGES.map((l) => [l.value.toLowerCase(), l.value] as const));
-function mapSubject(slug: string): string {
+function mapSubject(slug: string, t?: TFn): string {
   const k = slug.toLowerCase().trim();
-  if (SUBJECT_MAP.has(k)) return SUBJECT_MAP.get(k)!;
-  for (const s of MARKETPLACE_SUBJECTS) if (s.synonyms?.some((syn) => syn.toLowerCase() === k)) return s.labelRu;
+  if (SUBJECT_MAP.has(k)) {
+    const fb = SUBJECT_MAP.get(k)!;
+    const key = SUBJECT_KEYS.get(k);
+    return key && t ? String(t(key, fb)) : fb;
+  }
+  for (const s of MARKETPLACE_SUBJECTS) if (s.synonyms?.some((syn) => syn.toLowerCase() === k)) return t ? String(t(s.labelKey, s.labelRu)) : s.labelRu;
   return slug.charAt(0).toUpperCase() + slug.slice(1);
 }
-function mapCity(slug: string): string {
+function mapCity(slug: string, t?: TFn): string {
   const k = slug.toLowerCase().trim();
-  return CITY_MAP.get(k) ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
+  const fb = CITY_MAP.get(k) ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
+  const key = CITY_KEYS.get(k);
+  return key && t ? String(t(key, fb)) : fb;
 }
-function mapLevel(slug: string): string {
-  return LEVEL_MAP[slug.toLowerCase()] ?? slug;
+function mapLevel(slug: string, t?: TFn): string {
+  const low = slug.toLowerCase();
+  const fb = LEVEL_MAP[low] ?? slug;
+  const key = LEVEL_KEYS[low];
+  return key && t ? String(t(key, fb)) : fb;
 }
-function mapLanguage(v: string): string {
+const LANG_FALLBACK: Record<string, string> = {
+  kyrgyz: "Кыргызский",
+  russian: "Русский",
+  english: "Английский",
+  turkish: "Турецкий",
+  uzbek: "Узбекский",
+};
+function mapLanguage(v: string, t?: TFn): string {
   const k = v.toLowerCase().trim();
-  for (const l of TUTOR_LANGUAGES) if (l.value.toLowerCase() === k) return l.value === "Kyrgyz" ? "Кыргызский" : l.value === "Russian" ? "Русский" : l.value === "English" ? "Английский" : l.value === "Turkish" ? "Турецкий" : l.value === "Uzbek" ? "Узбекский" : l.value;
+  for (const l of TUTOR_LANGUAGES) {
+    if (l.value.toLowerCase() === k) {
+      const fb = LANG_FALLBACK[k] ?? l.value;
+      return t ? String(t(l.labelKey, fb)) : fb;
+    }
+  }
   return v;
 }
 
@@ -80,7 +122,7 @@ function getField(tutor: Record<string, unknown>, keys: string[]): string {
 export default function TutorProfileMarketplace() {
   const { tutorId, slug, subject: subjectParam } = useParams() as Record<string, string | undefined>;
   const rawParam = slug || tutorId || subjectParam || "";
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
   const { isAuthenticated } = useAuthStore();
@@ -121,7 +163,7 @@ export default function TutorProfileMarketplace() {
           }
         } catch { /* ignore */ }
         // SEO
-        const name = getField(tutorData, ["full_name","fullName","name"]) || "Репетитор";
+        const name = getField(tutorData, ["full_name","fullName","name"]) || (t("tutor_card.default_name", "Репетитор") as string);
         const subj = getField(tutorData, ["subject","subjects","main_subject"]).split(",")[0]?.trim() || subjectParam || "";
         const city = getField(tutorData, ["city","location"]);
         const bio = getField(tutorData, ["bio","about","description"]);
@@ -130,7 +172,8 @@ export default function TutorProfileMarketplace() {
         const avatar = getField(tutorData, ["avatar","avatar_url","avatarUrl","photoURL"]) || null;
         const slugVal = tutorSlug(tutorData);
         const typeRaw = getField(tutorData, ["tutor_type","tutorType","type"]);
-        applyTutorSeo({ name, subject: subj || undefined, city: city || undefined, bio: bio || undefined, price: price != null && !Number.isNaN(price) ? price : null, currency: "KGS", avatar, slug: slugVal || String(tutorData["id"] ?? paramForFetch), tutorType: typeRaw || undefined });
+        const isHidden = tutorData["status"] === "EXPIRED" || tutorData["status"] === "HIDDEN" || tutorData["status"] === "BLOCKED" || Boolean(tutorData["hidden"]) || Boolean(tutorData["is_hidden"]);
+        applyTutorSeo({ name, subject: subj || undefined, city: city || undefined, bio: bio || undefined, price: price != null && !Number.isNaN(price) ? price : null, currency: "KGS", avatar, slug: slugVal || String(tutorData["id"] ?? paramForFetch), tutorType: typeRaw || undefined, noindex: isHidden, lang: i18n.language });
       } else {
         const msg = (res.data as Record<string, unknown>)?.["message"] as string | undefined ?? (res.data as Record<string, unknown>)?.["error"] as string | undefined ?? t("tutor_profile.not_found", "Tutor not found");
         setError(String(msg));
@@ -142,7 +185,7 @@ export default function TutorProfileMarketplace() {
     } finally {
       setLoading(false);
     }
-  }, [paramForFetch, t, toast, subjectParam]);
+  }, [paramForFetch, t, toast, subjectParam, i18n.language]);
 
   useEffect(() => { void load(); return () => { clearTutorSeo(); }; }, [load]);
 
@@ -258,7 +301,7 @@ export default function TutorProfileMarketplace() {
           <ol>
             <li><Link to="/">{t("search.breadcrumb_home", "Главная")}</Link></li>
             <li><Link to="/tutors">{t("search.breadcrumb_search", "Репетиторы")}</Link></li>
-            {subject && <li><Link to={`/tutors?subject=${encodeURIComponent(subjects[0] ?? subject)}`}>{mapSubject(subjects[0] ?? subject)}</Link></li>}
+            {subject && <li><Link to={`/tutors?subject=${encodeURIComponent(subjects[0] ?? subject)}`}>{mapSubject(subjects[0] ?? subject, t as TFn)}</Link></li>}
             <li aria-current="page">{name}</li>
           </ol>
         </nav>
@@ -277,16 +320,16 @@ export default function TutorProfileMarketplace() {
             )}
 
             <div style={{ marginTop: 16, display: "grid", gap: 8, fontSize: "var(--font-size-base)", color: "var(--color-text-secondary)" }}>
-              {subjects.length > 0 && <p style={{ margin: 0 }}><strong>{t("profile.subjects", "Предметы")}:</strong> {subjects.map(mapSubject).join(", ")}</p>}
-              {levels.length > 0 && <p style={{ margin: 0 }}><strong>Уровни:</strong> {levels.map(mapLevel).join(", ")}</p>}
-              {city && <p style={{ margin: 0 }}><strong>{t("profile.location", "Город")}:</strong> {mapCity(city)}</p>}
-              {format && <p style={{ margin: 0 }}><strong>Формат:</strong> {t(`search.${String(format).toLowerCase()}`, String(format))}</p>}
-              {price && <p style={{ margin: 0 }}><strong>Цена:</strong> {price} {currency}/час</p>}
+              {subjects.length > 0 && <p style={{ margin: 0 }}><strong>{t("profile.subjects", "Предметы")}:</strong> {subjects.map((s) => mapSubject(s, t as TFn)).join(", ")}</p>}
+              {levels.length > 0 && <p style={{ margin: 0 }}><strong>{t("tutor_card.levels_row", "Уровни:")}</strong> {levels.map((s) => mapLevel(s, t as TFn)).join(", ")}</p>}
+              {city && <p style={{ margin: 0 }}><strong>{t("profile.location", "Город")}:</strong> {mapCity(city, t as TFn)}</p>}
+              {format && <p style={{ margin: 0 }}><strong>{t("tutor_card.format_row", "Формат:")}</strong> {t(`search.${String(format).toLowerCase()}`, String(format))}</p>}
+              {price && <p style={{ margin: 0 }}><strong>{t("tutor_card.price_row", "Цена:")}</strong> {t("tutor_card.per_hour", "{{price}} {{currency}}/час", { price, currency })}</p>}
               {education && <p style={{ margin: 0 }}><strong>{t("profile.education", "Образование")}:</strong> {education}</p>}
-              {university && <p style={{ margin: 0 }}><strong>ВУЗ:</strong> {university}</p>}
+              {university && <p style={{ margin: 0 }}><strong>{t("tutor_card.university_row", "ВУЗ:")}</strong> {university}</p>}
               {experience && <p style={{ margin: 0 }}><strong>{t("profile.experience", "Опыт")}:</strong> {experience} {t("profile.years", "лет")}</p>}
-              {languages.length > 0 && <p style={{ margin: 0 }}><strong>Языки:</strong> {languages.map(mapLanguage).join(", ")}</p>}
-              {achievements.length > 0 && <p style={{ margin: 0 }}><strong>Достижения:</strong> {achievements.join(", ")}</p>}
+              {languages.length > 0 && <p style={{ margin: 0 }}><strong>{t("tutor_card.languages_row", "Языки:")}</strong> {languages.map((s) => mapLanguage(s, t as TFn)).join(", ")}</p>}
+              {achievements.length > 0 && <p style={{ margin: 0 }}><strong>{t("tutor_card.achievements_row", "Достижения:")}</strong> {achievements.join(", ")}</p>}
             </div>
 
             {bio && <p className="tutor-bio" style={{ marginTop: 16, lineHeight: 1.6 }}>{bio}</p>}
@@ -298,7 +341,7 @@ export default function TutorProfileMarketplace() {
                 onClick={handleContact}
                 disabled={contactLoading}
                 aria-busy={contactLoading}
-                aria-label={`Связаться с репетитором ${name}`}
+                aria-label={t("tutor_card.contact_aria", "Связаться с репетитором {{name}}", { name }) as string}
                 style={{ minHeight: 48, padding: "12px 24px", fontWeight: 700, fontSize: "var(--font-size-base)", opacity: contactLoading ? 0.7 : 1 }}
               >
                 {contactLoading ? t("chat.creating", "Создание чата...") as string : t("marketplace.contact_tutor", "Связаться")}
@@ -333,7 +376,7 @@ export default function TutorProfileMarketplace() {
               }}
             >
               <button type="button" className="btn-primary" onClick={handleContact} disabled={contactLoading} style={{ width: "100%", minHeight: 44 }}>
-                {contactLoading ? "Создание..." : "Связаться"}
+                {contactLoading ? (t("chat.creating", "Создание чата...") as string) : (t("marketplace.contact_tutor", "Связаться") as string)}
               </button>
             </div>
           </div>
@@ -348,7 +391,7 @@ export default function TutorProfileMarketplace() {
                   <h3>{String(c["title"] ?? "")}</h3>
                   <p>{String(c["description"] ?? "").substring(0, 100)}...</p>
                   <div className="course-meta">
-                    <span>{String(c["price_per_hour"] ?? "")} {String(c["currency"] || "KGS")}/час</span>
+                    <span>{t("tutor_card.per_hour", "{{price}} {{currency}}/час", { price: String(c["price_per_hour"] ?? ""), currency: String(c["currency"] || "KGS") })}</span>
                   </div>
                 </div>
               ))}
@@ -378,10 +421,10 @@ export default function TutorProfileMarketplace() {
           className="btn-primary"
           onClick={handleContact}
           disabled={contactLoading}
-          aria-label={`Связаться с ${name}`}
+          aria-label={t("tutor_card.contact_aria_short", "Связаться с {{name}}", { name }) as string}
           style={{ flex: 1, minHeight: 48, fontWeight: 700 }}
         >
-          {contactLoading ? "Создание..." : "Связаться"}
+          {contactLoading ? (t("chat.creating", "Создание чата...") as string) : (t("marketplace.contact_tutor", "Связаться") as string)}
         </button>
       </div>
 
@@ -393,7 +436,7 @@ export default function TutorProfileMarketplace() {
           <div style={{ background: "var(--color-surface)", borderRadius: "var(--radius-xl)", padding: 24, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ marginTop: 0 }}>{t("marketplace.contact_tutor", "Связаться с репетитором")} — {name}</h3>
             <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
-              <label style={{ display: "grid", gap: 6 }}><span>{t("marketplace.your_name", "Ваше имя")} *</span><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Айбек" style={{ padding: 10, border: "1px solid var(--color-border)", borderRadius: 8 }} /></label>
+              <label style={{ display: "grid", gap: 6 }}><span>{t("marketplace.your_name", "Ваше имя")} *</span><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder={t("marketplace.name_example", "Айбек") as string} style={{ padding: 10, border: "1px solid var(--color-border)", borderRadius: 8 }} /></label>
               <label style={{ display: "grid", gap: 6 }}><span>{t("marketplace.your_contact", "Телефон или email")} *</span><input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+996 700 123 456" style={{ padding: 10, border: "1px solid var(--color-border)", borderRadius: 8 }} /></label>
               <label style={{ display: "grid", gap: 6 }}><span>{t("marketplace.message", "Сообщение")}</span><textarea value={contactMsg} onChange={(e) => setContactMsg(e.target.value)} rows={3} placeholder={t("marketplace.message_hint", "Здравствуйте! Ищу репетитора по математике для 9 класса...")} style={{ padding: 10, border: "1px solid var(--color-border)", borderRadius: 8 }} /></label>
             </div>

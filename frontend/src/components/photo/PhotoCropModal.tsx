@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { X, ZoomIn, ZoomOut, RotateCw, RotateCcw } from "lucide-react";
 
 export type CropAspect = "1:1" | "4:3" | "free";
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClose, onSave }: Props): JSX.Element | null {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const cropRef = useRef<HTMLDivElement>(null);
@@ -223,12 +225,12 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
   };
 
   return (
-    <div className="photo-crop-overlay" role="dialog" aria-modal="true" aria-label="Редактирование фото">
+    <div className="photo-crop-overlay" role="dialog" aria-modal="true" aria-label={t("photo.crop_title", "Редактирование фото") as string}>
       <div className="photo-crop-backdrop" onClick={onClose} />
       <div className="photo-crop-modal">
         <div className="photo-crop-header">
-          <h2>Редактирование фото</h2>
-          <button type="button" className="photo-crop-close" onClick={onClose} aria-label="Закрыть">
+          <h2>{t("photo.crop_title", "Редактирование фото")}</h2>
+          <button type="button" className="photo-crop-close" onClick={onClose} aria-label={t("common.close", "Закрыть") as string}>
             <X size={20} />
           </button>
         </div>
@@ -270,8 +272,8 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
               />
             ) : (
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: 14, flexDirection: "column", gap: 8 }}>
-                <span>Не удалось загрузить фото</span>
-                <span style={{ fontSize: 12 }}>Попробуйте выбрать другой файл</span>
+                <span>{t("photo.crop_load_error", "Не удалось загрузить фото")}</span>
+                <span style={{ fontSize: 12 }}>{t("photo.crop_try_other", "Попробуйте выбрать другой файл")}</span>
               </div>
             )}
             {/* crop box */}
@@ -294,7 +296,7 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
 
         <div className="photo-crop-controls">
           <div className="photo-crop-zoom-row">
-            <button type="button" className="photo-crop-icon-btn" onClick={() => setScale((s) => Math.max(0.5, s - 0.15))} aria-label="Уменьшить">
+            <button type="button" className="photo-crop-icon-btn" onClick={() => setScale((s) => Math.max(0.5, s - 0.15))} aria-label={t("photo.zoom_out", "Уменьшить") as string}>
               <ZoomOut size={18} />
             </button>
             <input
@@ -305,24 +307,24 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
               value={scale}
               onChange={(e) => setScale(Number(e.target.value))}
               className="photo-crop-slider"
-              aria-label="Масштаб"
+              aria-label={t("photo.zoom", "Масштаб") as string}
             />
-            <button type="button" className="photo-crop-icon-btn" onClick={() => setScale((s) => Math.min(3, s + 0.15))} aria-label="Увеличить">
+            <button type="button" className="photo-crop-icon-btn" onClick={() => setScale((s) => Math.min(3, s + 0.15))} aria-label={t("photo.zoom_in", "Увеличить") as string}>
               <ZoomIn size={18} />
             </button>
           </div>
 
           <div className="photo-crop-rotate-row">
             <button type="button" className="photo-crop-rotate-btn" onClick={rotateLeft}>
-              <RotateCcw size={18} /> Повернуть влево
+              <RotateCcw size={18} /> {t("photo.rotate_left", "Повернуть влево")}
             </button>
             <button type="button" className="photo-crop-rotate-btn" onClick={rotateRight}>
-              Повернуть вправо <RotateCw size={18} />
+              {t("photo.rotate_right", "Повернуть вправо")} <RotateCw size={18} />
             </button>
           </div>
 
           <div className="photo-crop-aspect">
-            <p className="photo-crop-aspect-label">Пропорции</p>
+            <p className="photo-crop-aspect-label">{t("photo.aspect", "Пропорции")}</p>
             <div className="photo-crop-aspect-btns">
               {(["1:1", "4:3", "free"] as const).map((a) => (
                 <button
@@ -331,7 +333,7 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
                   className={`photo-crop-aspect-btn ${aspect === a ? "active" : ""}`}
                   onClick={() => setAspect(a)}
                 >
-                  {a === "free" ? "свободный" : a}
+                  {a === "free" ? t("photo.aspect_free", "свободный") : a}
                 </button>
               ))}
             </div>
@@ -340,10 +342,10 @@ export default function PhotoCropModal({ open, src, initialAspect = "1:1", onClo
 
         <div className="photo-crop-footer">
           <button type="button" className="btn btn-secondary photo-crop-footer-btn" onClick={onClose} disabled={saving}>
-            Отмена
+            {t("photo.cancel", "Отмена")}
           </button>
           <button type="button" className="btn btn-primary photo-crop-footer-btn" onClick={handleSave} disabled={saving}>
-            {saving ? "Сохранение..." : "Сохранить и применить"}
+            {saving ? t("photo.saving", "Сохранение...") : t("photo.save_apply", "Сохранить и применить")}
           </button>
         </div>
       </div>

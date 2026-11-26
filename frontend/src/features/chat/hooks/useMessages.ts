@@ -1,5 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { chatApi, type ChatMessage } from "../../../api/chat.api";
+import i18n from "../../../i18n";
+
+const t = (key: string, fallback: string): string =>
+  (i18n.t(key, fallback) as unknown as string) ?? fallback;
 
 /**
  * Spec §9: useMessages(id) — polling только на активном chat screen
@@ -12,7 +16,7 @@ export function useMessages(conversationId: string | null, enabled = true) {
       const res = await chatApi.listMessages(conversationId);
       if (!res.response.ok) {
         const msg = (res.data as unknown as Record<string, unknown>)?.["message"] as string | undefined;
-        throw new Error(msg || "Не удалось загрузить сообщения");
+        throw new Error(msg || t("messages.load_failed", "Не удалось загрузить сообщения"));
       }
       return res.data as ChatMessage[];
     },

@@ -20,7 +20,7 @@ export default function PublicLayout(): JSX.Element {
             <Link to="/tutors" style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.find_tutor", "Найти репетитора")}</Link>
             <Link to="/become-tutor" style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.for_tutors", "Разместить резюме")}</Link>
             {!isAuthenticated ? (
-              <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600 }}>Войти</button>
+              <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600 }}>{t("navbar.login", "Войти")}</button>
             ) : (
               <button onClick={() => navigate(getDashboardPath(user?.role))} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 9999, border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
                 {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{user?.full_name?.[0] ?? "U"}</span>}
@@ -36,8 +36,18 @@ export default function PublicLayout(): JSX.Element {
         </div>
         {mobileOpen && (
           <div style={{ padding: "12px 16px", borderTop: "1px solid var(--color-border)", display: "flex", flexDirection: "column", gap: 12 }}>
-            <Link to="/tutors" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)" }}>{t("navbar.find_tutor", "Найти репетитора")}</Link>
-            <Link to="/become-tutor" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)" }}>{t("navbar.for_tutors", "Разместить резюме")}</Link>
+            <Link to="/tutors" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.find_tutor", "Найти репетитора")}</Link>
+            <Link to="/become-tutor" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.for_tutors", "Разместить резюме")}</Link>
+            {!isAuthenticated ? (
+              <button onClick={() => { setMobileOpen(false); navigate("/login"); }} style={{ padding: "10px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600, width: "100%", textAlign: "center" }}>
+                {t("navbar.login", "Войти")}
+              </button>
+            ) : (
+              <button onClick={() => { setMobileOpen(false); navigate(getDashboardPath(user?.role)); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-surface)", width: "100%" }}>
+                {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{user?.full_name?.[0] ?? "U"}</span>}
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{t("navbar.dashboard", "Моё приложение")}</span>
+              </button>
+            )}
           </div>
         )}
       </header>
@@ -45,7 +55,6 @@ export default function PublicLayout(): JSX.Element {
         <Outlet />
       </main>
       <Footer />
-      <style>{`@media(max-width: 768px){ .public-nav-desktop{ display:none !important; } .public-mobile-toggle{ display:block !important; } } @media(min-width: 769px){ .public-mobile-toggle{ display:none !important; } }`}</style>
     </div>
   );
 }

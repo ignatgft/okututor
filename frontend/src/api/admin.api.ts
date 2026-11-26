@@ -1,6 +1,7 @@
 import { endpoints } from "./endpoints";
 import { apiClient } from "./http";
 import type { HttpResult } from "./client/responseParser";
+import type { MaybePaginated, ReportDTO, ReviewDTO } from "../types/api";
 
 export const adminApi = {
   users: (query = ""): Promise<HttpResult<unknown>> => apiClient.get(`${endpoints.admin.users}${query}`),
@@ -22,10 +23,12 @@ export const adminApi = {
   tutorApplications: (status = ""): Promise<HttpResult<unknown>> =>
     apiClient.get(`${endpoints.admin.tutors}${status ? `?status=${status}` : ""}`),
 
-  tutorProfiles: (status = "", q = ""): Promise<HttpResult<unknown>> => {
+  tutorProfiles: (status = "", q = "", page = 0, size = 20): Promise<HttpResult<unknown>> => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (q) params.set("q", q);
+    params.set("page", String(Math.max(0, page)));
+    params.set("size", String(Math.min(Math.max(1, size), 100)));
     const qs = params.toString() ? `?${params.toString()}` : "";
     return apiClient.get(`${endpoints.admin.tutorProfiles}${qs}`);
   },
@@ -45,7 +48,7 @@ export const adminApi = {
   rejectCourse: (id: string | number, reason: string): Promise<HttpResult<unknown>> =>
     apiClient.post(endpoints.admin.rejectCourse(id), { reason }),
 
-  reviews: (): Promise<HttpResult<unknown>> => apiClient.get(endpoints.admin.reviews),
+  reviews: (): Promise<HttpResult<MaybePaginated<ReviewDTO>>> => apiClient.get(endpoints.admin.reviews),
 
   hideReview: (id: string | number): Promise<HttpResult<unknown>> =>
     apiClient.post(endpoints.admin.hideReview(id)),
@@ -53,7 +56,7 @@ export const adminApi = {
   restoreReview: (id: string | number): Promise<HttpResult<unknown>> =>
     apiClient.post(endpoints.admin.restoreReview(id)),
 
-  reports: (): Promise<HttpResult<unknown>> => apiClient.get(endpoints.admin.reports),
+  reports: (): Promise<HttpResult<MaybePaginated<ReportDTO>>> => apiClient.get(endpoints.admin.reports),
 
   updateReport: (id: string | number, payload: Record<string, unknown>): Promise<HttpResult<unknown>> =>
     apiClient.put(endpoints.admin.updateReport(id), payload),

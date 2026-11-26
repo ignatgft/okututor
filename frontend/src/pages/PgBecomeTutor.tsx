@@ -19,26 +19,64 @@ import "../components/photo/PhotoCropModal.css";
 const STEPS = ["personal", "subjects", "levels", "education", "experience", "price", "format", "photo", "preview", "submit"] as const;
 type StepKey = (typeof STEPS)[number];
 
-const STEP_META: Record<StepKey, { title: string; desc?: string }> = {
-  personal: { title: "Личные данные", desc: "Расскажите немного о себе. Эти данные помогут ученикам узнать вас лучше." },
-  subjects: { title: "Предметы", desc: "Выберите предметы, которые преподаёте" },
-  levels: { title: "Уровни", desc: "Выберите уровни, с которыми вы работаете." },
-  education: { title: "Образование", desc: "Укажите ваше образование — это повышает доверие учеников." },
-  experience: { title: "Опыт", desc: "Расскажите о преподавательском опыте." },
-  price: { title: "Цена занятий", desc: "Укажите стоимость часа — можно изменить позже." },
-  format: { title: "Формат занятий", desc: "Как вы проводите занятия?" },
-  photo: { title: "Фото", desc: "Загрузите фото — его увидят ученики. Можно пропустить и добавить позже" },
-  preview: { title: "Предпросмотр", desc: "Проверьте анкету перед отправкой на модерацию." },
-  submit: { title: "Отправка", desc: "Ваша анкета готова к модерации." },
+const STEP_META: Record<StepKey, { titleKey: string; descKey: string; title: string; desc?: string }> = {
+  personal: { titleKey: "wizard.step_personal_title", descKey: "wizard.step_personal_desc", title: "Личные данные", desc: "Расскажите немного о себе. Эти данные помогут ученикам узнать вас лучше." },
+  subjects: { titleKey: "wizard.step_subjects_title", descKey: "wizard.step_subjects_desc", title: "Предметы", desc: "Выберите предметы, которые преподаёте" },
+  levels: { titleKey: "wizard.step_levels_title", descKey: "wizard.step_levels_desc", title: "Уровни", desc: "Выберите уровни, с которыми вы работаете." },
+  education: { titleKey: "wizard.step_education_title", descKey: "wizard.step_education_desc", title: "Образование", desc: "Укажите ваше образование — это повышает доверие учеников." },
+  experience: { titleKey: "wizard.step_experience_title", descKey: "wizard.step_experience_desc", title: "Опыт", desc: "Расскажите о преподавательском опыте." },
+  price: { titleKey: "wizard.step_price_title", descKey: "wizard.step_price_desc", title: "Цена занятий", desc: "Укажите стоимость часа — можно изменить позже." },
+  format: { titleKey: "wizard.step_format_title", descKey: "wizard.step_format_desc", title: "Формат занятий", desc: "Как вы проводите занятия?" },
+  photo: { titleKey: "wizard.step_photo_title", descKey: "wizard.step_photo_desc", title: "Фото", desc: "Загрузите фото — его увидят ученики. Можно пропустить и добавить позже" },
+  preview: { titleKey: "wizard.step_preview_title", descKey: "wizard.step_preview_desc", title: "Предпросмотр", desc: "Проверьте анкету перед отправкой на модерацию." },
+  submit: { titleKey: "wizard.step_submit_title", descKey: "wizard.step_submit_desc", title: "Отправка", desc: "Ваша анкета готова к модерации." },
 };
 
-const LEVELS = ["Школьный", "ВУЗ", "Начинающий", "Продвинутый", "ОРТ"];
-const FORMATS: { value: string; label: string }[] = [
-  { value: "online", label: "Онлайн" },
-  { value: "offline", label: "Офлайн" },
-  { value: "both", label: "Оба" },
+// Значения LEVELS/FORMATS уходят в API как есть — переводим только отображение через labelKey.
+const LEVELS: { value: string; labelKey: string }[] = [
+  { value: "Школьный", labelKey: "search.level_school" },
+  { value: "ВУЗ", labelKey: "search.level_university" },
+  { value: "Начинающий", labelKey: "search.level_beginner" },
+  { value: "Продвинутый", labelKey: "search.level_advanced" },
+  { value: "ОРТ", labelKey: "search.level_ort" },
+];
+const LEVEL_KEY_BY_VALUE: Record<string, string> = {
+  "Школьный": "search.level_school",
+  "ВУЗ": "search.level_university",
+  "Начинающий": "search.level_beginner",
+  "Продвинутый": "search.level_advanced",
+  "ОРТ": "search.level_ort",
+};
+const FORMATS: { value: string; labelKey: string }[] = [
+  { value: "online", labelKey: "search.online" },
+  { value: "offline", labelKey: "search.offline" },
+  { value: "both", labelKey: "search.both" },
 ];
 
+type WizardT = (key: string, fallback: string) => string;
+// Маппинг значений формы (стабильны для API) в отображаемые подписи для предпросмотра.
+const locLevelValue = (v: string, t: WizardT): string => {
+  const key = LEVEL_KEY_BY_VALUE[v];
+  return key ? (t(key, v) as string) : v;
+};
+const locSubjectValue = (v: string, t: WizardT): string => {
+  const s = MARKETPLACE_SUBJECTS.find((m) => m.labelRu === v);
+  return s ? (t(s.labelKey, v) as string) : v;
+};
+const locLangValue = (v: string, t: WizardT): string => {
+  const l = LANGUAGES.find((x) => x.value === v);
+  return l ? (t(l.labelKey, v) as string) : v;
+};
+const locFormatValue = (v: string, t: WizardT): string => {
+  if (v === "online") return t("search.online", "Онлайн") as string;
+  if (v === "offline") return t("search.offline", "Офлайн") as string;
+  if (v === "both") return t("search.both", "Оба") as string;
+  return v;
+};
+const locCityValue = (v: string, t: WizardT): string => {
+  const c = MARKETPLACE_CITIES.find((m) => m.labelRu === v || m.value === v);
+  return c ? (t(c.labelKey, v) as string) : v;
+};
 export default function PgBecomeTutor(): JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -104,7 +142,7 @@ export default function PgBecomeTutor(): JSX.Element {
         if (form.phone) {
           const digits = form.phone.replace(/\D/g, "");
           const withoutCountry = digits.startsWith("996") ? digits.slice(3) : digits;
-          if (withoutCountry.length < 9) return "Укажите корректный телефон +996 XXX XXX XXX";
+          if (withoutCountry.length < 9) return t("wizard.error_phone", "Укажите корректный телефон +996 XXX XXX XXX") as string;
         }
         return "";
       case "subjects":
@@ -208,6 +246,7 @@ export default function PgBecomeTutor(): JSX.Element {
   const currentKey = STEPS[step] as StepKey;
   const meta = STEP_META[currentKey];
   const isPreview = currentKey === "preview" || currentKey === "submit";
+  const tt = ((k: string, fb: string) => t(k, fb) as string) as WizardT;
 
   // Sales landing — public, PublicLayout already provides header (§11)
   if (!showWizard) {
@@ -240,12 +279,12 @@ export default function PgBecomeTutor(): JSX.Element {
             )}
           </section>
           <section style={{ marginTop: 32, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
-            <div className="card"><h3>1. Основная информация</h3><p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--font-size-sm)" }}>Расскажи о себе — имя, телефон, город</p></div>
-            <div className="card"><h3>2. Предметы и уровни</h3><p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--font-size-sm)" }}>Математика, английский, ОРТ — что преподаёшь</p></div>
-            <div className="card"><h3>3. Оплата и модерация</h3><p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--font-size-sm)" }}>Цена, формат, фото → предпросмотр → на модерацию</p></div>
+            <div className="card"><h3>{t("wizard.card1_title", "1. Основная информация")}</h3><p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--font-size-sm)" }}>{t("wizard.card1_desc", "Расскажи о себе — имя, телефон, город")}</p></div>
+            <div className="card"><h3>{t("wizard.card2_title", "2. Предметы и уровни")}</h3><p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--font-size-sm)" }}>{t("wizard.card2_desc", "Математика, английский, ОРТ — что преподаёшь")}</p></div>
+            <div className="card"><h3>{t("wizard.card3_title", "3. Оплата и модерация")}</h3><p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--font-size-sm)" }}>{t("wizard.card3_desc", "Цена, формат, фото → предпросмотр → на модерацию")}</p></div>
           </section>
           <p style={{ marginTop: 24, textAlign: "center" }}>
-            <button type="button" className="btn-secondary" onClick={() => { if (isAuthenticated) setShowWizard(true); else openAuth(); }}>{t("common.next", "Далее")} → анкета репетитора</button>
+            <button type="button" className="btn-secondary" onClick={() => { if (isAuthenticated) setShowWizard(true); else openAuth(); }}>{t("common.next", "Далее")} {t("wizard.landing_next_suffix", "→ анкета репетитора")}</button>
           </p>
         </main>
     );
@@ -255,7 +294,7 @@ export default function PgBecomeTutor(): JSX.Element {
   return (
     <div className={`wizard-page ${currentKey === "subjects" ? "wizard-page--wide" : ""}`}>
       <button type="button" onClick={() => (isAppCreate ? navigate("/app/resumes") : setShowWizard(false))} className="wizard-back">
-        <ArrowLeft size={18} /> Назад
+        <ArrowLeft size={18} /> {t("wizard.back", "Назад")}
       </button>
       <h1 className="wizard-title">{t("become_tutor.title", "Стать репетитором")}</h1>
       <div className="wizard-dots" aria-hidden>
@@ -264,7 +303,7 @@ export default function PgBecomeTutor(): JSX.Element {
         ))}
       </div>
       <p className="wizard-step-label">
-        Шаг {step + 1} из {STEPS.length} · <strong>{meta.title}</strong>
+        {t("wizard.step_of", "Шаг {{n}} из {{total}}", { n: step + 1, total: STEPS.length })} · <strong>{t(meta.titleKey, meta.title)}</strong>
       </p>
 
       {!isPreview ? (
@@ -275,19 +314,19 @@ export default function PgBecomeTutor(): JSX.Element {
           }}
         >
           <div className="wizard-card">
-            <h2 className="wizard-card-title">{meta.title}</h2>
-            {meta.desc && <p className="wizard-card-desc">{meta.desc}</p>}
+            <h2 className="wizard-card-title">{t(meta.titleKey, meta.title)}</h2>
+            {meta.desc && <p className="wizard-card-desc">{t(meta.descKey, meta.desc)}</p>}
 
             {currentKey === "personal" && (
               <div className="wizard-fields">
                 <div className="wizard-field">
-                  <label htmlFor="bt-full_name">ФИО</label>
+                  <label htmlFor="bt-full_name">{t("wizard.full_name_label", "ФИО")}</label>
                   <div className="wizard-field-row">
                     <span className="wizard-field-icon"><User size={18} /></span>
                     <input
                       id="bt-full_name"
                       type="text"
-                      placeholder="Например, Асан Усенов"
+                      placeholder={t("wizard.full_name_ph", "Например, Асан Усенов") as string}
                       value={form.full_name}
                       onChange={(e) => set({ full_name: e.target.value })}
                       autoComplete="name"
@@ -295,7 +334,7 @@ export default function PgBecomeTutor(): JSX.Element {
                   </div>
                 </div>
                 <div className="wizard-field">
-                  <label htmlFor="bt-phone">Телефон</label>
+                  <label htmlFor="bt-phone">{t("wizard.phone_label", "Телефон")}</label>
                   <div className="wizard-field-row">
                     <span className="wizard-field-icon"><Phone size={18} /></span>
                     <input
@@ -317,7 +356,7 @@ export default function PgBecomeTutor(): JSX.Element {
                   </div>
                 </div>
                 <div className="wizard-field">
-                  <label htmlFor="bt-location">Местоположение</label>
+                  <label htmlFor="bt-location">{t("wizard.location_label", "Местоположение")}</label>
                   <div className="wizard-field-row">
                     <span className="wizard-field-icon"><MapPin size={18} /></span>
                     <select
@@ -325,9 +364,9 @@ export default function PgBecomeTutor(): JSX.Element {
                       value={form.location}
                       onChange={(e) => set({ location: e.target.value })}
                     >
-                      <option value="">Выберите ваш город или регион</option>
+                      <option value="">{t("wizard.city_choose", "Выберите ваш город или регион")}</option>
                       {MARKETPLACE_CITIES.map((c) => (
-                        <option key={c.value} value={c.labelRu}>{c.labelRu}</option>
+                        <option key={c.value} value={c.labelRu}>{t(c.labelKey, c.labelRu)}</option>
                       ))}
                     </select>
                   </div>
@@ -338,7 +377,7 @@ export default function PgBecomeTutor(): JSX.Element {
             {currentKey === "subjects" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.5 }}>
-                  Выберите предметы, которые вы преподаёте. Можно выбрать несколько. Если вашего предмета нет в списке — добавьте свой.
+                  {t("wizard.subjects_hint", "Выберите предметы, которые вы преподаёте. Можно выбрать несколько. Если вашего предмета нет в списке — добавьте свой.")}
                 </p>
                 <div className="wizard-options-grid wizard-options-grid--expanded">
                   {MARKETPLACE_SUBJECTS.map((s) => {
@@ -354,7 +393,7 @@ export default function PgBecomeTutor(): JSX.Element {
                 <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
                   <input
                     type="text"
-                    placeholder="Свой предмет, например: Дизайн"
+                    placeholder={t("wizard.custom_subject_ph", "Свой предмет, например: Дизайн") as string}
                     value={customSubject}
                     onChange={(e) => setCustomSubject(e.target.value)}
                     onKeyDown={(e) => {
@@ -388,7 +427,7 @@ export default function PgBecomeTutor(): JSX.Element {
                     className="wizard-btn wizard-btn-secondary"
                     style={{ minHeight: 44, padding: "0 18px", whiteSpace: "nowrap" }}
                   >
-                    Добавить
+                    {t("wizard.add", "Добавить")}
                   </button>
                 </div>
                 {form.subjects.filter((s) => !MARKETPLACE_SUBJECTS.some((m) => m.labelRu === s)).length > 0 && (
@@ -409,11 +448,11 @@ export default function PgBecomeTutor(): JSX.Element {
             {currentKey === "levels" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {LEVELS.map((lv) => {
-                  const selected = form.levels.includes(lv);
+                  const selected = form.levels.includes(lv.value);
                   return (
-                    <label key={lv} className={`wizard-option ${selected ? "active" : ""}`} style={{ borderRadius: 12 }}>
-                      <input type="checkbox" checked={selected} onChange={() => toggleIn("levels", lv)} />
-                      <span>{lv}</span>
+                    <label key={lv.value} className={`wizard-option ${selected ? "active" : ""}`} style={{ borderRadius: 12 }}>
+                      <input type="checkbox" checked={selected} onChange={() => toggleIn("levels", lv.value)} />
+                      <span>{t(lv.labelKey, lv.value)}</span>
                     </label>
                   );
                 })}
@@ -423,14 +462,14 @@ export default function PgBecomeTutor(): JSX.Element {
             {currentKey === "education" && (
               <div className="wizard-fields">
                 <div>
-                  <label htmlFor="bt-education" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: 6, display: "block" }}>Образование</label>
+                  <label htmlFor="bt-education" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: 6, display: "block" }}>{t("wizard.education_label", "Образование")}</label>
                   <textarea
                     id="bt-education"
                     className="wizard-textarea"
                     rows={3}
                     value={form.education}
                     onChange={(e) => set({ education: e.target.value })}
-                    placeholder="Например: КРСУ, Математика, 2018-2022"
+                    placeholder={t("wizard.education_ph", "Например: КРСУ, Математика, 2018-2022") as string}
                   />
                 </div>
               </div>
@@ -439,31 +478,31 @@ export default function PgBecomeTutor(): JSX.Element {
             {currentKey === "experience" && (
               <div className="wizard-fields">
                 <div className="wizard-field">
-                  <label htmlFor="bt-exp-years">Опыт (лет)</label>
+                  <label htmlFor="bt-exp-years">{t("wizard.exp_years_label", "Опыт (лет)")}</label>
                   <div className="wizard-field-row">
                     <input id="bt-exp-years" type="number" min={0} max={80} value={form.experience_years} onChange={(e) => set({ experience_years: Number(e.target.value) || 0 })} placeholder="0" />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="bt-exp-desc" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: 6, display: "block" }}>О себе</label>
+                  <label htmlFor="bt-exp-desc" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: 6, display: "block" }}>{t("wizard.exp_desc_label", "О себе")}</label>
                   <textarea
                     id="bt-exp-desc"
                     className="wizard-textarea"
                     rows={4}
                     value={form.experience_description}
                     onChange={(e) => set({ experience_description: e.target.value })}
-                    placeholder="Расскажите о вашем опыте преподавания"
+                    placeholder={t("wizard.exp_desc_ph", "Расскажите о вашем опыте преподавания") as string}
                   />
                 </div>
                 <div>
-                  <label htmlFor="bt-bio" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: 6, display: "block" }}>Кратко о себе для учеников</label>
+                  <label htmlFor="bt-bio" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: 6, display: "block" }}>{t("wizard.bio_label", "Кратко о себе для учеников")}</label>
                   <textarea
                     id="bt-bio"
                     className="wizard-textarea"
                     rows={3}
                     value={form.bio}
                     onChange={(e) => set({ bio: e.target.value })}
-                    placeholder="Почему стоит заниматься именно с вами..."
+                    placeholder={t("wizard.bio_ph", "Почему стоит заниматься именно с вами...") as string}
                   />
                 </div>
               </div>
@@ -472,17 +511,17 @@ export default function PgBecomeTutor(): JSX.Element {
             {currentKey === "price" && (
               <div className="wizard-fields">
                 <div className="wizard-field">
-                  <label htmlFor="bt-price">Цена за час (сом)</label>
+                  <label htmlFor="bt-price">{t("wizard.price_label", "Цена за час (сом)")}</label>
                   <div className="wizard-field-row">
                     <input id="bt-price" type="number" min={0} value={form.price_per_hour} onChange={(e) => set({ price_per_hour: e.target.value })} placeholder="500" />
                     <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>KGS</span>
                   </div>
-                  <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.4 }}>Укажите среднюю стоимость одного часа. Можно изменить позже в резюме.</p>
+                  <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.4 }}>{t("wizard.price_hint", "Укажите среднюю стоимость одного часа. Можно изменить позже в резюме.")}</p>
                 </div>
                 <div style={{ marginTop: 4 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>На каких языках вы преподаёте?</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>{t("wizard.lang_title", "На каких языках вы преподаёте?")}</div>
                   <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.4 }}>
-                    Ученики смогут фильтровать репетиторов по языку преподавания. Выберите все языки, на которых вы ведёте занятия.
+                    {t("wizard.lang_hint", "Ученики смогут фильтровать репетиторов по языку преподавания. Выберите все языки, на которых вы ведёте занятия.")}
                   </p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                     {LANGUAGES.map((l) => (
@@ -501,7 +540,7 @@ export default function PgBecomeTutor(): JSX.Element {
                 {FORMATS.map((f) => (
                   <label key={f.value} className={`wizard-option ${form.format === f.value ? "active" : ""}`} style={{ borderRadius: 12 }}>
                     <input type="radio" name="format" checked={form.format === f.value} onChange={() => set({ format: f.value })} />
-                    <span>{f.label}</span>
+                    <span>{t(f.labelKey, f.value)}</span>
                   </label>
                 ))}
               </div>
@@ -515,7 +554,7 @@ export default function PgBecomeTutor(): JSX.Element {
                   onRemove={photoPreview || photoUrl ? handlePhotoRemove : undefined}
                 />
                 <p style={{ marginTop: 12, fontSize: 13, color: "var(--color-text-muted)", textAlign: "center" }}>
-                  Можно пропустить — фото добавите позже в профиле
+                  {t("wizard.photo_skip", "Можно пропустить — фото добавите позже в профиле")}
                 </p>
               </div>
             )}
@@ -524,37 +563,37 @@ export default function PgBecomeTutor(): JSX.Element {
 
             <div className="wizard-actions">
               <button type="button" onClick={back} className="wizard-btn wizard-btn-secondary">
-                <ArrowLeft size={18} /> Назад
+                <ArrowLeft size={18} /> {t("wizard.back", "Назад")}
               </button>
               <button type="submit" className="wizard-btn wizard-btn-primary">
-                Далее <ArrowRight size={18} />
+                {t("wizard.next", "Далее")} <ArrowRight size={18} />
               </button>
             </div>
           </div>
         </form>
       ) : currentKey === "preview" ? (
         <div className="wizard-card">
-          <h2 className="wizard-card-title">Предпросмотр</h2>
-          <p className="wizard-card-desc">Так увидят ваше резюме ученики.</p>
+          <h2 className="wizard-card-title">{t("wizard.preview_title", "Предпросмотр")}</h2>
+          <p className="wizard-card-desc">{t("wizard.preview_desc", "Так увидят ваше резюме ученики.")}</p>
           <div className="wizard-preview-card">
             { (photoPreview || photoUrl) && (
-              <img loading="lazy" decoding="async" src={(photoPreview || photoUrl) as string} alt="Фото" style={{ width: 96, height: 96, borderRadius: 16, objectFit: "cover", border: "1px solid var(--color-border)" }} />
+              <img loading="lazy" decoding="async" src={(photoPreview || photoUrl) as string} alt={t("wizard.preview_alt", "Фото") as string} style={{ width: 96, height: 96, borderRadius: 16, objectFit: "cover", border: "1px solid var(--color-border)" }} />
             )}
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>{form.full_name || (user?.full_name as string) || "—"} {form.location ? `· ${form.location}` : ""}</p>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>{form.full_name || (user?.full_name as string) || "—"} {form.location ? `· ${locCityValue(form.location, tt)}` : ""}</p>
             {form.bio && <p style={{ margin: 0, color: "var(--color-text-secondary)", lineHeight: 1.5 }}>{form.bio}</p>}
-            <p style={{ margin: 0, fontSize: 14, color: "var(--color-text-secondary)" }}>Опыт: {form.experience_years} • Образование: {form.education || "—"}</p>
-            <p style={{ margin: 0, fontSize: 14 }}>Предметы: {form.subjects.join(", ") || "—"}</p>
-            <p style={{ margin: 0, fontSize: 14 }}>Уровни: {form.levels.join(", ") || "—"}</p>
-            <p style={{ margin: 0, fontSize: 14 }}>Языки: {form.languages.join(", ") || "—"}</p>
-            <p style={{ margin: 0, fontSize: 14 }}>Цена: {form.price_per_hour ? `${form.price_per_hour} KGS/час` : "—"} · Формат: {form.format}</p>
+            <p style={{ margin: 0, fontSize: 14, color: "var(--color-text-secondary)" }}>{t("wizard.preview_exp", "Опыт:")} {form.experience_years} • {t("wizard.preview_edu", "Образование:")} {form.education || "—"}</p>
+            <p style={{ margin: 0, fontSize: 14 }}>{t("wizard.preview_subjects", "Предметы:")} {form.subjects.map((s) => locSubjectValue(s, tt)).join(", ") || "—"}</p>
+            <p style={{ margin: 0, fontSize: 14 }}>{t("wizard.preview_levels", "Уровни:")} {form.levels.map((s) => locLevelValue(s, tt)).join(", ") || "—"}</p>
+            <p style={{ margin: 0, fontSize: 14 }}>{t("wizard.preview_langs", "Языки:")} {form.languages.map((s) => locLangValue(s, tt)).join(", ") || "—"}</p>
+            <p style={{ margin: 0, fontSize: 14 }}>{t("wizard.preview_price", "Цена:")} {form.price_per_hour ? `${form.price_per_hour} KGS/час` : "—"} · {t("wizard.preview_format", "Формат:")} {locFormatValue(form.format, tt)}</p>
           </div>
           {error && <p className="wizard-error" role="alert">{error}</p>}
           <div className="wizard-actions">
             <button type="button" className="wizard-btn wizard-btn-secondary" onClick={back}>
-              <ArrowLeft size={18} /> Назад
+              <ArrowLeft size={18} /> {t("wizard.back", "Назад")}
             </button>
             <button type="button" className="wizard-btn wizard-btn-primary" onClick={() => setStep(STEPS.indexOf("submit"))}>
-              Далее <ArrowRight size={18} />
+              {t("wizard.next", "Далее")} <ArrowRight size={18} />
             </button>
           </div>
         </div>
@@ -563,15 +602,15 @@ export default function PgBecomeTutor(): JSX.Element {
           <div style={{ width: 64, height: 64, borderRadius: 9999, background: "#EFF6FF", color: "#2563EB", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
             <Check size={32} />
           </div>
-          <h2 className="wizard-card-title" style={{ textAlign: "center" }}>Готово к отправке</h2>
-          <p className="wizard-card-desc" style={{ textAlign: "center" }}>Анкета будет проверена модератором. Обычно это занимает до 24 часов.</p>
+          <h2 className="wizard-card-title" style={{ textAlign: "center" }}>{t("wizard.ready_title", "Готово к отправке")}</h2>
+          <p className="wizard-card-desc" style={{ textAlign: "center" }}>{t("wizard.ready_desc", "Анкета будет проверена модератором. Обычно это занимает до 24 часов.")}</p>
           {error && <p className="wizard-error" role="alert">{error}</p>}
           <div className="wizard-actions">
             <button type="button" className="wizard-btn wizard-btn-secondary" onClick={back}>
-              <ArrowLeft size={18} /> Назад
+              <ArrowLeft size={18} /> {t("wizard.back", "Назад")}
             </button>
             <button type="button" className="wizard-btn wizard-btn-primary" onClick={submit} disabled={submitting}>
-              {submitting ? "Отправка..." : "Отправить на модерацию"}
+              {submitting ? (t("wizard.submitting", "Отправка...") as string) : (t("wizard.submit_cta", "Отправить на модерацию") as string)}
             </button>
           </div>
         </div>

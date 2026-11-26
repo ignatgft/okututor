@@ -1,10 +1,12 @@
 /**
- * Token storage abstraction — hardened for P0 audit.
+ * Token storage abstraction — hardened for P0 audit, reliability-fixed.
  *
  * Access token: sessionStorage (XSS mitigation — cleared on tab close).
- * Refresh token: sessionStorage (was localStorage — P0 fix). Persists only for
- * tab lifetime, not across browser restarts, reducing XSS window. Long-term
- * target is HttpOnly Secure SameSite cookie — see USE_COOKIE flag.
+ * Refresh token: localStorage — survives browser restarts and is shared
+ * across tabs, so the session can be restored via the 401 → refresh flow.
+ * Theft of a refresh token is mitigated server-side by rotation + reuse
+ * detection (the whole token family is revoked on reuse outside grace).
+ * Long-term target is HttpOnly Secure SameSite cookie — see USE_COOKIE flag.
  */
 
 const ACCESS_TOKEN_KEY = "access_token";
@@ -54,11 +56,11 @@ function getLocalStorage(): Storage | null {
   }
 }
 
-// Use sessionStorage for refresh token (P0 fix: was localStorage).
-// Keep localStorage read as fallback for migration of existing users.
+// Refresh token lives in localStorage (survives restarts, shared across tabs).
+// sessionStorage is kept as a read fallback for sessions created before this change.
 const refreshStorage = (): Storage | null => {
   try {
-    return USE_COOKIE ? null : getSessionStorage();
+    return USE_COOKIE ? null : getLocalStorage();
   } catch {
     return null;
   }
@@ -103,9 +105,9 @@ export function setTokens(accessToken: string | null, refreshToken: string | nul
     } catch {
       // ignore
     }
-    // Migrate: remove legacy localStorage copy if we now use sessionStorage
+    // Migrate: remove legacy sessionStorage copy now that localStorage is canonical
     try {
-      if (storage !== local) local?.removeItem(REFRESH_TOKEN_KEY);
+      if (storage !== session) session?.removeItem(REFRESH_TOKEN_KEY);
     } catch {
       // ignore
     }
@@ -116,7 +118,7 @@ export function setTokens(accessToken: string | null, refreshToken: string | nul
       // ignore
     }
     try {
-      local?.removeItem(REFRESH_TOKEN_KEY);
+      session?.removeItem(REFRESH_TOKEN_KEY);
     } catch {
       // ignore
     }
@@ -140,9 +142,9 @@ export function getRefreshToken(): string | null {
       const v = storage.getItem(REFRESH_TOKEN_KEY);
       if (v) return v;
     }
-    // Fallback for users who still have token in old localStorage
-    const local = getLocalStorage();
-    return local?.getItem(REFRESH_TOKEN_KEY) ?? null;
+    // Fallback for sessions created before localStorage became canonical
+    const session = getSessionStorage();
+    return session?.getItem(REFRESH_TOKEN_KEY) ?? null;
   } catch {
     return null;
   }
@@ -178,15 +180,17 @@ export function isAuthenticated(): boolean {
 }
 
 /**
- * Checks that access and refresh tokens are in sync.
+ * Checks that the stored tokens can still yield a session.
  * In cookie mode, only access token is checked.
- * Returns true if both exist or both are absent.
+ * Returns false only when NEITHER token exists. A refresh-only state
+ * (e.g. new tab, browser restart) is recoverable: the next authenticated
+ * request 401s and the refresh flow restores the access token.
  */
 export function areTokensConsistent(): boolean {
   const access = !!getAccessToken();
   if (USE_COOKIE) return true;
   const refresh = !!getRefreshToken();
-  return access === refresh;
+  return access || refresh;
 }
 
 export function isCookieRefreshEnabled(): boolean {

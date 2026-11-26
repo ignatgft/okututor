@@ -82,27 +82,18 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) return "vendor-react";
+            if (
+              id.includes("node_modules/react/") ||
+              id.includes("node_modules/react-dom/") ||
+              id.includes("node_modules/scheduler/")
+            ) return "vendor-react";
             if (id.includes("@tanstack/react-query")) return "vendor-react-query";
-            if (id.includes("livekit-client")) return "vendor-livekit";
             if (id.includes("i18next") || id.includes("react-i18next")) return "vendor-i18n";
-            if (id.includes("react-router")) return "vendor-router";
+            if (id.includes("react-router") || id.includes("@remix-run/router")) return "vendor-router";
             if (id.includes("zustand")) return "vendor-zustand";
             if (id.includes("lucide-react")) return "vendor-lucide";
-            // remaining vendors
-            if (id.includes("node_modules")) return "vendor";
+            return "vendor";
           }
-          // heavy pages — keep separate chunks (homepage not duplicated)
-          if (id.includes("src/pages/PgDashboard")) return "page-dashboard";
-          if (id.includes("src/pages/PgCourse")) return "page-course";
-          if (id.includes("src/pages/PgLesson")) return "page-lesson";
-          if (id.includes("src/pages/PgTutors")) return "page-tutors";
-          if (id.includes("src/features/tutors/components/TutorProfileMarketplace")) return "page-tutor-profile";
-          if (id.includes("src/pages/PgBecomeTutor")) return "page-become-tutor";
-          if (id.includes("src/pages/PgMarketplaceChat")) return "page-chat";
-          if (id.includes("src/components/chat")) return "page-chat";
-          if (id.includes("src/features/chat")) return "page-chat";
-          if (id.includes("src/api/chat.api")) return "page-chat";
           return undefined;
         },
       }

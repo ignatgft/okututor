@@ -56,10 +56,10 @@ export default function PgAdminMetrics() {
     try {
       const { response, data } = await adminApi.systemResources();
       if (response.ok && isRecord(data)) { setSys(data); setSysError(""); }
-      else if (response.status === 403 || response.status === 401) setSysError("Нет доступа");
+      else if (response.status === 403 || response.status === 401) setSysError(t("errors.forbidden", "Нет доступа"));
       else setSysError("");
     } catch { setSysError(""); }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -73,9 +73,11 @@ export default function PgAdminMetrics() {
 
   const cards: { key: string; label: string; value: number; icon: string }[] = [
     { key: "total_users", label: t("admin.users", "Users"), value: num(overview["total_users"] ?? overview["totalUsers"]), icon: "👥" },
-    { key: "total_tutors", label: t("admin.tutor_applications", "Резюме"), value: num(overview["total_tutors"] ?? overview["totalTutors"] ?? overview["total_resumes"] ?? overview["totalResumes"]), icon: "🧑‍🏫" },
-    { key: "total_requests", label: t("navigation.requests", "Обращения"), value: num(overview["total_requests"] ?? overview["totalRequests"] ?? overview["total_bookings"] ?? overview["totalBookings"]), icon: "" },
-    { key: "active_users", label: t("admin.metrics.active_users", "Active (24h)"), value: num(overview["active_users"] ?? overview["activeUsers"]), icon: "🟢" },
+    // Бэкенд metricsOverview отдаёт total_tutors = только PUBLISHED, а дашборд показывает pending.
+    // Для консистентности "Заявки репетиторов" = очередь модерации (pending), с фолбэками на total.
+    { key: "total_tutors", label: t("admin.tutor_applications", "Резюме"), value: num(overview["pending_tutor_profiles"] ?? overview["pendingTutors"] ?? overview["total_tutor_profiles"] ?? overview["total_tutors"] ?? overview["totalTutors"] ?? overview["total_resumes"] ?? overview["totalResumes"]), icon: "🧑‍🏫" },
+    { key: "total_requests", label: t("navigation.requests", "Обращения"), value: num(overview["total_tutor_requests"] ?? overview["total_requests"] ?? overview["totalRequests"] ?? overview["total_bookings"] ?? overview["totalBookings"]), icon: "📨" },
+    { key: "active_users", label: t("admin.metrics.active_users", "Active (24h)"), value: num(overview["active_tutor_profiles"] ?? overview["active_users"] ?? overview["activeUsers"] ?? overview["new_in_period"]), icon: "🟢" },
     { key: "total_reviews", label: t("course.reviews", "Reviews"), value: num(overview["total_reviews"] ?? overview["totalReviews"]), icon: "⭐" },
     { key: "revenue_total", label: t("admin.metrics.revenue", "Revenue"), value: num(overview["revenue_total"] ?? overview["revenueTotal"]), icon: "💰" },
   ];
@@ -95,7 +97,14 @@ export default function PgAdminMetrics() {
   };
 
   return (
-    <>
+    <div className="admin-page">
+      <div className="admin-page-head">
+        <div>
+          <h1>{t("admin.metrics", "Метрики")}</h1>
+          <p>{t("admin.metrics_subtitle", "Ключевые показатели платформы")}</p>
+        </div>
+      </div>
+
       {loading ? (
         <Skeleton count={4} className="skeleton-card" />
       ) : error ? (
@@ -107,7 +116,7 @@ export default function PgAdminMetrics() {
               key={c.key}
               label={c.label}
               value={c.value.toLocaleString()}
-              icon={<span aria-hidden="true">{c.icon}</span>}
+              icon={c.icon ? <span aria-hidden="true">{c.icon}</span> : undefined}
               tone="info"
             />
           ))}
@@ -117,9 +126,9 @@ export default function PgAdminMetrics() {
       {/* Сервер — ресурсы бэкенда и хоста */}
       <div style={{ marginTop: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>🖥️ Ресурсы сервера — бэкенд</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>🖥️ {t("admin.metrics.server_title", "Ресурсы сервера — бэкенд")}</h2>
           <span style={{ fontSize: 11, color: "var(--color-text-muted)", border: "1px solid var(--color-border)", padding: "2px 6px", borderRadius: 999 }}>live 15s</span>
-          <button type="button" onClick={() => void loadSys()} style={{ marginLeft: "auto", fontSize: 12, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--color-border)", background: "var(--color-surface)", cursor: "pointer" }}>Обновить</button>
+          <button type="button" onClick={() => void loadSys()} style={{ marginLeft: "auto", fontSize: 12, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--color-border)", background: "var(--color-surface)", cursor: "pointer" }}>{t("admin.metrics.refresh", "Обновить")}</button>
         </div>
         {sysError ? (
           <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>{sysError}</div>
@@ -136,40 +145,40 @@ export default function PgAdminMetrics() {
             const cpu = Math.round(Number(os["cpuLoad"] ?? 0) * 100);
             const pCpu = Math.round(Number(os["processCpuLoad"] ?? 0) * 100);
             return (
-              <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)" }}>
-                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>JVM Heap</div>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{fmtBytes(jvm["heapUsedBytes"])} / {fmtBytes(jvm["heapMaxBytes"])} <span style={{ fontSize: 12, color: heapPct > 85 ? "var(--color-danger)" : "var(--color-text-muted)" }}>{heapPct}%</span></div>
+              <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))" }}>
+                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)", minWidth: 0, overflowWrap: "anywhere" }}>
+                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("admin.metrics.jvm_heap", "JVM Heap")}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, overflowWrap: "anywhere" }}>{fmtBytes(jvm["heapUsedBytes"])} / {fmtBytes(jvm["heapMaxBytes"])} <span style={{ fontSize: 12, color: heapPct > 85 ? "var(--color-danger)" : "var(--color-text-muted)" }}>{heapPct}%</span></div>
                   <div style={{ height: 6, background: "var(--color-border)", borderRadius: 999, marginTop: 6 }}><div style={{ width: `${heapPct}%`, height: "100%", background: heapPct > 85 ? "var(--color-danger)" : "var(--color-primary)", borderRadius: 999 }} /></div>
-                  <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4 }}>{Number(jvm["threadCount"] ?? 0)} потоков · up {String(jvm["uptimeHuman"] ?? "")}</div>
+                  <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4 }}>{Number(jvm["threadCount"] ?? 0)} {t("admin.metrics.threads", "потоков")} · up {String(jvm["uptimeHuman"] ?? "")}</div>
                 </div>
-                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)" }}>
-                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Память процесса</div>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{fmtBytes(jvm["usedMemoryBytes"])} / {fmtBytes(jvm["maxMemoryBytes"])} <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{memPct}%</span></div>
+                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)", minWidth: 0, overflowWrap: "anywhere" }}>
+                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("admin.metrics.process_memory", "Память процесса")}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, overflowWrap: "anywhere" }}>{fmtBytes(jvm["usedMemoryBytes"])} / {fmtBytes(jvm["maxMemoryBytes"])} <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{memPct}%</span></div>
                   <div style={{ height: 6, background: "var(--color-border)", borderRadius: 999, marginTop: 6 }}><div style={{ width: `${memPct}%`, height: "100%", background: "var(--color-primary)", borderRadius: 999 }} /></div>
                   <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4 }}>{String(os["name"] ?? "")} {String(os["arch"] ?? "")}</div>
                 </div>
-                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)" }}>
-                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>CPU</div>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{cpu}% <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>система · процесс {pCpu}%</span></div>
+                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)", minWidth: 0, overflowWrap: "anywhere" }}>
+                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("admin.metrics.cpu", "CPU")}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, overflowWrap: "anywhere" }}>{cpu}% <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("admin.metrics.sys_proc", "система · процесс")} {pCpu}%</span></div>
                   <div style={{ height: 6, background: "var(--color-border)", borderRadius: 999, marginTop: 6 }}><div style={{ width: `${cpu}%`, height: "100%", background: cpu > 80 ? "var(--color-warning)" : "var(--color-success)", borderRadius: 999 }} /></div>
-                  <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4 }}>{Number(jvm["availableProcessors"] ?? 0)} ядра · load {Number(os["systemLoadAverage"] ?? 0).toFixed(2)}</div>
+                  <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4 }}>{Number(jvm["availableProcessors"] ?? 0)} {t("admin.metrics.cores", "ядра")} · load {Number(os["systemLoadAverage"] ?? 0).toFixed(2)}</div>
                 </div>
-                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)" }}>
-                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Диск /</div>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{fmtBytes(disk["usedBytes"])} / {fmtBytes(disk["totalBytes"])} <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{diskPct}%</span></div>
+                <div style={{ border: "1px solid var(--color-border)", borderRadius: 12, padding: 12, background: "var(--color-surface)", minWidth: 0, overflowWrap: "anywhere" }}>
+                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("admin.metrics.disk_root", "Диск /")}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, overflowWrap: "anywhere" }}>{fmtBytes(disk["usedBytes"])} / {fmtBytes(disk["totalBytes"])} <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{diskPct}%</span></div>
                   <div style={{ height: 6, background: "var(--color-border)", borderRadius: 999, marginTop: 6 }}><div style={{ width: `${diskPct}%`, height: "100%", background: diskPct > 85 ? "var(--color-danger)" : "var(--color-success)", borderRadius: 999 }} /></div>
-                  <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4 }}>свободно {fmtBytes(disk["freeBytes"])}</div>
+                  <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4 }}>{t("admin.metrics.free", "свободно")} {fmtBytes(disk["freeBytes"])}</div>
                 </div>
                 <div style={{ gridColumn: "1 / -1", fontSize: 11, color: "var(--color-text-muted)", display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-                  <span>Grafana → <a href="/admin" style={{ color: "var(--color-primary)" }}>Дашборд «Сервер — состояние»</a> (node-exporter: CPU/RAM/диск/сеть)</span>
-                  <span style={{ marginLeft: "auto" }}>{new Date(String(sys["timestamp"] ?? "")).toLocaleTimeString()}</span>
+                  <span>{t("admin.metrics.grafana_note", "Grafana → Дашборд «Сервер — состояние» (node-exporter: CPU/RAM/диск/сеть)")}</span>
+                  <span style={{ marginLeft: "auto" }}>{sys["timestamp"] ? new Date(String(sys["timestamp"])).toLocaleTimeString() : ""}</span>
                 </div>
               </div>
             );
           })()
         )}
       </div>
-    </>
+    </div>
   );
 }

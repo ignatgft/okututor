@@ -68,6 +68,7 @@
   width: 48px;
   height: 32px;
   border-radius: var(--radius-lg);
+  isolation: isolate;
 }
 
 .bottom-nav-item.active .bottom-nav-indicator {
@@ -104,8 +105,8 @@
     /* ensure it sits above everything */
     z-index: 100;
   }
-  /* keep page content above the bar (safe-area aware) */
-  body {
+  /* keep page content above the bar (safe-area aware) only when bottom nav is mounted */
+  body.has-bottom-nav {
     padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
   }
   /* when dashboard layout is used, avoid double padding */

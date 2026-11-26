@@ -6,7 +6,6 @@ import useAuthStore from "../store/authStore";
 import useSupportTicket from "../hooks/support/useSupportTicket";
 import useSupportChat from "../hooks/support/useSupportChat";
 import { supportApi } from "../api/support.api";
-import DashboardLayout from "../components/DashboardLayout";
 import SupportTicketHeader from "../components/support/SupportTicketHeader";
 import SupportMessage from "../components/support/SupportMessage";
 import SupportMessageInput from "../components/support/SupportMessageInput";
@@ -89,43 +88,29 @@ export default function PgSupportTicket() {
   };
 
   if (ticketLoading) {
-    return (
-      <DashboardLayout>
-        <Spinner label={t("common.loading", "Loading...")} />
-      </DashboardLayout>
-    );
+    return <Spinner label={t("common.loading", "Loading...")} />;
   }
 
   if (ticketError === "NOT_FOUND") {
     return (
-      <DashboardLayout>
-        <div className="support-page">
-          <ErrorState message={t("support.not_found", "Ticket not found")} onRetry={() => navigate("/support")} />
-        </div>
-      </DashboardLayout>
+      <div className="support-page">
+        <ErrorState message={t("support.not_found", "Ticket not found")} onRetry={() => navigate("/app/support")} />
+      </div>
     );
   }
 
   if (ticketError === "FORBIDDEN") {
-    return (
-      <DashboardLayout>
-        <ErrorState message={t("support.no_access", "You don't have access to this ticket")} onRetry={() => navigate("/support")} />
-      </DashboardLayout>
-    );
+    return <ErrorState message={t("support.no_access", "You don't have access to this ticket")} onRetry={() => navigate("/app/support")} />;
   }
 
   if (ticketError) {
-    return (
-      <DashboardLayout>
-        <ErrorState message={t("support.load_error", "Failed to load ticket")} onRetry={refetchTicket} />
-      </DashboardLayout>
-    );
+    return <ErrorState message={t("support.load_error", "Failed to load ticket")} onRetry={refetchTicket} />;
   }
 
   const isClosed = ticket?.status === "CLOSED" || ticket?.status === "RESOLVED";
 
   return (
-    <DashboardLayout>
+    <>
       <div className="support-page support-ticket-page">
         <SupportTicketHeader
           ticket={ticket}
@@ -196,6 +181,6 @@ export default function PgSupportTicket() {
         onConfirm={handleClose}
         onCancel={() => setShowCloseDialog(false)}
       />
-    </DashboardLayout>
+    </>
   );
 }

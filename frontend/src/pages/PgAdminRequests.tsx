@@ -6,6 +6,7 @@ import { usePageTitle } from "../components/pageTitleContext";
 import { Badge, Spinner, EmptyState, ErrorState } from "../components/ui/Primitives";
 import { apiClient } from "../api/http";
 import { tutorRequestsMarketplaceApi, type TutorRequestDto } from "../api/marketplace/tutorRequestsMarketplace.api";
+import "../styles/Admin.css";
 
 function toList(data: unknown): TutorRequestDto[] {
   if (Array.isArray(data)) return data as TutorRequestDto[];

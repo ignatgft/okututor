@@ -6,11 +6,24 @@ import { login as apiLogin, buildGoogleOAuthUrl } from "../../api/auth";
 import useAuthStore from "../../store/authStore";
 import { useUIStore } from "../../store/uiStore";
 import { getContactIntent } from "../../store/authIntentStore";
+import { ROLES } from "../../constants/roles";
+import { errorText } from "../../utils/apiHelpers";
 import googleIcon from "../../assets/AuthRegister/google-icon.svg";
 import Modal from "./Modal";
 import "../../styles/AuthRegister/Auth.css";
 
-export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unknown>) {
+interface AuthProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+interface AuthFieldErrors {
+  email?: string;
+  password?: string;
+}
+
+export default function Auth({ isOpen, onClose, onSuccess }: AuthProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { setUser, init } = useAuthStore();
@@ -18,12 +31,12 @@ export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unkn
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [emailNotVerified, setEmailNotVerified] = useState(false);
 
-  const validateForm = () => {
-    const errors = {};
+  const validateForm = (): AuthFieldErrors => {
+    const errors: AuthFieldErrors = {};
 
     if (!email.trim()) {
       errors.email = t("validation.required", "Required");
@@ -38,7 +51,7 @@ export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unkn
     return errors;
   };
 
-  const handleEmailChange = (e) => {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
     if (fieldErrors.email) {
       setFieldErrors(prev => ({ ...prev, email: "" }));
@@ -46,14 +59,14 @@ export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unkn
     if (emailNotVerified) setEmailNotVerified(false);
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     if (fieldErrors.password) {
       setFieldErrors(prev => ({ ...prev, password: "" }));
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setEmailNotVerified(false);
@@ -71,7 +84,7 @@ export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unkn
         setEmailNotVerified(true);
         return;
       }
-      setUser(result.user);
+      if (result.user) setUser({ ...result.user, role: result.user.role ?? ROLES.STUDENT });
       await init();
       onClose();
       if (onSuccess) onSuccess();
@@ -80,7 +93,7 @@ export default function Auth({ isOpen, onClose, onSuccess }: Record<string, unkn
       if (getContactIntent()) return;
       navigate("/app/dashboard", { replace: true });
     } catch (err) {
-      setError(err.message || "Login failed");
+      setError(errorText(err) || "Login failed");
     } finally {
       setLoading(false);
     }

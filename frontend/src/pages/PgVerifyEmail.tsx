@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { authApi, EMAIL_ERROR_CODES } from "../api/auth.api";
+import { authApi, EMAIL_ERROR_CODES } from "../api/auth";
 import { setTokens } from "../api/token";
 import useAuthStore from "../store/authStore";
 import OtpInput from "../components/ui/OtpInput";

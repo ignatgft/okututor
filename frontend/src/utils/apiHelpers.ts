@@ -13,3 +13,11 @@ export function extractError(data: unknown): string | undefined {
   if (typeof err === "string" && err) return err;
   return undefined;
 }
+
+/** Extracts a human-readable message from a thrown value (unknown in catch). */
+export function errorText(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error instanceof Error && error.message) return error.message;
+  if (isRecord(error)) return extractError(error) ?? "";
+  return "";
+}

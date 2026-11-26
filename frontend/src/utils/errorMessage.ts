@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next";
+
 export const ERROR_CODE_KEYS: Record<string, string> = {
   SCHEDULE_CONFLICT: "errors.scheduleConflict",
   MEETING_NOT_AVAILABLE: "errors.meetingNotAvailable",
@@ -24,7 +26,7 @@ export function extractErrorCode(error: unknown): string | null {
   return null;
 }
 
-export function getErrorMessage(error: unknown, t: (key: string, fallback?: string) => string): string {
+export function getErrorMessage(error: unknown, t: TFunction): string {
   let code = extractErrorCode(error);
   const rec = error as Record<string, unknown> | null | undefined;
   const msg = rec?.["message"];

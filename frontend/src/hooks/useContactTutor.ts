@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { conversationApi } from "../api/conversation.api";
+import { conversationApi } from "../api/chat.api";
 import useAuthStore from "../store/authStore";
 import { saveContactIntent } from "../store/authIntentStore";
 
@@ -14,6 +15,7 @@ export interface UseContactTutorOptions {
 export default function useContactTutor(options: UseContactTutorOptions = {}) {
   const { source = "tutor_card" } = options;
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const [state, setState] = useState<State>("idle");
@@ -26,10 +28,10 @@ export default function useContactTutor(options: UseContactTutorOptions = {}) {
         const raw = (data as Record<string, unknown>)?.["message"] as string || "";
         // Map backend English messages to localized user-friendly text
         let msg = raw;
-        if (!msg) msg = "Не удалось открыть чат";
-        else if (msg.includes("under moderation")) msg = "Анкета репетитора на модерации — чат будет доступен после одобрения";
-        else if (msg.toLowerCase().includes("not available for chat")) msg = "Чат с этим репетитором временно недоступен";
-        else if (msg === "Tutor not found") msg = "Репетитор не найден";
+        if (!msg) msg = t("chat.error_open", "Не удалось открыть чат") as string;
+        else if (msg.includes("under moderation")) msg = t("chat.error_moderation", "Анкета репетитора на модерации — чат будет доступен после одобрения") as string;
+        else if (msg.toLowerCase().includes("not available for chat")) msg = t("chat.error_unavailable", "Чат с этим репетитором временно недоступен") as string;
+        else if (msg === "Tutor not found") msg = t("chat.error_not_found", "Репетитор не найден") as string;
         throw new Error(msg);
       }
       return data as { id: string; created: boolean };
@@ -50,7 +52,7 @@ export default function useContactTutor(options: UseContactTutorOptions = {}) {
       const tutorId = String(tutor["userId"] ?? tutor["user_id"] ?? tutor["userId"] ?? tutor["id"] ?? "");
       const tutorSlug = String(tutor["slug"] ?? "");
       if (!tutorId) {
-        setError("Tutor not found");
+        setError(t("chat.error_not_found", "Репетитор не найден") as string);
         return;
       }
 
@@ -82,7 +84,7 @@ export default function useContactTutor(options: UseContactTutorOptions = {}) {
         navigate(`/app/messages/${convId}`);
         return { needsAuth: false as const, conversationId: convId };
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : "Не удалось открыть чат";
+        const msg = e instanceof Error ? e.message : (t("chat.error_open", "Не удалось открыть чат") as string);
         // 409 duplicate is not error - try to recover by listing conversations
         if (msg.includes("409") || msg.toLowerCase().includes("already exists")) {
           // fallback: try to find existing via list
@@ -105,7 +107,7 @@ export default function useContactTutor(options: UseContactTutorOptions = {}) {
         return { needsAuth: false as const, error: msg };
       }
     },
-    [isAuthenticated, mutation, navigate, source]
+    [isAuthenticated, mutation, navigate, source, t]
   );
 
   const reset = useCallback(() => {

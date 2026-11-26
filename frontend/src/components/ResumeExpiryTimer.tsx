@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { useCountdown } from "../hooks/schedule/useCountdown";
+import { useCountdown } from "../hooks/useCountdown";
 
 interface Props {
   expiresAt?: string | null;

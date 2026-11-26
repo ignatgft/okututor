@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
 import { legalApi } from "../api/legal.api";
 import { Spinner, ErrorState } from "../components/ui/Primitives";
 
 export default function PgLegal(): JSX.Element {
+  const { t } = useTranslation();
   const { type = "privacy" } = useParams<{ type: string }>();
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,24 +28,24 @@ export default function PgLegal(): JSX.Element {
     legalApi.getPublished(backendType).then(({ response, data }) => {
       if (cancelled) return;
       if (response.ok) setData(data as Record<string, unknown>);
-      else setError("Документ не найден");
+      else setError(t("legal.not_found", "Документ не найден"));
     }).catch((e: unknown) => !cancelled && setError(e instanceof Error ? e.message : String(e)))
       .finally(() => !cancelled && setLoading(false));
     return () => { cancelled = true; };
-  }, [type]);
+  }, [type, t]);
 
   const rawContent = String((data as Record<string, unknown> | null)?.["content"] ?? "");
   const isHtml = rawContent.includes("<");
   const sanitized = useMemo(() => isHtml ? DOMPurify.sanitize(rawContent, { USE_PROFILES: { html: true }, FORBID_TAGS: ["style", "script", "iframe", "object", "embed", "form"], FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"] }) : "", [rawContent, isHtml]);
 
-  if (loading) return <div style={{ maxWidth: 800, margin: "40px auto", padding: 16 }}><Spinner label="Загрузка..." /></div>;
+  if (loading) return <div style={{ maxWidth: 800, margin: "40px auto", padding: 16 }}><Spinner label={t("legal.loading", "Загрузка...")} /></div>;
   if (error) return <div style={{ maxWidth: 800, margin: "40px auto", padding: 16 }}><ErrorState message={error} onRetry={() => location.reload()} /></div>;
   if (!data) return null;
   return (
     <div style={{ maxWidth: 800, margin: "40px auto", padding: 16 }}>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>{String(data["title"] ?? type)}</h1>
       <div style={{ color: "var(--color-text-muted)", fontSize: 12, marginBottom: 16 }}>
-        Версия {String(data["version"] ?? "")} • {data["effectiveAt"] ? `Вступает в силу: ${new Date(String(data["effectiveAt"])).toLocaleDateString()}` : ""} • Язык {String(data["language"] ?? "ru")}
+        {t("legal.version", "Версия")} {String(data["version"] ?? "")} • {data["effectiveAt"] ? `${t("legal.effective_from", "Вступает в силу:")} ${new Date(String(data["effectiveAt"])).toLocaleDateString()}` : ""} • {t("legal.language", "Язык")} {String(data["language"] ?? "ru")}
       </div>
       {isHtml ? (
         <div dangerouslySetInnerHTML={{ __html: sanitized }} style={{ lineHeight: 1.7, fontSize: 15 }} />

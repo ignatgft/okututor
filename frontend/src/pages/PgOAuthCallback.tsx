@@ -4,6 +4,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useAuthStore from "../store/authStore";
 import { setTokens, clearTokens } from "../api/token";
+import { apiClient } from "../api/http";
+import { endpoints } from "../api/endpoints";
 import { getCurrentUser } from "../api/auth";
 import { getDashboardPath } from "../config/navigation";
 
@@ -21,10 +23,9 @@ export default function PgOAuthCallback() {
 
     const complete = async () => {
       const oauthError = searchParams.get("error");
-      // новый flow: ?code= (one-time, обмен на токены), легаси: ?access_token=
+      // Только flow с одноразовым ?code= (обмен на токены через бэкенд).
+      // Приём токенов из URL (?access_token=) удалён — токены в history/логах/referer.
       const code = searchParams.get("code");
-      const accessTokenParam = searchParams.get("access_token");
-      const refreshTokenParam = searchParams.get("refresh_token");
 
       window.history.replaceState(null, "", "/oauth/callback");
 
@@ -36,28 +37,25 @@ export default function PgOAuthCallback() {
 
       try {
         if (code) {
-          // обмен code -> tokens (backend POST /api/v1/auth/oauth/exchange)
-          const resp = await fetch("/api/v1/auth/oauth/exchange", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code }),
-          });
-          if (!resp.ok) {
+          // обмен code -> tokens через общий HTTP-клиент (таймаут, обработка ошибок)
+          const { response, data } = await apiClient.post<Record<string, unknown>>(
+            endpoints.auth.oauthExchange,
+            { code },
+            false
+          );
+          if (!response.ok) {
             clearTokens();
             setStatus("error");
             return;
           }
-          const data = await resp.json();
-          const at = data.access_token || data.accessToken;
-          const rt = data.refresh_token || data.refreshToken;
+          const at = (data?.["access_token"] ?? data?.["accessToken"]) as string | undefined;
+          const rt = (data?.["refresh_token"] ?? data?.["refreshToken"]) as string | null | undefined;
           if (!at) {
             clearTokens();
             setStatus("error");
             return;
           }
-          setTokens(at, rt);
-        } else if (accessTokenParam) {
-          setTokens(accessTokenParam, refreshTokenParam);
+          setTokens(at, rt ?? null);
         } else {
           clearTokens();
           setStatus("error");

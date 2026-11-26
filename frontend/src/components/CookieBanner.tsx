@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { legalApi, consentApi } from "../api/legal.api";
 import { setAnalyticsConsent } from "../utils/analytics";
 
 const KEY = "okututor_cookie_consent_v1";
 
 export default function CookieBanner(): JSX.Element | null {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [categories, setCategories] = useState<{ code: string; name: string; isRequired: boolean }[]>([]);
 
@@ -41,14 +43,14 @@ export default function CookieBanner(): JSX.Element | null {
 
   return (
     <div style={{ position: "fixed", bottom: 16, left: 16, right: 16, maxWidth: 640, margin: "0 auto", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 16, padding: 16, boxShadow: "0 12px 32px rgba(0,0,0,0.15)", zIndex: 60 }}>
-      <div style={{ fontWeight: 700, marginBottom: 8 }}>Мы используем cookies</div>
+      <div style={{ fontWeight: 700, marginBottom: 8 }}>{t("cookie.title", "Мы используем cookies")}</div>
       <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.5, marginBottom: 12 }}>
-        Необходимые — всегда включены. Аналитика и маркетинг — по вашему выбору. Подробнее в <a href="/legal/cookies" target="_blank" rel="noreferrer">Cookie Policy</a>.
+        {t("cookie.text", "Необходимые — всегда включены. Аналитика и маркетинг — по вашему выбору.")} {t("cookie.policy_more", "Подробнее в")} <a href="/legal/cookies" target="_blank" rel="noreferrer">Cookie Policy</a>.
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" className="btn-primary" onClick={() => accept(true)}>Принять все</button>
-        <button type="button" className="btn-secondary" onClick={() => accept(false)}>Только необходимые</button>
-        <a href="/legal/cookies" className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", padding: "8px 12px", textDecoration: "none" }}>Настройки</a>
+        <button type="button" className="btn-primary" onClick={() => accept(true)}>{t("cookie.accept_all", "Принять все")}</button>
+        <button type="button" className="btn-secondary" onClick={() => accept(false)}>{t("cookie.necessary_only", "Только необходимые")}</button>
+        <a href="/legal/cookies" className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", padding: "8px 12px", textDecoration: "none" }}>{t("cookie.settings", "Настройки")}</a>
       </div>
     </div>
   );

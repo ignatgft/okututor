@@ -260,7 +260,18 @@ export function normalizeLesson(raw: unknown = {}): NormalizedLesson | null {
   };
 }
 
-export function normalizeNotification(raw: unknown = {}): Record<string, unknown> {
+export interface NormalizedNotification extends RawRecord {
+  id: string | number | null;
+  type: string;
+  read: boolean;
+  created_at: string | null;
+  link: string | null;
+  payload: RawRecord;
+  params: RawRecord;
+  rawMessage: string | null;
+}
+
+export function normalizeNotification(raw: unknown = {}): NormalizedNotification {
   const r = asRecord(raw);
   const type = typeof r["type"] === "string" ? (r["type"] as string) : "";
   const message = (r["message"] as string | undefined) ?? (r["text"] as string | undefined) ?? "";

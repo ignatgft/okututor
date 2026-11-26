@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { authApi, EMAIL_ERROR_CODES } from "../api/auth.api";
+import { authApi, EMAIL_ERROR_CODES } from "../api/auth";
 import OtpInput from "../components/ui/OtpInput";
 import ResendCodeButton from "../components/ui/ResendCodeButton";
 import "../styles/AuthForms.css";
@@ -45,6 +45,7 @@ export default function PgForgotPassword() {
 
   const handleVerifyCode = useCallback(async (otp) => {
     if (!otp || otp.length !== 6) return;
+    setCode(otp);
     setError("");
     setErrorCode(null);
     setLoading(true);

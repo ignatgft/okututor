@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { supportApi } from "../api/support.api";
-import DashboardLayout from "../components/DashboardLayout";
 import { Spinner } from "../components/ui/Primitives";
 import { useToast } from "../components/ui/Toast";
 import "../styles/Support.css";
@@ -39,7 +38,7 @@ export default function PgSupportNew() {
       const { response, data } = await supportApi.createTicket({ category, subject: subject.trim(), description: description.trim(), priority });
       if (response.ok && data?.id) {
         toast?.success(t("support.ticket_created", "Ticket created"));
-        navigate(`/support/tickets/${data.id}`);
+        navigate(`/app/support/tickets/${data.id}`);
       } else {
         toast?.error(t("support.create_failed", "Failed to create ticket"));
       }
@@ -63,8 +62,8 @@ export default function PgSupportNew() {
   ];
 
   return (
-    <DashboardLayout title={t("support.new_ticket", "New ticket")} subtitle={t("support.new_ticket_hint", "Describe your issue and we will help you")}>
-      <div className="support-page support-form-page">
+    <div className="support-page support-form-page">
+      <p className="support-page-sub">{t("support.new_ticket_hint", "Describe your issue and we will help you")}</p>
         <form className="support-create-form" onSubmit={handleSubmit} noValidate>
           <div className="support-form-group">
             <label className="support-form-label" htmlFor="support-category">
@@ -140,7 +139,7 @@ export default function PgSupportNew() {
           </div>
 
           <div className="support-form-actions">
-            <button type="button" className="btn-secondary" onClick={() => navigate("/support")}>
+            <button type="button" className="btn-secondary" onClick={() => navigate("/app/support")}>
               {t("common.cancel", "Cancel")}
             </button>
             <button type="submit" className="btn-primary" disabled={loading}>
@@ -148,7 +147,6 @@ export default function PgSupportNew() {
             </button>
           </div>
         </form>
-      </div>
-    </DashboardLayout>
+    </div>
   );
 }

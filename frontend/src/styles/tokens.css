@@ -194,6 +194,12 @@
 }
 
 /* ===== RESPONSIVE TOKEN OVERRIDES (mobile-first) ===== */
+@media (max-width: 480px) {
+  :root {
+    --page-padding: 12px;
+  }
+}
+
 @media (min-width: 768px) {
   :root {
     --page-padding: 24px;

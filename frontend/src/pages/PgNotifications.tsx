@@ -6,12 +6,15 @@ import { usePageTitle } from "../components/pageTitleContext";
 import { notificationsApi } from "../api/messages.api";
 import { Spinner, EmptyState, ErrorState, Badge } from "../components/ui/Primitives";
 import { normalizeNotification, getNotificationTypeKey } from "../utils/normalize";
+import type { NormalizedNotification } from "../utils/normalize";
+import { extractError, errorText } from "../utils/apiHelpers";
+import { toList } from "../types/api";
 
 export default function PgNotifications() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const setPageTitle = usePageTitle();
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<NormalizedNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -23,14 +26,13 @@ export default function PgNotifications() {
     try {
       const { response, data } = await notificationsApi.list();
       if (response.ok) {
-        const rawItems = Array.isArray(data) ? data : data.content || [];
         // Normalize notifications for proper i18n rendering
-        setItems(rawItems.map(normalizeNotification));
+        setItems(toList(data).map(normalizeNotification));
       } else {
-        setError(data.message || data.error || t("common.error", "Error"));
+        setError(extractError(data) || t("common.error", "Error"));
       }
     } catch (e) {
-      setError(e.message || t("errors.default", "Something went wrong"));
+      setError(errorText(e) || t("errors.default", "Something went wrong"));
     } finally {
       setLoading(false);
     }
@@ -48,11 +50,12 @@ export default function PgNotifications() {
       setItems((prev) => prev.map((n) => ({ ...n, read: true })));
       window.dispatchEvent(new CustomEvent("notifications:refresh"));
     } catch (err) {
-      setError(err.message || t("errors.default", "Something went wrong"));
+      setError(errorText(err) || t("errors.default", "Something went wrong"));
     }
   };
 
-  const open = async (n) => {
+  const open = async (n: NormalizedNotification) => {
+    if (n.id === null) return;
     if (!n.read) {
       try {
         await notificationsApi.markRead(n.id);
@@ -64,14 +67,14 @@ export default function PgNotifications() {
     }
     if (n.link) {
       navigate(n.link);
-    } else if (n.payload?.booking_id) {
-      navigate(`/lesson/${n.payload.booking_id}`);
-    } else if (n.payload?.enrollment_id) {
+    } else if (n.payload["booking_id"]) {
+      navigate(`/lesson/${n.payload["booking_id"]}`);
+    } else if (n.payload["enrollment_id"]) {
       navigate(`/student/courses`);
     }
   };
 
-  const formatDate = (dateStr) => {
+  const formatDate = (dateStr: string) => {
     if (!dateStr) return null;
     try {
       const d = new Date(dateStr);
@@ -87,7 +90,7 @@ export default function PgNotifications() {
     }
   };
 
-  const renderNotificationContent = (n) => {
+  const renderNotificationContent = (n: NormalizedNotification) => {
     // Use normalized params for i18n message template
     const typeKey = getNotificationTypeKey(n.type);
     const messageKey = `notifications.messages.${n.type}`;
@@ -95,15 +98,15 @@ export default function PgNotifications() {
 
     if (hasTemplate && n.params) {
       // Render using i18n template with interpolated params
-      return t(messageKey, n.params);
+      return <>{t(messageKey, n.params)}</>;
     }
 
     // Fallback: show clean type label only (no raw message)
     return (
       <>
         <span className="notification-type">{t(typeKey, n.type)}</span>
-        {n.payload?.scheduled_at && (
-          <span className="notification-date">{formatDate(n.payload.scheduled_at)}</span>
+        {typeof n.payload["scheduled_at"] === "string" && (
+          <span className="notification-date">{formatDate(n.payload["scheduled_at"])}</span>
         )}
       </>
     );

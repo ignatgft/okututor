@@ -44,7 +44,16 @@ export default function AppMessages(): JSX.Element {
   const showChat = !isMobile || Boolean(activeId);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: isMobile ? "calc(100dvh - 56px - var(--bottom-nav-height,64px) - 16px)" : "calc(100dvh - 96px)", maxHeight: isMobile ? "calc(100dvh - 56px)" : "calc(100dvh - 32px)", overflow: "hidden", background: "transparent", paddingBottom: isMobile ? "var(--bottom-nav-height,64px)" : undefined }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: isMobile ? (activeId ? "calc(100dvh - 56px)" : "calc(100dvh - 56px - 16px)") : "calc(100dvh - 96px)",
+        maxHeight: isMobile ? (activeId ? "calc(100dvh - 56px)" : "calc(100dvh - 56px - 16px)") : "calc(100dvh - 32px)",
+        overflow: "hidden",
+        background: "transparent",
+      }}
+    >
       <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden", border: "1px solid var(--color-border, #E5E7EB)", borderRadius: 12, background: "var(--color-surface, #fff)" }}>
         {showList && (
           <div style={{ display: "flex", flexDirection: "column", width: isMobile ? "100%" : 360, minWidth: isMobile ? "100%" : 320, maxWidth: isMobile ? "100%" : 420, borderRight: isMobile ? "none" : "1px solid var(--color-border, #E5E7EB)", minHeight: 0, overflow: "hidden" }}>

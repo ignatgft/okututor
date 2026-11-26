@@ -6,26 +6,29 @@ import { adminApi } from "../api/admin.api";
 import { Badge, Spinner, EmptyState, ErrorState } from "../components/ui/Primitives";
 import { useToast } from "../components/ui/Toast";
 import { REPORT_STATUS } from "../constants/enums";
+import { extractError, errorText } from "../utils/apiHelpers";
+import { toList } from "../types/api";
+import type { ReportDTO } from "../types/api";
 import "../styles/Admin.css";
 
 export default function PgAdminReports() {
   const { t } = useTranslation();
   const setPageTitle = usePageTitle();
   const toast = useToast();
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<ReportDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [actionLoading, setActionLoading] = useState(null);
+  const [actionLoading, setActionLoading] = useState<string | number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const { response, data } = await adminApi.reports();
-      if (response.ok) setReports(Array.isArray(data) ? data : data.content || []);
-      else setError(data.message || data.error || t("common.error"));
+      if (response.ok) setReports(toList(data));
+      else setError(extractError(data) || t("common.error"));
     } catch (e) {
-      setError(e.message);
+      setError(errorText(e));
     } finally {
       setLoading(false);
     }
@@ -35,13 +38,13 @@ export default function PgAdminReports() {
     load();
   }, [load]);
 
-  const updateStatus = async (report, status) => {
+  const updateStatus = async (report: ReportDTO, status: string) => {
     setActionLoading(report.id);
     try {
       await adminApi.updateReport(report.id, { status });
       await load();
     } catch (e) {
-      toast.error(e.message || t("errors.default", "Something went wrong."));
+      toast.error(errorText(e) || t("errors.default", "Something went wrong."));
     } finally {
       setActionLoading(null);
     }

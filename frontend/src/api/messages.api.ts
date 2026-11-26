@@ -3,7 +3,7 @@ import { apiClient } from "./http";
 import { uploadFile } from "./client/upload";
 import { CONVERSATION_TYPES } from "../constants/roles";
 import type { HttpResult } from "./client/responseParser";
-import type { ConversationDTO, MessageDTO, NotificationDTO } from "../types/api";
+import type { ConversationDTO, MaybePaginated, MessageDTO, NotificationDTO } from "../types/api";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -57,7 +57,7 @@ export const messagesApi = {
 };
 
 export const notificationsApi = {
-  list: (): Promise<HttpResult<NotificationDTO[] | unknown>> =>
+  list: (): Promise<HttpResult<MaybePaginated<NotificationDTO>>> =>
     apiClient.get(endpoints.notifications.list),
 
   unreadCount: (): Promise<HttpResult<{ count: number } | unknown>> =>

@@ -74,6 +74,8 @@ export interface UserDTO {
   telegram?: string | null;
   instagram?: string | null;
   whatsapp?: string | null;
+  experience_years?: number | null;
+  education?: string | null;
   timezone?: string;
   email_verified?: boolean;
   verified?: boolean;
@@ -158,7 +160,7 @@ export interface CoursePayload {
   group_size: string;
   location_type: string;
   location?: string;
-  experience?: string;
+  experience?: string | number | null;
   price_per_hour: number;
   currency: string;
   max_students: number;
@@ -244,6 +246,8 @@ export interface ReviewDTO {
   comment?: string;
   student_name?: string;
   student_avatar?: string | null;
+  hidden?: boolean | null;
+  student?: { full_name?: string | null } | null;
   created_at?: string;
   [key: string]: unknown;
 }
@@ -367,6 +371,21 @@ export interface NotificationDTO {
   read?: boolean;
   created_at?: string;
   link?: string | null;
+  [key: string]: unknown;
+}
+
+export interface ReportDTO {
+  id: string | number;
+  type?: string;
+  status?: string;
+  subject_type?: string | null;
+  target_type?: string | null;
+  target_id?: string | number | null;
+  reason?: string | null;
+  description?: string | null;
+  reporter_name?: string | null;
+  reporter?: { full_name?: string | null } | null;
+  created_at?: string;
   [key: string]: unknown;
 }
 
