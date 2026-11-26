@@ -135,7 +135,7 @@ backend/src/main/java/com/okututor/backend/notification/NotificationController.j
 backend/src/main/java/com/okututor/backend/notification/NotificationRepository.java,существует ли почтовое событие (напр. напоминание) с конкретным окном в payload.,2 references,NO,HIGH,used
 backend/src/main/java/com/okututor/backend/notification/NotificationService.java,Асинхронная отправка уведомления через фиксированный пул,12 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/notification/NotificationType.java,Предсказуемые типы уведомлений (строка в БД остаётся varchar — это контракт для фронта).,7 references,NO,LOW,used
-backend/src/main/java/com/okututor/backend/observability/ObservabilityMetrics.java,Бизнес-метрики OkuTutor (низкая cardinality: только фиксированные enum-значения;,23 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/observability/ObservabilityMetrics.java,Бизнес-метрики OkuTutor (низкая cardinality: только фиксированные enum-значения;,25 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/OkututorBackendApplication.java,Исключаем RedisRepositoriesAutoConfiguration; т.к. проект не использует,0 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/request/dto/TutorRequestCreateRequest.java,DTO / Record TutorRequestCreateRequest,4 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/request/dto/TutorRequestResponse.java,DTO / Record TutorRequestResponse,20 references,NO,LOW,used
@@ -205,7 +205,7 @@ backend/src/main/java/com/okututor/backend/tutor/ModerationAction.java,JPA Entit
 backend/src/main/java/com/okututor/backend/tutor/ModerationActionRepository.java,Spring Data JPA repository for ModerationAction,2 references,NO,HIGH,used
 backend/src/main/java/com/okututor/backend/tutor/ReferenceDataController.java,REST Controller for ReferenceData,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/tutor/ReferenceDataService.java,Business logic service for ReferenceData,2 references,NO,MEDIUM,used
-backend/src/main/java/com/okututor/backend/tutor/ResumeExpiryScheduler.java,Component / utility ResumeExpiryScheduler,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/ResumeExpiryScheduler.java,DTO / Record ResumeExpiryScheduler,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/tutor/ResumeOrphanDetector.java,100% гарантия: сверяет заявки и профили; алертит если заявка есть а профиля нет более 5 минут,0 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/tutor/TutorCacheConstants.java,Константы кешей для TutorProfile. Устраняет дублирование @CacheEvict в 11 местах.,0 references,NO,LOW,dead
 backend/src/main/java/com/okututor/backend/tutor/TutorCacheKey.java,Component / utility TutorCacheKey,2 references,NO,LOW,used
@@ -314,7 +314,7 @@ frontend/src/components/Navbar.tsx,UI component Navbar,5 references,NO,LOW,used
 frontend/src/components/pageTitleContext.tsx,UI component pageTitleContext,20 references,NO,LOW,used
 frontend/src/components/photo/PhotoCropModal.tsx,Modal dialog PhotoCropModal,6 references,NO,LOW,used
 frontend/src/components/photo/PhotoDropzone.tsx,UI component PhotoDropzone,8 references,NO,LOW,used
-frontend/src/components/Profile.tsx,UI component Profile,5 references,NO,LOW,used
+frontend/src/components/Profile.tsx,UI component Profile,6 references,NO,LOW,used
 frontend/src/components/ProtectedRoute.tsx,UI component ProtectedRoute,8 references,NO,HIGH,used
 frontend/src/components/ReconsentBanner.tsx,UI component ReconsentBanner,3 references,NO,LOW,used
 frontend/src/components/RestoreContactIntent.tsx,UI component RestoreContactIntent,4 references,NO,LOW,used
@@ -413,7 +413,7 @@ frontend/src/pages/PgAdminSupportTicket.tsx,Page component PgAdminSupportTicket,
 frontend/src/pages/PgAdminTelegram.tsx,Page component PgAdminTelegram,3 references,NO,HIGH,used
 frontend/src/pages/PgAdminTutors.tsx,Page component PgAdminTutors,3 references,NO,HIGH,used
 frontend/src/pages/PgAdminUsers.tsx,Page component PgAdminUsers,3 references,NO,HIGH,used
-frontend/src/pages/PgBecomeTutor.tsx,Page component PgBecomeTutor,4 references,NO,MEDIUM,duplicate
+frontend/src/pages/PgBecomeTutor.tsx,Page component PgBecomeTutor,5 references,NO,MEDIUM,duplicate
 frontend/src/pages/PgDashboardResume.tsx,Page component PgDashboardResume,3 references,NO,MEDIUM,used
 frontend/src/pages/PgFavorites.tsx,Page component PgFavorites,3 references,NO,MEDIUM,used
 frontend/src/pages/PgForbidden.tsx,Page component PgForbidden,3 references,NO,MEDIUM,used
@@ -426,7 +426,7 @@ frontend/src/pages/PgNotifications.tsx,Page component PgNotifications,0 referenc
 frontend/src/pages/PgOAuthCallback.tsx,Page component PgOAuthCallback,4 references,NO,HIGH,used
 frontend/src/pages/PgProfile.tsx,Page component PgProfile,6 references,NO,MEDIUM,used
 frontend/src/pages/PgResetPassword.tsx,Page component PgResetPassword,3 references,NO,MEDIUM,used
-frontend/src/pages/PgResumeEditor.tsx,Page component PgResumeEditor,4 references,NO,MEDIUM,used
+frontend/src/pages/PgResumeEditor.tsx,Page component PgResumeEditor,5 references,NO,MEDIUM,used
 frontend/src/pages/PgResumePreview.tsx,Page component PgResumePreview,3 references,NO,MEDIUM,used
 frontend/src/pages/PgSettings.tsx,Page component PgSettings,6 references,NO,MEDIUM,used
 frontend/src/pages/PgShare.tsx,Page component PgShare,3 references,NO,MEDIUM,used
@@ -456,4 +456,5 @@ frontend/src/utils/slots.ts,Frontend module slots,2 references,NO,LOW,used
 frontend/src/utils/slug.ts,Frontend module slug,100 references,NO,LOW,used
 frontend/src/utils/statusLabels.ts,Frontend module statusLabels,0 references,NO,LOW,dead
 frontend/src/utils/timezone.ts,Frontend module timezone,29 references,NO,LOW,used
+frontend/src/utils/validation.ts,Frontend module validation,13 references,YES,LOW,used
 frontend/src/vite-env.d.ts,Frontend module vite-env.d,0 references,NO,LOW,used
