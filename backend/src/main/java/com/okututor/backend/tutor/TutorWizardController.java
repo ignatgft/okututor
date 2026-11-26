@@ -1,8 +1,9 @@
-package com.okututor.backend.legacy;
+package com.okututor.backend.tutor;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.okututor.backend.common.error.ApiException;
 import com.okututor.backend.common.error.FieldValidationException;
+import com.okututor.backend.common.ratelimit.RateLimitService;
 import com.okututor.backend.level.Level;
 import com.okututor.backend.level.LevelRepository;
 import com.okututor.backend.location.City;
@@ -10,13 +11,6 @@ import com.okututor.backend.location.CityRepository;
 import com.okututor.backend.security.UserPrincipal;
 import com.okututor.backend.subject.Subject;
 import com.okututor.backend.subject.SubjectRepository;
-import com.okututor.backend.tutor.TutorProfile;
-import com.okututor.backend.tutor.TutorProfileLanguageRepository;
-import com.okututor.backend.tutor.TutorProfileLevelRepository;
-import com.okututor.backend.tutor.TutorProfileRepository;
-import com.okututor.backend.tutor.TutorProfileService;
-import com.okututor.backend.tutor.TutorProfileStatus;
-import com.okututor.backend.tutor.TutorProfileSubjectRepository;
 import com.okututor.backend.tutor.dto.TutorProfileCreateRequest;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -33,17 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Legacy bridge for old wizard {@code POST /api/v1/tutors/applications} and {@code GET /me}.
- * Frontend PgBecomeTutor historically used this endpoint (full_name, subjects as csv etc.)
- * After migration to TutorProfile marketplace the endpoint was deleted, causing 404 and
- * "резюме не отправляется на модерацию". This controller restores compatibility
- * без ломки нового API: creates TutorProfile + submits to moderation.
- *
- * Thread-safe: no mutable instance fields, relations synced via repositories within transaction.
+ * Controller for the 10-step "Become a Tutor" registration wizard.
+ * Converts unstructured human-readable wizard form data into canonical TutorProfile entities
+ * and triggers immediate moderation submission.
  */
 @RestController
-@RequestMapping({"/api/v1/tutors/applications", "/api/tutors/applications"})
-public class LegacyTutorApplicationController {
+@RequestMapping({"/api/v1/tutors/wizard", "/api/v1/tutors/applications", "/api/tutors/applications"})
+public class TutorWizardController {
 
     private final TutorProfileRepository profileRepository;
     private final TutorProfileService profileService;
@@ -53,17 +43,17 @@ public class LegacyTutorApplicationController {
     private final TutorProfileSubjectRepository subjectLinkRepository;
     private final TutorProfileLevelRepository levelLinkRepository;
     private final TutorProfileLanguageRepository languageLinkRepository;
-    private final com.okututor.backend.common.ratelimit.RateLimitService rateLimitService;
+    private final RateLimitService rateLimitService;
 
-    public LegacyTutorApplicationController(TutorProfileRepository profileRepository,
-                                            TutorProfileService profileService,
-                                            CityRepository cityRepository,
-                                            SubjectRepository subjectRepository,
-                                            LevelRepository levelRepository,
-                                            TutorProfileSubjectRepository subjectLinkRepository,
-                                            TutorProfileLevelRepository levelLinkRepository,
-                                            TutorProfileLanguageRepository languageLinkRepository,
-                                            com.okututor.backend.common.ratelimit.RateLimitService rateLimitService) {
+    public TutorWizardController(TutorProfileRepository profileRepository,
+                                 TutorProfileService profileService,
+                                 CityRepository cityRepository,
+                                 SubjectRepository subjectRepository,
+                                 LevelRepository levelRepository,
+                                 TutorProfileSubjectRepository subjectLinkRepository,
+                                 TutorProfileLevelRepository levelLinkRepository,
+                                 TutorProfileLanguageRepository languageLinkRepository,
+                                 RateLimitService rateLimitService) {
         this.profileRepository = profileRepository;
         this.profileService = profileService;
         this.cityRepository = cityRepository;
@@ -76,7 +66,7 @@ public class LegacyTutorApplicationController {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record LegacySubmitRequest(
+    public record WizardSubmitRequest(
             String full_name,
             String phone,
             String location,
@@ -95,7 +85,7 @@ public class LegacyTutorApplicationController {
     @PostMapping({"", "/"})
     @Transactional
     public ResponseEntity<Map<String, Object>> submit(@AuthenticationPrincipal UserPrincipal principal,
-                                                      @RequestBody(required = false) LegacySubmitRequest req) {
+                                                      @RequestBody(required = false) WizardSubmitRequest req) {
         if (principal == null) throw ApiException.unauthorized("Authentication required");
         try { rateLimitService.checkTutorProfileCreate(principal.id().toString()); } catch (ApiException e) { throw e; } catch (Exception ignored) {}
         if (req == null || req.full_name() == null || req.full_name().isBlank()) {
@@ -109,7 +99,7 @@ public class LegacyTutorApplicationController {
             if (existing.getStatus() == TutorProfileStatus.PENDING_MODERATION
                     || existing.getStatus() == TutorProfileStatus.PUBLISHED
                     || existing.getStatus() == TutorProfileStatus.ACTIVE) {
-                return ResponseEntity.ok(toLegacyResponse(existing));
+                return ResponseEntity.ok(toResponse(existing));
             }
             // soft-deleted/archived allow recreation
             if (existing.getStatus() == TutorProfileStatus.DELETED || existing.getStatus() == TutorProfileStatus.ARCHIVED) {
@@ -120,20 +110,19 @@ public class LegacyTutorApplicationController {
                 profileRepository.flush();
             } else if (existing.getStatus() == TutorProfileStatus.DRAFT
                     || existing.getStatus() == TutorProfileStatus.REJECTED) {
-                updateExistingFromLegacy(existing, req);
+                updateExistingFromWizard(existing, req);
                 profileRepository.save(existing);
-                // sync relations after entity save (needs id)
                 syncRelations(existing,
                         resolveSubjectIds(req.subjects()),
                         resolveLevelIds(req.levels()),
                         parseLanguages(req.languages()));
                 trySubmit(existing);
                 var refreshed = profileRepository.findByUserId(principal.id()).orElse(existing);
-                return ResponseEntity.ok(toLegacyResponse(refreshed));
+                return ResponseEntity.ok(toResponse(refreshed));
             } else if (existing.getStatus() == TutorProfileStatus.SUSPENDED
                     || existing.getStatus() == TutorProfileStatus.HIDDEN
                     || existing.getStatus() == TutorProfileStatus.EXPIRED) {
-                throw ApiException.conflict("Profile in status " + existing.getStatus() + " cannot be resubmitted via legacy endpoint. Use /api/v1/tutors/me");
+                throw ApiException.conflict("Profile in status " + existing.getStatus() + " cannot be resubmitted via wizard. Use /api/v1/tutors/me");
             }
         }
 
@@ -142,7 +131,7 @@ public class LegacyTutorApplicationController {
         var entity = profileRepository.findByUserId(principal.id()).orElseThrow();
         trySubmit(entity);
         var refreshed = profileRepository.findByUserId(principal.id()).orElse(entity);
-        return ResponseEntity.ok(toLegacyResponse(refreshed));
+        return ResponseEntity.ok(toResponse(refreshed));
     }
 
     @GetMapping({"/me", "/me/"})
@@ -162,10 +151,10 @@ public class LegacyTutorApplicationController {
             body.put("phone", "");
             return ResponseEntity.ok(body);
         }
-        return ResponseEntity.ok(toLegacyResponse(opt.get()));
+        return ResponseEntity.ok(toResponse(opt.get()));
     }
 
-    private void updateExistingFromLegacy(TutorProfile p, LegacySubmitRequest req) {
+    private void updateExistingFromWizard(TutorProfile p, WizardSubmitRequest req) {
         String[] names = splitName(req.full_name());
         p.setFirstName(sanitize(names[0]));
         if (names[1] != null) p.setLastName(sanitize(names[1]));
@@ -191,55 +180,50 @@ public class LegacyTutorApplicationController {
     }
 
     private void syncRelations(TutorProfile p, List<UUID> subjectIds, List<UUID> levelIds, List<String> languages) {
-        // subjects
         if (subjectIds != null) {
             subjectLinkRepository.deleteByProfileId(p.getId());
             if (!subjectIds.isEmpty()) {
                 var subjects = subjectRepository.findAllById(subjectIds);
-                var toSave = subjects.stream().map(s -> new com.okututor.backend.tutor.TutorProfileSubject(p, s)).toList();
+                var toSave = subjects.stream().map(s -> new TutorProfileSubject(p, s)).toList();
                 subjectLinkRepository.saveAll(toSave);
             }
         }
-        // levels
         if (levelIds != null) {
             levelLinkRepository.deleteByProfileId(p.getId());
             if (!levelIds.isEmpty()) {
                 var levels = levelRepository.findAllById(levelIds);
-                var toSave = levels.stream().map(l -> new com.okututor.backend.tutor.TutorProfileLevel(p, l)).toList();
+                var toSave = levels.stream().map(l -> new TutorProfileLevel(p, l)).toList();
                 levelLinkRepository.saveAll(toSave);
             }
         }
-        // languages
         if (languages != null) {
             languageLinkRepository.deleteByProfileId(p.getId());
             if (!languages.isEmpty()) {
                 var normalized = languages.stream().filter(l -> l != null && !l.isBlank()).map(String::trim).distinct().toList();
-                var toSave = normalized.stream().map(lang -> new com.okututor.backend.tutor.TutorProfileLanguage(p, lang)).toList();
+                var toSave = normalized.stream().map(lang -> new TutorProfileLanguage(p, lang)).toList();
                 languageLinkRepository.saveAll(toSave);
             }
         }
     }
 
     private void trySubmit(TutorProfile p) {
-        // idempotent: already pending/published
         if (p.getStatus() == TutorProfileStatus.PENDING_MODERATION || p.getStatus() == TutorProfileStatus.PUBLISHED) return;
         try {
             profileService.submit(p.getUser().getId(), p.getUser().getId());
         } catch (Exception e) {
-            // fallback for edge cases: if service rejected due to state but DRAFT/REJECTED -> force pending
             if (p.getStatus() == TutorProfileStatus.DRAFT || p.getStatus() == TutorProfileStatus.REJECTED) {
                 p.setStatus(TutorProfileStatus.PENDING_MODERATION);
                 p.setRejectionReason(null);
                 profileRepository.save(p);
             } else if (p.getStatus() == TutorProfileStatus.PENDING_MODERATION || p.getStatus() == TutorProfileStatus.PUBLISHED) {
-                // already success, ignore
+                // already success
             } else {
                 throw e;
             }
         }
     }
 
-    private TutorProfileCreateRequest mapToCreateRequest(LegacySubmitRequest req) {
+    private TutorProfileCreateRequest mapToCreateRequest(WizardSubmitRequest req) {
         String[] names = splitName(req.full_name());
         String first = sanitize(names[0]);
         String last = names[1] == null ? null : sanitize(names[1]);
@@ -258,13 +242,13 @@ public class LegacyTutorApplicationController {
         return new TutorProfileCreateRequest(
                 first,
                 last,
-                null, // title
-                null, // shortDescription
+                null,
+                null,
                 about,
                 "STUDENT_TUTOR",
                 req.education() == null ? null : sanitize(req.education()),
-                null, // university
-                null, // educationDetails
+                null,
+                null,
                 req.experience_years() == null ? null : clamp(req.experience_years()),
                 price,
                 price,
@@ -272,12 +256,12 @@ public class LegacyTutorApplicationController {
                 online,
                 offline,
                 cityId,
-                null, // district
+                null,
                 req.phone() == null ? null : req.phone().trim(),
                 subjectIds.isEmpty() ? null : subjectIds,
                 levelIds.isEmpty() ? null : levelIds,
                 languages.isEmpty() ? null : languages,
-                null // photoUrl
+                null
         );
     }
 
@@ -323,7 +307,6 @@ public class LegacyTutorApplicationController {
                 if (o == null) continue;
                 String s = String.valueOf(o).trim();
                 if (!s.isBlank()) {
-                    // if element itself contains commas, split
                     if (s.contains(",")) out.addAll(splitCsv(s));
                     else out.add(s);
                 }
@@ -341,10 +324,8 @@ public class LegacyTutorApplicationController {
         if (name == null || name.isBlank()) return java.util.Optional.empty();
         String trimmed = name.trim();
         String lower = trimmed.toLowerCase();
-        // fast path via slug
         var bySlug = cityRepository.findBySlug(lower);
         if (bySlug.isPresent()) return bySlug;
-        // try exact nameRu match (case-insensitive)
         var all = cityRepository.findAll();
         return all.stream()
                 .filter(c -> c.getNameRu() != null && c.getNameRu().toLowerCase().equals(lower))
@@ -408,11 +389,10 @@ public class LegacyTutorApplicationController {
         return cleaned == null ? v.trim() : cleaned.trim();
     }
 
-    private Map<String, Object> toLegacyResponse(TutorProfile p) {
+    private Map<String, Object> toResponse(TutorProfile p) {
         Map<String, Object> m = new LinkedHashMap<>();
         String fullName = ((p.getFirstName() != null ? p.getFirstName() : "") + (p.getLastName() != null ? " " + p.getLastName() : "")).trim();
         String modernStatus = p.getStatus().name();
-        // legacy aliases: PENDING, APPROVED etc. Provide both modern and legacy
         String legacyStatus = switch (p.getStatus()) {
             case PENDING_MODERATION -> "PENDING";
             case PUBLISHED, ACTIVE -> "APPROVED";
@@ -422,7 +402,6 @@ public class LegacyTutorApplicationController {
         };
         Instant created = p.getCreatedAt() != null ? p.getCreatedAt() : Instant.now();
         Instant updated = p.getUpdatedAt() != null ? p.getUpdatedAt() : Instant.now();
-        // primary status is legacy for backward compat with Profile.tsx (expects PENDING/APPROVED/REJECTED)
         m.put("id", p.getId().toString());
         m.put("status", legacyStatus);
         m.put("modernStatus", modernStatus);
@@ -455,7 +434,6 @@ public class LegacyTutorApplicationController {
         m.put("cityId", cityIdStr);
         m.put("price_from", p.getPriceFrom());
         m.put("price_to", p.getPriceTo());
-        // also expose modern status under alternative keys for marketplace consumers polling legacy
         m.put("RESUME_STATUS", modernStatus);
         return m;
     }

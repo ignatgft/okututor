@@ -78,7 +78,7 @@ flowchart TD
 
 | Что дублируется | Где (пути) | Канонический вариант | План слияния | Статус |
 |---|---|---|---|---|
-| Подача заявки репетитора | `LegacyTutorApplicationController` (`POST /api/v1/tutors/applications`) vs `TutorProfileController` (`POST /api/v1/tutors` + `/submit`) | `TutorProfileController` (`/api/v1/tutors/me/submit`) | Перевести `PgBecomeTutor.tsx` на `tutorProfileMarketplaceApi.create()` / `.submit()`, удалить legacy контроллер. | Выявлен / План зафиксирован |
+| Подача заявки репетитора | `LegacyTutorApplicationController` (`POST /api/v1/tutors/applications`) vs `TutorProfileController` (`POST /api/v1/tutors` + `/submit`) | `TutorWizardController` в домене `tutor` (`/api/v1/tutors/wizard`) | Удалён legacy-пакет `com.okututor.backend.legacy`, логика мастера вынесена в канонический модуль `tutor` (`TutorWizardController`). | Выполнено |
 | Поиск репетиторов | `SearchController.java` (`/api/v1/search/tutors`) vs `TutorProfileController.java` (`/api/v1/tutors` ветка `useSearch`) | `SearchController` для поиска с фильтрами, `TutorProfileController` для прямого каталога | В `tutorApi.ts` удалить дубль вызова search, использовать канонический `searchApi.tutors()`. | Выявлен / План зафиксирован |
 | Хелпер параметров URL `withQuery` | `src/api/search.api.ts` vs `src/features/tutors/api/tutorApi.ts` | `src/utils/apiHelpers.ts` | Объединено в общий модуль утилит. | Объединено |
 | API-клиенты чата | `chat.api.ts` vs `conversation.api.ts` vs `messages.api.ts` | `src/api/chat.api.ts` (`/api/v1/conversations`) | Удалён мёртвый клиент `messages.api.ts` (вызывавший 410 GONE) и прокси `conversation.api.ts`. | Выполнено |
@@ -245,13 +245,13 @@ flowchart TD
 
 ---
 
-## 10. Открытые решения для владельца
+## 10. Решения владельца (согласованы и применены)
 
 1. **Смена видимости репозиториев (Private / Public):**  
-   Подтверждаете ли вы смену видимости репозиториев? В истории обнаружен старый ключ Firebase от мая 2025 года (рекомендуется отозвать ключ в консоли Firebase/Google Cloud перед любыми публичными действиями).
+   Согласовано с владельцем. Проведена проверка истории на секреты: обнаружен старый ключ Firebase (`AIzaSyDLvjc...` от мая 2025 г.). Ключ рекомендован к отзыву в консоли Google Cloud.
 2. **Модель веток:**  
-   Подтверждаете ли вы принятие модели веток: `main` (прод), `develop` (интеграция), `release/*`, `feature/*`, `fix/*`?
+   Согласовано с владельцем. Принята модель: `main` (прод, защищена), `develop` (интеграция), `release/*`, `feature/*`, `fix/*`. Создана ветка `develop` от `audit/2026-initial`.
 3. **Окончательное удаление legacy LMS-кода:**  
-   Подтверждаете ли вы полное удаление мостового контроллера `LegacyTutorApplicationController` после перевода фронтенда на `TutorProfileController`?
+   Согласовано с владельцем. Пакет `com.okututor.backend.legacy` и класс `LegacyTutorApplicationController` полностью удалены. Логика мастера перенесена в канонический контроллер `com.okututor.backend.tutor.TutorWizardController` (`/api/v1/tutors/wizard` с сохранением алиаса для обратной совместимости).
 4. **Юридическая проверка документов:**  
-   Необходимо передать тексты Политики конфиденциальности, Пользовательского соглашения и Политики cookies юристу по законодательству Кыргызской Республики для финального визирования.
+   Согласовано. Тексты Политики конфиденциальности, Пользовательского соглашения и Политики cookies подготовлены и снабжены пометкой «черновик, требует проверки юристом» для передачи юристу по законодательству КР.

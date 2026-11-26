@@ -77,7 +77,7 @@ backend/src/main/java/com/okututor/backend/config/SeedData.java,Минималь
 backend/src/main/java/com/okututor/backend/favorite/Favorite.java,JPA Entity Favorite,7 references,NO,LOW,used
 backend/src/main/java/com/okututor/backend/favorite/FavoriteController.java,REST Controller for Favorite,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/favorite/FavoriteRepository.java,Spring Data JPA repository for Favorite,5 references,NO,HIGH,used
-backend/src/main/java/com/okututor/backend/legacy/LegacyTutorApplicationController.java,Legacy bridge for old wizard {@code POST /api/v1/tutors/applications} and {@code GET /me}.,0 references,NO,MEDIUM,legacy
+backend/src/main/java/com/okututor/backend/tutor/TutorWizardController.java,10-step wizard controller creating canonical TutorProfile and submitting to moderation.,1 references,YES,MEDIUM,used
 backend/src/main/java/com/okututor/backend/legal/AdminLegalController.java,REST Controller for AdminLegal,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/legal/AdminTgController.java,REST Controller for AdminTg,0 references,NO,MEDIUM,used
 backend/src/main/java/com/okututor/backend/legal/ConsentController.java,REST Controller for Consent,0 references,NO,MEDIUM,used
