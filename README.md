@@ -78,7 +78,10 @@ okututor/
 ├── monitoring/         # Конфигурация Prometheus, Grafana и правила алертов
 ├── docs/               # Документация проекта
 │   ├── audit/          # Итоговый отчёт аудита и инвентарь файлов
+│   ├── adr/            # Архитектурные решения (ADR)
+│   ├── API.md          # REST API справочник
 │   ├── ARCHITECTURE.md # Архитектура системы
+│   ├── CONTRIBUTING.md # Регламент разработки и ветвления
 │   ├── RUNBOOK.md      # Инструкции по эксплуатации и инцидентам
 │   ├── LEGAL_COMPLIANCE.md # Чек-лист по персональным данным и cookies
 │   └── PATTERNS_AND_REUSE.md # Архитектурные паттерны проекта
@@ -92,6 +95,10 @@ okututor/
 ## 📖 Документация
 
 - [Итоговый отчёт аудита 2026](file:///docs/audit/AUDIT_REPORT.md)
-- [Инвентарь всех файлов проекта](file:///docs/audit/FILE_INVENTORY.csv)
+- [Инвентарь файлов проекта](file:///docs/audit/FILE_INVENTORY.csv)
+- [REST API Reference](file:///docs/API.md)
 - [Архитектура OkuTutor](file:///docs/ARCHITECTURE.md)
-- [Регламент разработки и ветвления](file:///CONTRIBUTING.md)
+- [Регламент разработки и ветвления](file:///docs/CONTRIBUTING.md)
+- [ADR-001: Жизненный цикл резюме и TutorProfile](file:///docs/adr/ADR-001-resume-tutorprofile-lifecycle.md)
+- [ADR-002: Apple Space Gray палитра и CustomSelect](file:///docs/adr/ADR-002-apple-space-gray-and-accessible-ui.md)
+- [Runbook по устранению сбоев](file:///docs/RUNBOOK.md)
