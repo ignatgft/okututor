@@ -41,6 +41,8 @@ public class EmailVerificationService {
     @Transactional
     public VerifiedEmailResponse verifyEmail(String email, String code) {
         String normalized = normalizeEmail(email);
+        // Rate limit на подбор кода поверх лимита 5 попыток на код
+        rateLimitService.checkVerify(normalized);
 
         if (emailCodeRepository.findLatestActive(normalized, EmailCodePurpose.EMAIL_VERIFY).isPresent()) {
             emailCodeService.verify(normalized, EmailCodePurpose.EMAIL_VERIFY, code);
@@ -51,9 +53,7 @@ public class EmailVerificationService {
         }
 
         if (emailCodeRepository.findLatestActive(normalized, EmailCodePurpose.EMAIL_CHANGE).isPresent()) {
-            emailCodeService.verify(normalized, EmailCodePurpose.EMAIL_CHANGE, code);
-            EmailCode changeCode = emailCodeRepository
-                    .findLatestActive(normalized, EmailCodePurpose.EMAIL_CHANGE).orElseThrow();
+            EmailCode changeCode = emailCodeService.verify(normalized, EmailCodePurpose.EMAIL_CHANGE, code);
             User owner = changeCode.getUser();
             if (owner == null || userRepository.existsByEmail(normalized)) {
                 throw ApiException.conflict("This email is already in use");

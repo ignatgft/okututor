@@ -13,6 +13,8 @@ public record UpdateProfileRequest(
         @Size(max = 40) String phone,
         @Size(max = 255) String location,
         Integer experience_years,
-        @Size(max = 500) String education
+        @Size(max = 500) String education,
+        @Size(max = 50) String timezone
 ) {
 }
+

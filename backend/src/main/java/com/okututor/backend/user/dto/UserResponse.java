@@ -24,6 +24,7 @@ public record UserResponse(
         String phone,
         String location,
         Integer experienceYears,
-        String education
+        String education,
+        String timezone
 ) {
 }

@@ -257,7 +257,9 @@ public class TutorProfile {
 
     public void renew() {
         Instant now = Instant.now();
-        expiresAt = now.plusSeconds(30L * 24 * 3600);
+        // spec: expiresAt = max(now, expiresAt) + 30d — не теряем оставшиеся дни, без стакинга
+        Instant base = (expiresAt != null && expiresAt.isAfter(now)) ? expiresAt : now;
+        expiresAt = base.plusSeconds(30L * 24 * 3600);
         publishedAt = now;
         lastActiveAt = now;
         status = TutorProfileStatus.PUBLISHED;

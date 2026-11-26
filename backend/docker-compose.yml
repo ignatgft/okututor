@@ -6,6 +6,38 @@ networks:
     name: okututor-monitoring_monitoring
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: okututor-postgres-local
+    environment:
+      POSTGRES_DB: okututor
+      POSTGRES_USER: okututor
+      POSTGRES_PASSWORD: okututor
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [monitoring]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U okututor -d okututor"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: okututor-redis-local
+    ports:
+      - "6379:6379"
+    networks: [monitoring]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -15,12 +47,30 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev,jsonlog
       OKUTUTOR_ENV: development
-      # External services: Neon, R2, LiveKit Cloud, Resend — no local postgres/redis
-      # jsonlog enables JSON logs for Loki (level/message/requestId)
+      # Локальный fallback: если Neon quota — раскомментировать DB_HOST ниже, перекроет .env
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: okututor
+      DB_USER: okututor
+      DB_PASSWORD: okututor
+      DB_URL_PARAMS: ""
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      APP_RATE_LIMIT_USE_REDIS: "true"
+      MANAGEMENT_HEALTH_REDIS_ENABLED: "true"
       OTEL_TRACING_ENABLED: "false"
       OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      OTEL_SDK_DISABLED: "true"
+      OTEL_TRACES_EXPORTER: "none"
+      OTEL_METRICS_EXPORTER: "none"
+      OTEL_LOGS_EXPORTER: "none"
     ports:
       - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks: [monitoring]
     restart: unless-stopped
     healthcheck:
@@ -29,3 +79,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+
+volumes:
+  pgdata:

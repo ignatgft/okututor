@@ -56,6 +56,14 @@ public class UserService {
         if (request.education() != null) {
             current.setEducation(request.education());
         }
+        if (request.timezone() != null && !request.timezone().isBlank()) {
+            try {
+                java.time.ZoneId.of(request.timezone().trim());
+                current.setTimezone(request.timezone().trim());
+            } catch (Exception e) {
+                throw ApiException.validation(com.okututor.backend.common.error.ErrorCodes.INVALID_TIMEZONE, "Invalid timezone: " + request.timezone());
+            }
+        }
         return userMapper.toResponse(userRepository.save(current));
     }
 

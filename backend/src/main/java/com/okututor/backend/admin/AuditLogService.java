@@ -1,9 +1,9 @@
 package com.okututor.backend.admin;
 
-import com.okututor.backend.user.User;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * неизменяемый след привилегированных действий (блокировки, смена роли, модерация).
@@ -14,38 +14,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditLogService {
 
     private final AuditLogRepository repository;
+    private final AsyncAuditLogWriter writer;
 
-    public AuditLogService(AuditLogRepository repository) {
+    public AuditLogService(AuditLogRepository repository, AsyncAuditLogWriter writer) {
         this.repository = repository;
+        this.writer = writer;
     }
 
-    @Async("notificationExecutor")
-    @Transactional
+    /**
+     * Запись откладывается до успешного коммита вызывающей транзакции: пока она не завершена,
+     * actor_id не виден из потока notificationExecutor и insert падает по внешнему ключу.
+     * Откат транзакции бизнес-операции не должен оставлять запись аудита.
+     */
     public void log(AuditEntry entry) {
-        repository.save(build(entry));
+        if (entry == null) return;
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    writer.write(entry);
+                }
+            });
+        } else {
+            writer.write(entry);
+        }
     }
 
     /** синхронная запись в той же транзакции (для таймлайна заявки): не «best-effort», молчит об ошибках. */
     @Transactional
     public void logSync(AuditEntry entry) {
-        repository.saveAndFlush(build(entry));
-    }
-
-    private AuditLog build(AuditEntry entry) {
-        AuditLog audit = new AuditLog();
-        if (entry.actorId() != null) {
-            // для внешнего ключа достаточно «голой» ссылки; не загружаем строку пользователя
-            User ref = new User();
-            ref.setId(entry.actorId());
-            audit.setActor(ref);
-        }
-        audit.setAction(entry.action());
-        audit.setTargetType(entry.targetType());
-        audit.setTargetId(entry.targetId());
-        String details = entry.details();
-        audit.setDetails(details == null ? null : details.length() <= 2000 ? details : details.substring(0, 2000));
-        audit.setOldValue(entry.oldValue());
-        audit.setNewValue(entry.newValue());
-        return audit;
+        repository.saveAndFlush(writer.build(entry));
     }
 }

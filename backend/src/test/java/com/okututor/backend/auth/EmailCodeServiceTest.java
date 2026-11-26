@@ -145,8 +145,30 @@ class EmailCodeServiceTest {
                 .doesNotThrowAnyException();
     }
 
-    @SuppressWarnings("unused")
-    private void unusedHelper() {
-        assertThat(true).isTrue();
+    @Test
+    void validateOnlyLeavesCodeUnconsumed() {
+        String code = "123456";
+        EmailCode stored = activeCodeWithRaw(code);
+        when(repository.findLatestActive("user@test.com", EmailCodePurpose.PASSWORD_RESET))
+                .thenReturn(Optional.of(stored));
+
+        EmailCode result = service.validateOnly("user@test.com", EmailCodePurpose.PASSWORD_RESET, code);
+        assertThat(result).isNotNull();
+        assertThat(stored.isConsumed()).isFalse();
+        assertThat(stored.getConsumedAt()).isNull();
+    }
+
+    @Test
+    void validateOnlyThenVerifyConsumesCode() {
+        String code = "123456";
+        EmailCode stored = activeCodeWithRaw(code);
+        when(repository.findLatestActive("user@test.com", EmailCodePurpose.PASSWORD_RESET))
+                .thenReturn(Optional.of(stored));
+
+        service.validateOnly("user@test.com", EmailCodePurpose.PASSWORD_RESET, code);
+        assertThat(stored.isConsumed()).isFalse();
+
+        service.verify("user@test.com", EmailCodePurpose.PASSWORD_RESET, code);
+        assertThat(stored.isConsumed()).isTrue();
     }
 }

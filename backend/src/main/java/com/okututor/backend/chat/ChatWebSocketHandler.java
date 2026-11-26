@@ -2,9 +2,12 @@ package com.okututor.backend.chat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.okututor.backend.security.JwtService;
 import io.jsonwebtoken.Claims;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,39 +32,65 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final com.okututor.backend.user.UserRepository userRepository;
 
     private final ConcurrentHashMap<String, UUID> sessionUser = new ConcurrentHashMap<>();
+    private final Cache<UUID, Boolean> adminCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofMinutes(1))
+            .maximumSize(5_000)
+            .build();
+    private final WsTicketService ticketService;
 
     public ChatWebSocketHandler(JwtService jwtService, ObjectMapper objectMapper,
                                 ChatPresenceService presence, ChatService chatService,
                                 ChatParticipantRepository participantRepository,
-                                com.okututor.backend.user.UserRepository userRepository) {
+                                com.okututor.backend.user.UserRepository userRepository,
+                                WsTicketService ticketService) {
         this.jwtService = jwtService;
         this.objectMapper = objectMapper;
         this.presence = presence;
         this.chatService = chatService;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
+        this.ticketService = ticketService;
     }
 
     private boolean isAdmin(UUID userId) {
+        if (userId == null) return false;
         try {
-            var u = userRepository.findById(userId).orElse(null);
-            if (u == null) return false;
-            String r = String.valueOf(u.getRole());
-            return "ADMIN".equals(r) || "SUPER_ADMIN".equals(r);
-        } catch (Exception e) { return false; }
+            return Boolean.TRUE.equals(adminCache.get(userId, id -> {
+                var u = userRepository.findById(id).orElse(null);
+                if (u != null) {
+                    String r = String.valueOf(u.getRole());
+                    return "ADMIN".equals(r) || "SUPER_ADMIN".equals(r);
+                }
+                return false;
+            }));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private UUID resolveUserId(WebSocketSession session) {
         try {
             URI uri = session.getUri();
             if (uri != null && uri.getQuery() != null) {
+                String ticket = null;
+                String token = null;
                 for (String p : uri.getQuery().split("&")) {
                     String[] kv = p.split("=",2);
-                    if (kv.length==2 && (kv[0].equals("token") || kv[0].equals("access_token"))) {
-                        String token = java.net.URLDecoder.decode(kv[1], java.nio.charset.StandardCharsets.UTF_8);
-                        Claims claims = jwtService.parse(token);
-                        return UUID.fromString(claims.getSubject());
+                    if (kv.length != 2) continue;
+                    if (kv[0].equals("ticket")) {
+                        ticket = java.net.URLDecoder.decode(kv[1], java.nio.charset.StandardCharsets.UTF_8);
+                    } else if (kv[0].equals("token") || kv[0].equals("access_token")) {
+                        token = java.net.URLDecoder.decode(kv[1], java.nio.charset.StandardCharsets.UTF_8);
                     }
+                }
+                // Приоритет — одноразовый тикет (POST /api/v1/ws/ticket), JWT в query — legacy fallback.
+                if (ticket != null && !ticket.isBlank()) {
+                    UUID userId = ticketService.consume(ticket);
+                    if (userId != null) return userId;
+                }
+                if (token != null) {
+                    Claims claims = jwtService.parse(token);
+                    return UUID.fromString(claims.getSubject());
                 }
             }
             List<String> auth = session.getHandshakeHeaders().get("Authorization");
@@ -85,7 +114,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         UUID userId = resolveUserId(session);
         if (userId == null) {
             log.warn("WS reject no auth {}", session.getId());
-            session.close(CloseStatus.NOT_ACCEPTABLE.withReason("Unauthorized"));
+            session.close(CloseStatus.POLICY_VIOLATION.withReason("Unauthorized"));
             return;
         }
         session.getAttributes().put("userId", userId);
@@ -162,9 +191,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 session.sendMessage(new TextMessage(objectMapper.writeValueAsString(Map.of("type","error","message","Empty message"))));
                 return;
             }
-            // verify participant
+            // verify participant (admins can moderate/message any conversation)
             try {
-                if (!participantRepository.isParticipant(convId, senderId)) {
+                if (!isAdmin(senderId) && !participantRepository.isParticipant(convId, senderId)) {
                     session.sendMessage(new TextMessage(objectMapper.writeValueAsString(Map.of("type","error","message","Not participant"))));
                     return;
                 }
@@ -175,18 +204,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
             try {
                 // persist via service (will also check blocked etc.)
-                // ChatService.sendMessage expects UUID conversationId and senderId + text
                 var saved = chatService.sendMessage(convId, senderId, body.trim());
-                // saved is ChatMessage entity or DTO? service returns void? Check ChatService: sendMessage returns ChatMessage entity? Actually ChatService.sendMessage returns ChatMessage entity? Let's assume it returns ChatMessage
-                // We'll broadcast the saved message data
                 Map<String,Object> out = new ConcurrentHashMap<>();
                 out.put("type","message");
                 out.put("conversationId", convId.toString());
-                // try to extract fields from saved via objectMapper convert
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String,Object> mapped = objectMapper.convertValue(saved, Map.class);
-                    // normalize keys to snake/camel for frontend
                     Map<String,Object> msg = new ConcurrentHashMap<>();
                     msg.put("id", mapped.getOrDefault("id",""));
                     msg.put("conversation_id", convId.toString());
@@ -231,9 +255,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             for (UUID uid : userIds) {
                 if (excludeUserId != null && uid.equals(excludeUserId)) continue;
                 for (WebSocketSession s : presence.getSessions(uid)) {
-                    if (s.isOpen()) {
-                        try { s.sendMessage(msg); } catch (Exception e) { log.debug("WS send to {} failed {}", uid, e.getMessage()); }
-                    }
+                    sendSessionMessage(s, msg);
                 }
             }
             // also broadcast to online admins (moderators may not be participants)
@@ -242,9 +264,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 if (excludeUserId != null && adminId.equals(excludeUserId)) continue;
                 if (!isAdmin(adminId)) continue;
                 for (WebSocketSession s : presence.getSessions(adminId)) {
-                    if (s.isOpen()) {
-                        try { s.sendMessage(msg); } catch (Exception ignored) {}
-                    }
+                    sendSessionMessage(s, msg);
                 }
             }
         } catch (Exception e) {
@@ -260,12 +280,23 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             // broadcast to all online sessions
             for (UUID uid : presence.onlineUsers()) {
                 for (WebSocketSession s : presence.getSessions(uid)) {
-                    if (s.isOpen()) {
-                        try { s.sendMessage(msg); } catch (Exception ignored) {}
-                    }
+                    sendSessionMessage(s, msg);
                 }
             }
         } catch (Exception ignored) {}
+    }
+
+    private void sendSessionMessage(WebSocketSession s, TextMessage msg) {
+        if (s == null || !s.isOpen()) return;
+        try {
+            synchronized (s) {
+                if (s.isOpen()) {
+                    s.sendMessage(msg);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("WS send to session {} failed: {}", s.getId(), e.getMessage());
+        }
     }
 
     private static UUID tryUuid(String s) {

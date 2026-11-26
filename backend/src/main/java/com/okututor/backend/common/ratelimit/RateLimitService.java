@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class RateLimitService {
 
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(RateLimitService.class);
+
     private final RateLimiter delegate;
     private final RateLimiter localLimiter;
     private final AppProperties properties;
@@ -36,6 +38,10 @@ public class RateLimitService {
                 ? redisRateLimiter.orElse(null)
                 : null;
         this.localLimiter = new LocalRateLimiter(localBuckets);
+        if (properties.getRateLimit().isUseRedis() && this.delegate == null) {
+            LOG.warn("rate-limit: Redis limiter unavailable, falling back to in-memory "
+                    + "(limits reset on restart and are per-instance)");
+        }
     }
 
     public void checkLogin(String ip) {
@@ -125,6 +131,10 @@ public class RateLimitService {
         @Override
         public boolean tryAcquire(String key, int limit, Duration window) {
             Instant now = Instant.now();
+            if (buckets.size() > 20_000) {
+                Instant cutoff = now.minus(Duration.ofHours(1));
+                buckets.entrySet().removeIf(e -> e.getValue().isEmpty() || e.getValue().peekLast().isBefore(cutoff));
+            }
             // compute выполняет лямбду атомарно для ключа: блокировка только
             // по конкретному бакету, а не один монитор на все ключи
             boolean[] allowed = new boolean[1];
