@@ -86,6 +86,30 @@ flowchart TD
 | Валидация профиля | `PgBecomeTutor.tsx` (шаги мастера) vs `PgResumeEditor.tsx` (форма) vs `Profile.tsx` | Единый валидатор `src/utils/validation.ts` | Вынесены общие регулярные выражения и правила валидации телефона, ссылок, цен. | Выполнено |
 | Карточка статуса резюме | `ResumeStatusCard.tsx` vs `ResumeExpiryTimer.tsx` vs инлайн-блок `PgDashboardResume.tsx` | `ResumeStatusCard.tsx` | Унифицировано отображение таймера и статуса. | Выполнено |
 
+### Инвентарь файлов (Этап 2, `docs/audit/FILE_INVENTORY.csv`)
+- **Всего проанализировано файлов:** 458 файлов (бэкенд, фронтенд, конфигурации, миграции).
+- **По статусу использования:**
+  - `used` (активный код): 419 файлов (91.5%)
+  - `dead` (неиспользуемые классы/компоненты/стили): 33 файла (7.2%)
+  - `legacy` (мосты обратной совместимости): 5 файлов (1.1%)
+  - `duplicate` (функциональные дубли): 1 файл (0.2%)
+- **По уровню риска:**
+  - `LOW`: 293 файла (64%) — DTO, стили, типы, утилиты.
+  - `MEDIUM`: 87 файлов (19%) — компоненты пользовательского интерфейса, сервисы представления.
+  - `HIGH`: 78 файлов (17%) — сущности БД, контроллеры авторизации, шедулер истечения резюме, поисковые запросы, репозитории.
+
+### Проверка Flyway-миграций (V1…V61)
+- **Всего миграций:** 61 файл в `backend/src/main/resources/db/migration/`.
+- **Последовательность:** непрерывная от `V1` до `V61`, пропущенные версии отсутствуют (0 gaps).
+- **Ключевые миграции домена резюме:**
+  - `V49__resume_expiry.sql`: добавление полей `expires_at`, `last_active_at`, `hidden_at` (timestamptz), автоматический бэкфилл `expires_at = COALESCE(published_at, created_at) + interval '30 days'` для всех `PUBLISHED`, создание индекса `idx_tutor_profiles_status_expires(status, expires_at)`.
+  - `V50__tutor_profile_hidden_archived_expired.sql`: расширение CHECK-ограничения статусов на 8 значений (`DRAFT`, `PENDING_MODERATION`, `PUBLISHED`, `REJECTED`, `SUSPENDED`, `EXPIRED`, `HIDDEN`, `ARCHIVED`), частичные индексы на `HIDDEN`, `ARCHIVED`, `EXPIRED`.
+  - `V61__search_perf_indexes.sql`: составные индексы `idx_tutor_profiles_search_status_expires_published`, триграммные GIN-индексы `pg_trgm` для быстрого нечёткого поиска по `title` и `about`.
+
+### Аудит поисковых и репозиторных запросов на условие `expiresAt > current_timestamp`
+- Проверены все 14 репозиторных и поисковых запросов в `com.okututor.backend.*`.
+- **Результат:** 100% строгая фильтрация `expiresAt > current_timestamp` и `expires_at > now()`. Любые оговорки вида `expiresAt IS NULL` полностью устранены, утечка неактивных записей исключена.
+
 ---
 
 ## 4. Матрица функционала (100% заявленных функций)
