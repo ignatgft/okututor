@@ -12,6 +12,16 @@ groups:
           summary: "🔴 Бэкенд OkuTutor недоступен"
           description: "Бэкенд не отвечает более 2 минут. Требуется срочная проверка."
 
+      - alert: ResumeExpirySchedulerStalled
+        expr: (time() - okututor_expiry_last_run_timestamp_seconds) > 7200
+        for: 5m
+        labels:
+          severity: critical
+          service: okututor-backend
+        annotations:
+          summary: "🔴 Задача истечения срока резюме не запускалась более 2 часов"
+          description: "Шедулер истечения резюме (ResumeExpiryScheduler) не отрабатывал {{ $value | humanizeDuration }}. Риск зависания просроченных резюме."
+
       - alert: PrometheusDown
         expr: up{job="prometheus"} == 0
         for: 2m
@@ -113,15 +123,15 @@ groups:
           summary: "🟡 Очередь ожидания соединений БД (>5 потоков)"
           description: "Более 5 потоков ожидают соединения к БД. Возможна блокировка или нехватка коннектов."
 
-  - name: okututor-monitoring
-    interval: 30s
-    rules:
-      - alert: LokiDown
-        expr: up{job="loki"} == 0
-        for: 2m
-        labels:
-          severity: warning
-          service: loki
-        annotations:
-          summary: "🟡 Loki недоступен"
-          description: "Сервис сбора логов Loki не отвечает более 2 минут. Логи могут не сохраняться."
+#  - name: okututor-monitoring
+#    interval: 30s
+#    rules:
+#      - alert: LokiDown
+#        expr: up{job="loki"} == 0
+#        for: 2m
+#        labels:
+#          severity: warning
+#          service: loki
+#        annotations:
+#          summary: "🟡 Loki недоступен"
+#          description: "Сервис сбора логов Loki не отвечает более 2 минут. Логи могут не сохраняться."

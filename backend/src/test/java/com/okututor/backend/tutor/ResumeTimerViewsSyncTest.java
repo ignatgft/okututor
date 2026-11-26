@@ -25,10 +25,12 @@ class ResumeTimerViewsSyncTest {
         p.setStatus(TutorProfileStatus.PUBLISHED);
         Instant now = Instant.now();
         p.setPublishedAt(now.minusSeconds(10L * 24 * 3600));
-        p.setExpiresAt(now.plusSeconds(20L * 24 * 3600));
+        Instant oldExpires = now.plusSeconds(20L * 24 * 3600);
+        p.setExpiresAt(oldExpires);
         p.renew();
-        assertThat(p.getExpiresAt()).isAfter(Instant.now().plusSeconds(29L * 24 * 3600));
-        assertThat(p.getExpiresAt()).isBefore(Instant.now().plusSeconds(31L * 24 * 3600));
+        // spec: max(now, expiresAt) + 30d — сохраняет оставшиеся дни
+        assertThat(p.getExpiresAt()).isAfter(oldExpires.plusSeconds(29L * 24 * 3600));
+        assertThat(p.getExpiresAt()).isBefore(oldExpires.plusSeconds(31L * 24 * 3600));
     }
 
     @Test

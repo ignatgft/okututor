@@ -18,6 +18,7 @@ public class ObservabilityMetrics {
     private final MeterRegistry registry;
     private final AtomicLong pendingModerationGauge = new AtomicLong(0);
     private final AtomicLong resumesTotalGauge = new AtomicLong(0);
+    private final AtomicLong lastExpiryRunTimestamp = new AtomicLong(System.currentTimeMillis() / 1000);
 
     public ObservabilityMetrics(MeterRegistry registry) {
         this.registry = registry;
@@ -30,6 +31,14 @@ public class ObservabilityMetrics {
         Gauge.builder("okututor_resumes_total", resumesTotalGauge, AtomicLong::get)
                 .description("Total resumes")
                 .register(registry);
+        Gauge.builder("okututor_expiry_last_run_timestamp_seconds", lastExpiryRunTimestamp, AtomicLong::get)
+                .description("Timestamp of the last resume expiry scheduler execution in epoch seconds")
+                .register(registry);
+    }
+
+    public void recordExpiryRun() {
+        lastExpiryRunTimestamp.set(System.currentTimeMillis() / 1000);
+        counter("okututor_expiry_runs_total").increment();
     }
 
     // ---------------- applications ----------------

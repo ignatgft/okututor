@@ -150,7 +150,7 @@ public class TutorProfileController {
         }
         repository.findBySlugWithLocation(slug).ifPresent(profile -> {
             boolean isPublic = profile.getStatus() == TutorProfileStatus.PUBLISHED
-                    && (profile.getExpiresAt() == null || !profile.getExpiresAt().isBefore(Instant.now()))
+                    && profile.getExpiresAt() != null && profile.getExpiresAt().isAfter(Instant.now())
                     && !profile.isNoindex()
                     && (profile.getUser() == null || !profile.getUser().isBlocked());
             if (isPublic) service.incrementViews(profile.getId());
@@ -172,14 +172,14 @@ public class TutorProfileController {
         if (profileOpt.isPresent()) {
             var prof = profileOpt.get();
             boolean isPublic = "PUBLISHED".equals(prof.getStatus().name())
-                    && (prof.getExpiresAt() == null || !prof.getExpiresAt().isBefore(Instant.now()))
+                    && prof.getExpiresAt() != null && prof.getExpiresAt().isAfter(Instant.now())
                     && !prof.isNoindex()
                     && (prof.getUser() == null || !prof.getUser().isBlocked());
             if (isPublic) service.incrementViews(uuid);
         }
         TutorProfileResponse resp = service.getByIdForAdmin(uuid);
         if (!"PUBLISHED".equals(resp.status())
-                || (resp.expiresAt() != null && resp.expiresAt().isBefore(Instant.now()))
+                || resp.expiresAt() == null || !resp.expiresAt().isAfter(Instant.now())
                 || resp.noindex()) {
             throw ApiException.notFound("Tutor profile not found");
         }

@@ -23,9 +23,9 @@ public class TutorProfileMapper {
         fullName = fullName.trim();
         boolean isVerified = p.getStatus() == TutorProfileStatus.PUBLISHED;
 
-        boolean expiringSoon = p.getExpiresAt() != null && p.getExpiresAt().isAfter(java.time.Instant.now()) && p.getExpiresAt().isBefore(java.time.Instant.now().plusSeconds(3L * 24 * 3600));
+        boolean expiringSoon = p.getExpiresAt() != null && p.getExpiresAt().isAfter(java.time.Instant.now()) && p.getExpiresAt().isBefore(java.time.Instant.now().plusSeconds(7L * 24 * 3600));
         // noindex for expired/hidden
-        boolean noindexVal = p.isNoindex() || p.getStatus() == TutorProfileStatus.EXPIRED || p.getStatus() == TutorProfileStatus.HIDDEN || (p.getExpiresAt() != null && p.getExpiresAt().isBefore(java.time.Instant.now()));
+        boolean noindexVal = p.isNoindex() || p.getStatus() == TutorProfileStatus.EXPIRED || p.getStatus() == TutorProfileStatus.HIDDEN || p.getExpiresAt() == null || !p.getExpiresAt().isAfter(java.time.Instant.now());
         return new TutorProfileResponse(
                 p.getId(),
                 p.getUser().getId(),

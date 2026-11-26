@@ -40,7 +40,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
             left join fetch t.city
             left join fetch t.district
             where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
-              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and t.expiresAt > current_timestamp
             order by t.publishedAt desc nulls last, t.createdAt desc
             """)
     Page<TutorProfile> findPublishedExcludingBlocked(@Param("status") TutorProfileStatus status, Pageable pageable);
@@ -53,7 +53,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
             left join fetch t.city
             left join fetch t.district
             where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
-              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and t.expiresAt > current_timestamp
               and (:tutorType is null or t.tutorType = :tutorType)
               and (:cityId is null or t.city.id = :cityId)
               and (:districtId is null or t.district.id = :districtId)
@@ -75,7 +75,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
     @Query("update TutorProfile t set t.viewsCount = t.viewsCount + 1 where t.id = :id")
     int incrementViews(@Param("id") UUID id);
 
-    @Query("select t from TutorProfile t where t.status in ('PUBLISHED','ACTIVE') and t.noindex = false and (t.expiresAt is null or t.expiresAt > current_timestamp) order by t.publishedAt desc")
+    @Query("select t from TutorProfile t where t.status in ('PUBLISHED','ACTIVE') and t.noindex = false and t.expiresAt > current_timestamp order by t.publishedAt desc")
     List<TutorProfile> findPublishedForSitemap();
 
     // Slice pagination for infinite scroll — no COUNT, uses LIMIT size+1
@@ -85,7 +85,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
             left join fetch t.city
             left join fetch t.district
             where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
-              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and t.expiresAt > current_timestamp
             order by t.publishedAt desc nulls last, t.id desc
             """)
     org.springframework.data.domain.Slice<TutorProfile> findPublishedSlice(org.springframework.data.domain.Pageable pageable);
@@ -96,7 +96,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
             left join fetch t.city
             left join fetch t.district
             where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
-              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and t.expiresAt > current_timestamp
               and (:tutorType is null or t.tutorType = :tutorType)
               and (:cityId is null or t.city.id = :cityId)
               and (:districtId is null or t.district.id = :districtId)
@@ -122,7 +122,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
             left join fetch t.city
             left join fetch t.district
             where t.status in ('PUBLISHED','ACTIVE') and t.user.blocked = false
-              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and t.expiresAt > current_timestamp
               and (
                 :cursorPublishedAt is null
                 or t.publishedAt < :cursorPublishedAt
@@ -181,7 +181,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
     @Query("update TutorProfile t set t.status = 'EXPIRED' where t.status in ('PUBLISHED','HIDDEN','ACTIVE') and t.expiresAt is not null and t.expiresAt <= current_timestamp")
     int expireOldProfiles();
 
-    @Query("select count(t) from TutorProfile t where t.status in ('PUBLISHED','ACTIVE') and (t.expiresAt is null or t.expiresAt > current_timestamp)")
+    @Query("select count(t) from TutorProfile t where t.status in ('PUBLISHED','ACTIVE') and t.expiresAt > current_timestamp")
     long countActive();
 
     @Query("select count(t) from TutorProfile t where t.status in ('PUBLISHED','ACTIVE') and t.expiresAt is not null and t.expiresAt > current_timestamp and t.expiresAt <= :threshold")
@@ -200,7 +200,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
             left join fetch t.district
             where t.status in ('PUBLISHED','ACTIVE')
               and t.user.blocked = false
-              and (t.expiresAt is null or t.expiresAt > current_timestamp)
+              and t.expiresAt > current_timestamp
               and t.noindex = false
             order by t.viewsCount desc, t.rating desc, t.reviewsCount desc, t.publishedAt desc nulls last
             """)
@@ -241,7 +241,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
               LEFT JOIN cities c ON c.id = tp.city_id
               JOIN users u ON u.id = tp.user_id
               WHERE tp.status in ('PUBLISHED','ACTIVE') AND u.blocked = false
-                AND (tp.expires_at IS NULL OR tp.expires_at > now())
+                AND tp.expires_at > now()
                 AND (:cityId IS NULL OR tp.city_id = :cityId)
                 AND (:tutorType IS NULL OR tp.tutor_type = :tutorType)
                 AND (:online IS NULL OR tp.online = :online)
@@ -291,7 +291,7 @@ public interface TutorProfileRepository extends JpaRepository<TutorProfile, UUID
               FROM tutor_profiles tp
               JOIN users u ON u.id = tp.user_id
               WHERE tp.status in ('PUBLISHED','ACTIVE') AND u.blocked = false
-                AND (tp.expires_at IS NULL OR tp.expires_at > now())
+                AND tp.expires_at > now()
                 AND (:cityId IS NULL OR tp.city_id = :cityId)
                 AND (:tutorType IS NULL OR tp.tutor_type = :tutorType)
                 AND (:online IS NULL OR tp.online = :online)

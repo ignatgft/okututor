@@ -38,21 +38,22 @@ scrape_configs:
     #   username: "prom"
     #   password: "change-me"
 
-  - job_name: alertmanager
-    static_configs:
-      - targets: ["alertmanager:9093"]
-        labels:
-          service: alertmanager
-
-  - job_name: node
-    scrape_interval: 15s
-    static_configs:
-      - targets: ["node-exporter:9100"]
-        labels:
-          service: node-exporter
-
-  - job_name: loki
-    static_configs:
-      - targets: ["loki:3100"]
-        labels:
-          service: loki
+# Optional services (uncomment when alertmanager / node-exporter / loki containers are running):
+#  - job_name: alertmanager
+#    static_configs:
+#      - targets: ["alertmanager:9093"]
+#        labels:
+#          service: alertmanager
+#
+#  - job_name: node
+#    scrape_interval: 15s
+#    static_configs:
+#      - targets: ["node-exporter:9100"]
+#        labels:
+#          service: node-exporter
+#
+#  - job_name: loki
+#    static_configs:
+#      - targets: ["loki:3100"]
+#        labels:
+#          service: loki
