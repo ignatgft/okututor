@@ -27,25 +27,37 @@
 ## 2. Структура системы
 
 ### Модули Backend (Spring Boot 3.5.4, Java 21)
-- `com.okututor.backend.tutor`: Жизненный цикл резюме (`TutorProfile`, `TutorProfileService`, `TutorProfileController`, модерация `TutorModerationController`, планировщик `ResumeExpiryScheduler`).
-- `com.okututor.backend.search`: Полнотекстовый поиск, нормализация раскладки (ru/en), опечатки, стоп-слова, фильтрация по строгим условиям активности резюме (`SearchController`, `TutorSearchService`).
-- `com.okututor.backend.auth` & `security`: Регистрация, верификация через 6-значный email-код (`EmailVerificationService`), ротация refresh-токенов в Redis, JWT-фильтр, роли `USER`, `ADMIN`, `SUPER_ADMIN`.
-- `com.okututor.backend.chat`: Двусторонний диалог между учеником и репетитором, WebSocket (`/ws/chat`), модерация чатов администратором.
-- `com.okututor.backend.legal`: Фиксация согласий с версионированием юридических документов и реестр cookies.
-- `com.okututor.backend.admin`: Модерация, метрики платформы (`AdminMetricsController`), аудит действий (`AuditLogService`, `AsyncAuditLogWriter`).
-- `com.okututor.backend.support`: Система тикетов поддержки пользователей (`SupportController`).
-- `com.okututor.backend.observability`: Экспорт метрик Micrometer в Prometheus (`ObservabilityMetrics`), структурированные логи в формате JSON.
-- `com.okututor.backend.legacy`: Защитный барьер устаревших LMS-путей (`LegacyApiGuard` возвращает HTTP 410 GONE).
+Всего в проекте 26 пакетов и 34 JPA-сущности в `com.okututor.backend.*`:
+- `tutor` (25 классов): Жизненный цикл резюме (`TutorProfile`, `TutorProfileService`, `TutorProfileController`, модерация `TutorModerationController`, планировщик `ResumeExpiryScheduler`).
+- `search` (14 классов): Полнотекстовый поиск, нормализация раскладки (ru/en), опечатки, стоп-слова, фильтрация по строгим условиям активности резюме (`SearchController`, `TutorSearchService`, `KeyboardLayoutNormalizer`, `SynonymExpander`).
+- `auth` & `security` (34 класса): Регистрация, верификация через 6-значный email-код (`EmailVerificationService`), ротация refresh-токенов в Redis, JWT-фильтр, роли `USER`, `ADMIN`, `SUPER_ADMIN`.
+- `chat` (16 классов): Двусторонний диалог между учеником и репетитором, WebSocket (`/ws/chat`), модерация чатов администратором, одноразовые WS-тикеты (`WsTicketController`, `WsTicketService`).
+- `legal` (22 класса): Фиксация согласий с версионированием юридических документов и реестр cookies (`ConsentRecord`, `LegalDocumentVersion`, `CookieProvider`).
+- `admin` (9 классов): Модерация, метрики платформы (`AdminMetricsController`), асинхронный аудит действий (`AuditLogService`, `AsyncAuditLogWriter`).
+- `support` (10 классов): Система тикетов поддержки пользователей (`SupportController`, `SupportTicketService`).
+- `media` (21 класс): Обработка, обрезка и хранение аватаров и фото документов (локально / Cloudflare R2).
+- `seo` & `share` (11 классов): Поисковая оптимизация, sitemap XML, безопасные временные ссылки на просмотр резюме (`ResumeShareService`).
+- `legacy` & `common` (26 классов): Защитный барьер устаревших LMS-путей (`LegacyApiGuard` возвращает HTTP 410 GONE для 12 префиксов), глобальная обработка ошибок (`GlobalExceptionHandler`), ограничение частоты запросов (`RedisRateLimiter`).
 
 ### Модули Frontend (React 19, TypeScript, TanStack Query v5, Zustand)
-- `frontend/src/app/layouts`: Двухоболочечная компоновка — `PublicLayout` (гостевой режим, SEO) и `AppLayout` (кабинет пользователя, шторка навигации, сайдбар).
-- `frontend/src/app/router`: Защищённые маршруты `ProtectedRoute`, перенаправления с устаревших LMS-маршрутов на каталог и кабинет.
+- `frontend/src/app/layouts`: Двухоболочечная компоновка — `PublicLayout` (гостевой режим, лендинг, SEO) и `AppLayout` (кабинет пользователя, адаптивная навигация, сайдбар, мобильная шторка).
+- `frontend/src/app/router`: Защищённые маршруты `ProtectedRoute`, перенаправления со старых LMS-маршрутов на каталог и кабинет.
 - `frontend/src/features/tutors`: Карточки репетитора (`TutorCard`, `TutorResumeCard`), детальная страница (`TutorProfileMarketplace`).
-- `frontend/src/features/search`: Поисковый интерфейс, быстрые фильтры предметов, городов, диапазонов цен и форматов занятий.
-- `frontend/src/features/dashboard`: Хук `useDashboardResume` (live sync статуса без задержек), виджеты статуса резюме.
-- `frontend/src/pages`: 10-шаговый мастер репетитора `PgBecomeTutor`, редактор `PgResumeEditor`, предпросмотр `PgResumePreview`, страница дашборда `PgDashboardResume`, тикеты поддержки `PgSupport`, админ-панель `PgAdmin`.
+- `frontend/src/features/search`: Поисковый интерфейс `useTutorSearch`, быстрые фильтры предметов, городов, диапазонов цен и форматов занятий.
+- `frontend/src/features/dashboard`: Хук `useDashboardResume` (live sync статуса без задержек с `staleTime: 0`), виджеты статуса резюме.
+- `frontend/src/features/chat`: Хуки чата `useChatWebSocket`, `useConversations`, `useMessages`, компоненты диалога и бейджи непрочитанных сообщений.
+- `frontend/src/pages` (35 страниц): 10-шаговый мастер репетитора `PgBecomeTutor`, редактор `PgResumeEditor`, предпросмотр `PgResumePreview`, страница дашборда `PgDashboardResume`, тикеты поддержки `PgSupport`, админ-панель `PgAdmin`.
 - `frontend/src/locales`: Интернационализация `i18n` на 3 языка (`ru`, `en`, `kg`).
 - `frontend/src/styles`: Дизайн-система `tokens.css`, тёмная тема через селектор `[data-theme="dark"]`.
+
+### Единственный источник правды для резюме (TutorProfile)
+- **Сущность:** `backend/src/main/java/com/okututor/backend/tutor/TutorProfile.java` (таблица `tutor_profiles`).
+- **Проверка:** Сущности `Resume`, `Listing` или `Application` в базе данных отсутствуют. `TutorProfile` — единственная сущность листинга.
+- **Уникальность:** Поле `user_id` защищено ограничением `@JoinColumn(name = "user_id", nullable = false, unique = true)`. Пользователь может иметь ровно одно резюме.
+- **Статусы жизненного цикла:** `DRAFT`, `PENDING_MODERATION`, `PUBLISHED`, `REJECTED`, `SUSPENDED`, `EXPIRED`, `HIDDEN`, `ARCHIVED`.
+- **Вычисляемые состояния:**
+  - `ACTIVE`: `status = PUBLISHED` и `expiresAt > current_timestamp`.
+  - `EXPIRING`: `0 < (expiresAt - now) <= 7 дней` (рассчитывается на бэкенде динамически, в БД не дублируется).
 
 ### Схема зависимостей
 ```mermaid
