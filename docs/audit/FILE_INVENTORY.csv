@@ -370,7 +370,7 @@ frontend/src/constants/booking.ts,Frontend module booking,18 references,NO,LOW,u
 frontend/src/constants/cities.ts,Frontend module cities,14 references,NO,LOW,used
 frontend/src/constants/course.ts,Frontend module course,40 references,NO,LOW,used
 frontend/src/constants/enums.ts,Frontend module enums,4 references,NO,LOW,used
-frontend/src/constants/roles.ts,Frontend module roles,19 references,YES,LOW,used
+frontend/src/constants/roles.ts,Frontend module roles,20 references,YES,LOW,used
 frontend/src/constants/support.ts,Frontend module support,461 references,NO,LOW,used
 frontend/src/constants/tutorTypes.ts,Frontend module tutorTypes,4 references,NO,LOW,used
 frontend/src/context/ThemeContext.tsx,Frontend module ThemeContext,2 references,NO,LOW,used

@@ -141,8 +141,10 @@ flowchart TD
 | Админ-метрики | Обзор платформы `/api/v1/admin/metrics/overview` | **Работает** | Скрипт п. 6.2 (`total_users: 20`, `total_tutors: 8`) | Быстрый подсчёт без блокировок |
 | Интернационализация | Поддержка языков `ru`, `en`, `kg` | **Работает** | Локали в `frontend/src/locales/{ru,en,kg}/translation.json`, автодетекция | Полнота переводов проверена |
 | Тёмная тема | Переключение темы интерфейса | **Работает** | CSS-переменные в `frontend/src/styles/tokens.css` под атрибутом `[data-theme="dark"]` | Автосохранение выбора в `localStorage` |
-| Юнит-тесты Backend | Тестирование бизнес-логики и порогов статусов | **Работает** | Surefire Maven: `ResumeTimerViewsSyncTest` (5 тестов) + `TutorProfileStatusTest` (7 тестов) — 12 PASSED (0 failures) | Окно 7 дней `expiringSoon` доказано |
-| Тесты Frontend | Vitest компонентные и интеграционные тесты | **Работает** | Vitest: 32 тестовых файла, 170 тестов — 170 PASSED (0 failures) за 6.8 сек | Покрыты хуки, карточки, таймеры, i18n, нормализация, валидация, роутер, CustomSelect, SubjectIcon |
+| Юнит-тесты Backend | Тестирование бизнес-логики, порогов статусов, токенов и безопасности | **Работает** | Surefire Maven: 57 тестов (Auth, RefreshToken, Status, WsTicket, Search Normalizer, Query Parser, AdminGuard) — 57 PASSED (0 failures) | Окно 7 дней `expiringSoon` и безопасность подтверждены |
+| Тесты Frontend | Vitest компонентные и интеграционные тесты | **Работает** | Vitest: 32 тестовых файла, 170 тестов — 170 PASSED (0 failures) за 8.0 сек | Покрыты хуки, карточки, таймеры, i18n, нормализация, валидация, роутер, CustomSelect, SubjectIcon |
+| Playwright E2E | Сквозные тесты пользовательского интерфейса (Chromium) | **Работает** | `scripts/e2e_playwright_test.py`: 6 сценариев (десктоп, мобильный 390x844, темы, кастомный селект, иконки, навигация) — 100% PASSED | Скриншоты: `docs/audit/e2e_desktop_verified.png`, `docs/audit/e2e_mobile_verified.png` |
+| Нагрузочный тест k6 | Проверка RPS и латентности поиска | **Работает** | `backend/src/test/k6/rps-simple.js`: 751 запрос за 15 сек (50 RPS), 100% успешных ответов, `http_req_failed: 0.00%`, `p(95) = 8.76 мс` | Платформа легко держит пиковые нагрузки Free MVP |
 
 ---
 
