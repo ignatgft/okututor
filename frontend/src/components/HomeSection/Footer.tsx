@@ -15,9 +15,9 @@ const Footer = () => {
       <div className="footer-container">
         {/* Логотип и заголовок - как на макете Image 3 */}
         <div className="footer-logo">
-          <img loading="lazy" decoding="async" src={logoBlue} alt={t("footer.logo_alt", "Okututor Logo")} className="logo-image" style={{ height: 36 }} />
+          <img loading="lazy" decoding="async" src={logoBlue} alt={t("footer.logo_alt", "OkuTutor Logo")} className="logo-image" style={{ height: 36 }} />
           <div className="footer-logo-text">
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 18, color: "var(--color-text)" }}>Okututor</p>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 18, color: "var(--color-text)" }}>OkuTutor</p>
             <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--color-text-secondary)" }}>{t("footer.learning_and_teaching")}</p>
           </div>
         </div>
@@ -62,7 +62,7 @@ const Footer = () => {
 
         {/* Копирайт */}
         <p className="copyright">
-          © 2026 Okututor Inc.
+          © 2026 OkuTutor. Все права защищены.
         </p>
       </div>
     </footer>

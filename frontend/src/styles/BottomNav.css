@@ -154,11 +154,11 @@
   }
 }
 
-/* Dark theme — unified with Sidebar: soft bg + blue active */
+/* Dark theme — unified Apple Space Gray: soft surface bg + blue active */
 [data-theme="dark"] .bottom-nav {
-  background: #000000;
-  border-top-color: #1a1a1a;
-  box-shadow: 0 -1px 0 #1a1a1a;
+  background: var(--color-surface, #242426);
+  border-top-color: var(--color-border, #3a3a3c);
+  box-shadow: 0 -1px 0 var(--color-border, #3a3a3c);
 }
 
 [data-theme="dark"] .bottom-nav-item {

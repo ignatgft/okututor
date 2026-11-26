@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import Navbar from "../components/Navbar";
 import TutorResumeCard from "../features/tutors/components/TutorResumeCard";
 import TutorFilters from "../features/tutors/components/TutorFilters";
 import { useTutorSearch } from "../features/search/hooks/useTutorSearch";
@@ -68,7 +67,7 @@ export default function PgTutors() {
   const isApp = location.pathname.startsWith("/app");
   return (
     <>
-      <main id="main-content" className="search-page-container" style={{ paddingTop: isApp ? 0 : "var(--header-height, 64px)" }}>
+      <main id="main-content" className="search-page-container" style={{ paddingTop: 16 }}>
         <section className="search-hero" style={{ paddingBottom: 8 }}>
           <h1>{t("marketplace.list_title", "Репетиторы в Кыргызстане")}</h1>
           <p>{t("marketplace.list_subtitle", "Найдите преподавателя по предмету, городу, формату и типу репетитора")}</p>
