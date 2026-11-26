@@ -108,7 +108,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/tutors/applications", "/api/v1/tutors/applications/**", "/api/tutors/applications", "/api/tutors/applications/**").authenticated()
                         // websocket for chat presence/typing — auth via query token, handshake permitAll
                         .requestMatchers("/ws/**").permitAll()
-                        // prometheus scraped via internal docker network; in prod restrict via AppProperties or reverse-proxy ACL
+                        // prometheus: only when actuator exposed explicitly; in prod use reverse-proxy ACL (Dokploy) or disable via MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/prometheus").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, PUBLIC_POST).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, publicGet.toArray(String[]::new)).permitAll()
@@ -136,7 +136,7 @@ public class SecurityConfig {
     }
 
     private boolean isGoogleConfigured(String clientId) {
-        return clientId != null && !clientId.isBlank();
+        return clientId != null && !clientId.isBlank() && !"disabled".equalsIgnoreCase(clientId);
     }
 
     @Bean

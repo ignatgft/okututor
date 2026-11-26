@@ -26,6 +26,10 @@ backend/target/
 frontend/dist/
 frontend/node_modules/
 
+# Agent pack
+okututor-agent-pack/
+*.zip
+
 # Local scratch / archives
 /backend.zip
 /test_auth_servise/
