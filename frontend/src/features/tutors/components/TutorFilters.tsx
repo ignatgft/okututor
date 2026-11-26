@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { MARKETPLACE_CITIES, MARKETPLACE_SUBJECTS } from "../../../constants/cities";
 import { TUTOR_TYPES } from "../../../constants/tutorTypes";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { subjectApi } from "../../subjects/api/subjectApi";
+import CustomSelect, { CustomSelectOption } from "../../../components/ui/CustomSelect";
 
 interface Props {
   filters: {
@@ -48,14 +49,28 @@ export default function TutorFilters({ filters, onApply }: Props) {
     return () => { cancelled = true; };
   }, []);
 
-  const selectStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: "var(--radius-lg)",
-    border: "1px solid var(--color-border)",
-    background: "var(--color-surface)",
-    fontSize: "var(--font-size-base)",
-  };
+  const subjectOptions: CustomSelectOption[] = useMemo(() => [
+    { value: "", label: t("search.all_subjects", "Все предметы") },
+    ...subjects.map((s) => ({ value: s.value, label: t(s.labelKey, s.label ?? s.value) })),
+  ], [subjects, t]);
+
+  const levelOptions: CustomSelectOption[] = useMemo(() =>
+    LEVELS.map((l) => ({ value: l.value, label: l.fallback })),
+  []);
+
+  const cityOptions: CustomSelectOption[] = useMemo(() => [
+    { value: "", label: t("search.all_cities", "Все города") },
+    ...MARKETPLACE_CITIES.map((c) => ({ value: c.value, label: t(c.labelKey, c.labelRu) })),
+  ], [t]);
+
+  const formatOptions: CustomSelectOption[] = useMemo(() =>
+    FORMATS.map((f) => ({ value: f.value, label: t(f.labelKey, f.fallback) })),
+  [t]);
+
+  const tutorTypeOptions: CustomSelectOption[] = useMemo(() => [
+    { value: "", label: t("search.all", "Любой") },
+    ...TUTOR_TYPES.map((tt) => ({ value: tt.value, label: t(tt.labelKey, tt.labelRu) })),
+  ], [t]);
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -71,41 +86,38 @@ export default function TutorFilters({ filters, onApply }: Props) {
       <style>{`input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type="number"] { -moz-appearance: textfield; } .tutor-filters-title{font-size:var(--font-size-lg);font-weight:600;margin:0} @media(max-width:767px){.tutor-filters-title{display:none}}`}</style>
       <h3 className="tutor-filters-title" style={{ fontSize: "var(--font-size-lg)", fontWeight: 600 }}>{t("search.filter_by", "Фильтры")}</h3>
 
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>{t("search.subject", "Предмет")}</span>
-        <select
+        <CustomSelect
           value={filters.subject}
-          onChange={(e) => onApply({ subject: e.target.value })}
-          style={selectStyle}
-          aria-label={t("search.subject", "Предмет")}
-        >
-          <option value="">{t("search.all_subjects", "Все предметы")}</option>
-          {subjects.map((s) => (
-            <option key={s.value} value={s.value}>
-              {t(s.labelKey, s.label ?? s.value)}
-            </option>
-          ))}
-        </select>
-      </label>
+          onChange={(val) => onApply({ subject: val })}
+          options={subjectOptions}
+          placeholder={t("search.all_subjects", "Все предметы")}
+          ariaLabel={t("search.subject", "Предмет")}
+        />
+      </div>
 
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>{t("search.level", "Уровень")}</span>
-        <select value={filters.level} onChange={(e) => onApply({ level: e.target.value })} style={selectStyle}>
-          {LEVELS.map((l) => (
-            <option key={l.value || "any"} value={l.value}>{l.fallback}</option>
-          ))}
-        </select>
-      </label>
+        <CustomSelect
+          value={filters.level}
+          onChange={(val) => onApply({ level: val })}
+          options={levelOptions}
+          placeholder={t("search.all", "Любой")}
+          ariaLabel={t("search.level", "Уровень")}
+        />
+      </div>
 
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>{t("profile.location", "Город")}</span>
-        <select value={filters.city} onChange={(e) => onApply({ city: e.target.value })} style={selectStyle}>
-          <option value="">{t("search.all", "Все города")}</option>
-          {MARKETPLACE_CITIES.map((c) => (
-            <option key={c.value} value={c.value}>{t(c.labelKey, c.labelRu)}</option>
-          ))}
-        </select>
-      </label>
+        <CustomSelect
+          value={filters.city}
+          onChange={(val) => onApply({ city: val })}
+          options={cityOptions}
+          placeholder={t("search.all_cities", "Все города")}
+          ariaLabel={t("profile.location", "Город")}
+        />
+      </div>
 
       <div>
         <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500, display: "block", marginBottom: 6 }}>{t("search.price", "Цена")} (KGS/час)</span>
@@ -134,24 +146,27 @@ export default function TutorFilters({ filters, onApply }: Props) {
         </div>
       </div>
 
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>{t("search.location_type", "Формат")}</span>
-        <select value={filters.format} onChange={(e) => onApply({ format: e.target.value })} style={selectStyle}>
-          {FORMATS.map((f) => (
-            <option key={f.value || "any"} value={f.value}>{t(f.labelKey, f.fallback)}</option>
-          ))}
-        </select>
-      </label>
+        <CustomSelect
+          value={filters.format}
+          onChange={(val) => onApply({ format: val })}
+          options={formatOptions}
+          placeholder={t("search.all", "Любой")}
+          ariaLabel={t("search.location_type", "Формат")}
+        />
+      </div>
 
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 500 }}>{t("tutor_type.label", "Тип репетитора")}</span>
-        <select value={filters.tutor_type} onChange={(e) => onApply({ tutor_type: e.target.value })} style={selectStyle}>
-          <option value="">{t("search.all", "Любой")}</option>
-          {TUTOR_TYPES.map((tt) => (
-            <option key={tt.value} value={tt.value}>{t(tt.labelKey, tt.labelRu)}</option>
-          ))}
-        </select>
-      </label>
+        <CustomSelect
+          value={filters.tutor_type}
+          onChange={(val) => onApply({ tutor_type: val })}
+          options={tutorTypeOptions}
+          placeholder={t("search.all", "Любой")}
+          ariaLabel={t("tutor_type.label", "Тип репетитора")}
+        />
+      </div>
     </div>
   );
 }

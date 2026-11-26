@@ -3,20 +3,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { subjectApi } from "../../features/subjects/api/subjectApi";
+import SubjectIcon from "../ui/SubjectIcon";
 import "../../styles/HomeSectionCSS/Category.css";
-
-const FALLBACK_ICON: Record<string, string> = {
-  matematika: "∑",
-  angliyskiy: "A",
-  russkiy: "Я",
-  kyrgyzskiy: "К",
-  fizika: "⚛",
-  himiya: "🧪",
-  biologiya: "🧬",
-  informatika: "💻",
-  python: "🐍",
-  ort: "",
-};
 
 export default function SubjectGrid() {
   const { t } = useTranslation();
@@ -68,7 +56,6 @@ export default function SubjectGrid() {
       </div>
       <div className="category-grid">
         {subjects.map((s) => {
-          const icon = FALLBACK_ICON[s.value] ?? s.label.charAt(0).toUpperCase();
           const label = t(s.labelKey, s.label);
           return (
             <Link
@@ -77,8 +64,8 @@ export default function SubjectGrid() {
               className="category-card"
               aria-label={label}
             >
-              <div className="category-icon" aria-hidden="true" style={{ fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {icon}
+              <div className="category-icon" aria-hidden="true" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-primary)" }}>
+                <SubjectIcon name={s.value} size={28} />
               </div>
               <h3 className="category-card-title">{label}</h3>
               <span className="category-card-link">{t("categories.show_more", "показать больше")}</span>
