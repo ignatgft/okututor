@@ -24,12 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(MediaFileController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -40,7 +40,6 @@ class MediaFileControllerTest {
     @MockitoBean ObjectStorage storage;
     @MockitoBean MediaObjectRepository mediaObjectRepository;
     @MockitoBean SupportTicketMessageRepository supportTicketMessageRepository;
-    @MockitoBean JdbcTemplate jdbcTemplate;
     @MockitoBean JwtService jwtService;
     @MockitoBean UserRepository userRepository;
     @MockitoBean com.okututor.backend.observability.ObservabilityMetrics observabilityMetrics;
@@ -139,22 +138,58 @@ class MediaFileControllerTest {
 
         mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"));
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
     }
 
     @Test
-    void read_privateFile_recipientAuthorizedByConversation_ok() throws Exception {
+    void read_privateFile_recipientAuthorizedByTicket_304NotModified_hasPrivateNoStore() throws Exception {
         authenticate(recipientId, Role.USER);
         when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
                 .thenReturn(Optional.of(sampleMedia));
         when(supportTicketMessageRepository.isAuthorizedTicketParticipant(sampleMedia.getId(), recipientId))
-                .thenReturn(false);
-        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(sampleMedia.getId()), eq(sampleMedia.getId()), eq(recipientId), eq(recipientId)))
-                .thenReturn(1);
+                .thenReturn(true);
+        when(storage.openStream("messages/attachments/test.pdf"))
+                .thenReturn(new ByteArrayInputStream("pdf-bytes".getBytes()));
+
+        MvcResult first = mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"))
+                .andReturn();
+
+        String etag = first.getResponse().getHeader("ETag");
+        mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf")
+                        .header("If-None-Match", etag))
+                .andExpect(status().isNotModified())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
+    }
+
+    @Test
+    void read_privateFile_queryException_failsClosedWithForbidden() throws Exception {
+        authenticate(strangerId, Role.USER);
+        when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
+                .thenReturn(Optional.of(sampleMedia));
+        when(supportTicketMessageRepository.isAuthorizedTicketParticipant(sampleMedia.getId(), strangerId))
+                .thenThrow(new RuntimeException("db failure"));
+
+        mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void read_privateFile_superAdminOk() throws Exception {
+        authenticate(strangerId, Role.SUPER_ADMIN);
+        when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
+                .thenReturn(Optional.of(sampleMedia));
+        when(storage.openStream("messages/attachments/test.pdf"))
+                .thenReturn(new ByteArrayInputStream("pdf-bytes".getBytes()));
 
         mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"));
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
     }
 
     @Test
@@ -177,7 +212,8 @@ class MediaFileControllerTest {
 
         mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"));
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
     }
 
     @Test
@@ -191,8 +227,50 @@ class MediaFileControllerTest {
     }
 
     @Test
+    void read_privateFile_ownerNull_authorizedByTicket_ok() throws Exception {
+        MediaObject unowned = new MediaObject();
+        unowned.setId(UUID.randomUUID());
+        unowned.setOwner(null);
+
+        authenticate(recipientId, Role.USER);
+        when(mediaObjectRepository.findByObjectKey("messages/attachments/unowned.pdf"))
+                .thenReturn(Optional.of(unowned));
+        when(supportTicketMessageRepository.isAuthorizedTicketParticipant(unowned.getId(), recipientId))
+                .thenReturn(true);
+        when(storage.openStream("messages/attachments/unowned.pdf"))
+                .thenReturn(new ByteArrayInputStream("pdf-bytes".getBytes()));
+
+        mockMvc.perform(get("/api/v1/files/media/messages/attachments/unowned.pdf"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
+    }
+
+    @Test
+    void read_privateFile_ownerNull_strangerForbidden() throws Exception {
+        MediaObject unowned = new MediaObject();
+        unowned.setId(UUID.randomUUID());
+        unowned.setOwner(null);
+
+        authenticate(strangerId, Role.USER);
+        when(mediaObjectRepository.findByObjectKey("messages/attachments/unowned.pdf"))
+                .thenReturn(Optional.of(unowned));
+        when(supportTicketMessageRepository.isAuthorizedTicketParticipant(unowned.getId(), strangerId))
+                .thenReturn(false);
+
+        mockMvc.perform(get("/api/v1/files/media/messages/attachments/unowned.pdf"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void read_pathTraversal_notFound() throws Exception {
         mockMvc.perform(get("/api/v1/files/media/..%2Fetc/passwd"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/files/media/tutors/../messages/secret.pdf"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/files/media/users/./avatar.webp"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/files/media/%252e%252e/secret.pdf"))
                 .andExpect(status().isNotFound());
     }
 }

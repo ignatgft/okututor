@@ -9,13 +9,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,36 +31,34 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MediaFileController {
 
+    private static final Logger log = LoggerFactory.getLogger(MediaFileController.class);
     private static final String PRIVATE_CACHE_CONTROL = "private, no-store, must-revalidate";
     private static final String PUBLIC_CACHE_CONTROL = "public, max-age=31536000, immutable";
 
     private final ObjectStorage storage;
     private final MediaObjectRepository mediaObjectRepository;
     private final SupportTicketMessageRepository supportTicketMessageRepository;
-    private final JdbcTemplate jdbcTemplate;
 
     public MediaFileController(ObjectStorage storage,
                                MediaObjectRepository mediaObjectRepository,
-                               SupportTicketMessageRepository supportTicketMessageRepository,
-                               @Nullable JdbcTemplate jdbcTemplate) {
+                               SupportTicketMessageRepository supportTicketMessageRepository) {
         this.storage = storage;
         this.mediaObjectRepository = mediaObjectRepository;
         this.supportTicketMessageRepository = supportTicketMessageRepository;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping("/api/v1/files/media/{*key}")
     public ResponseEntity<InputStreamResource> read(@PathVariable String key, HttpServletRequest request) {
-        String normalized = key.startsWith("/") ? key.substring(1) : key;
-        // path traversal guard — S3 keys may contain ".." literally, block after decode; также нормализуем двойное кодирование %2e
-        String lower = normalized.toLowerCase(Locale.ROOT);
-        if (lower.contains("..") || normalized.contains("//") || normalized.contains("\\") || lower.contains("%2e")) {
+        final String normalized;
+        try {
+            normalized = MediaKind.normalizeObjectKey(key);
+        } catch (ApiException ex) {
             throw ApiException.notFound("File not found");
         }
 
-        boolean isPrivate = isPrivateKey(normalized);
+        boolean isPrivate = MediaKind.isNormalizedPrivateKey(normalized);
 
-        // Private objects (chat attachments, support) require authentication and ownership/recipient/admin authorization
+        // Private objects (support attachments, private prefixes) require authentication and owner/participant/admin authorization
         if (isPrivate) {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             boolean authed = auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken);
@@ -73,17 +71,11 @@ public class MediaFileController {
                 if (!(auth.getPrincipal() instanceof UserPrincipal principal)) {
                     throw ApiException.unauthorized("Authentication required for this file");
                 }
-                var mediaOpt = mediaObjectRepository.findByObjectKey(normalized);
-                if (mediaOpt.isEmpty() || mediaOpt.get().getOwner() == null) {
+                MediaObject media = mediaObjectRepository.findByObjectKey(normalized)
+                        .orElseThrow(() -> ApiException.forbidden("You do not have permission to access this file"));
+                boolean isOwner = media.getOwner() != null && media.getOwner().getId().equals(principal.id());
+                if (!isOwner && !isAuthorizedParticipant(media.getId(), principal.id())) {
                     throw ApiException.forbidden("You do not have permission to access this file");
-                }
-                MediaObject media = mediaOpt.get();
-                boolean isOwner = media.getOwner().getId().equals(principal.id());
-                if (!isOwner) {
-                    boolean isAuthorized = isAuthorizedParticipant(media.getId(), principal.id());
-                    if (!isAuthorized) {
-                        throw ApiException.forbidden("You do not have permission to access this file");
-                    }
                 }
             }
         }
@@ -130,40 +122,16 @@ public class MediaFileController {
     }
 
     private boolean isAuthorizedParticipant(UUID mediaId, UUID userId) {
+        if (supportTicketMessageRepository == null) {
+            return false;
+        }
         try {
-            if (supportTicketMessageRepository != null &&
-                    supportTicketMessageRepository.isAuthorizedTicketParticipant(mediaId, userId)) {
-                return true;
-            }
-        } catch (Exception ignored) {
-            // fail-closed on query exception
+            return supportTicketMessageRepository.isAuthorizedTicketParticipant(mediaId, userId);
+        } catch (Exception ex) {
+            // fail-closed без раскрытия PII в логах
+            log.error("Media authorization query failed for mediaId={}: {}", mediaId, ex.getMessage());
+            return false;
         }
-
-        if (jdbcTemplate != null) {
-            try {
-                Integer count = jdbcTemplate.queryForObject(
-                        """
-                        SELECT count(*) FROM messages m
-                        JOIN conversations c ON m.conversation_id = c.id
-                        JOIN message_attachments a ON m.attachment_id = a.id
-                        WHERE (a.media_id = ? OR a.thumbnail_media_id = ?)
-                        AND (c.user1_id = ? OR c.user2_id = ?)
-                        """,
-                        Integer.class, mediaId, mediaId, userId, userId);
-                if (count != null && count > 0) {
-                    return true;
-                }
-            } catch (Exception ignored) {
-                // fail-closed
-            }
-        }
-        return false;
-    }
-
-    private static boolean isPrivateKey(String key) {
-        String lower = key.toLowerCase(Locale.ROOT);
-        return lower.startsWith("messages/") || lower.startsWith("support/") || lower.startsWith("chat/")
-                || lower.startsWith("private/");
     }
 
     private static MediaType contentTypeOf(String key) {

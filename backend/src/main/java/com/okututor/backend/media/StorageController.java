@@ -3,9 +3,9 @@ package com.okututor.backend.media;
 import com.okututor.backend.common.error.ApiException;
 import com.okututor.backend.security.UserPrincipal;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,8 +40,8 @@ public class StorageController {
         if (principal == null) throw ApiException.unauthorized("Authentication required");
         rateLimitService.checkStorageUpload(principal.id().toString());
 
-        String type = req.type() == null ? "AVATAR" : req.type().toUpperCase();
-        String contentType = req.contentType() == null ? "image/webp" : req.contentType().toLowerCase();
+        String type = req.type() == null ? "AVATAR" : req.type().toUpperCase(Locale.ROOT);
+        String contentType = req.contentType() == null ? "image/webp" : req.contentType().toLowerCase(Locale.ROOT);
         long size = req.size() == null ? 0 : req.size();
 
         // Validate type
@@ -49,14 +49,18 @@ public class StorageController {
         try {
             kind = MediaKind.valueOf(type);
         } catch (Exception e) {
-            // Map legacy AVATAR etc. to MediaKind
+            // Map legacy AVATAR/RESUME aliases to MediaKind
             kind = switch (type) {
                 case "AVATAR" -> MediaKind.AVATAR;
                 case "PROFILE", "RESUME", "RESUME_IMAGE" -> MediaKind.PROFILE;
                 case "COURSE_COVER" -> MediaKind.COURSE_COVER;
-                case "MESSAGE_ATTACHMENT" -> MediaKind.MESSAGE_ATTACHMENT;
                 default -> throw ApiException.validation("Unknown type: " + type);
             };
+        }
+
+        // Приватные вложения нельзя загружать напрямую через presigned URL в обход обработки и БД-учёта
+        if (kind.isPrivate()) {
+            throw ApiException.forbidden("Direct presigned upload is not allowed for private media");
         }
 
         // Validate content type
@@ -75,12 +79,15 @@ public class StorageController {
         }
 
         // Generate objectKey securely — never trust frontend key
-        String ext = req.extension() != null ? req.extension().toLowerCase() : contentTypeToExt(contentType);
+        String ext = req.extension() != null ? req.extension().toLowerCase(Locale.ROOT) : contentTypeToExt(contentType);
         if (!ALLOWED_EXT.contains(ext)) ext = "webp";
-        String objectKey = kind.objectKey(principal.id(), ext);
+        String objectKey = MediaKind.normalizeObjectKey(kind.objectKey(principal.id(), ext));
 
+        if (MediaKind.isNormalizedPrivateKey(objectKey)) {
+            throw ApiException.forbidden("Direct presigned upload is not allowed for private media");
+        }
         // Security: ensure prefix matches owner
-        if (!objectKey.startsWith(kind.name().toLowerCase() + "/") && !objectKey.startsWith("users/") && !objectKey.startsWith("avatars/") && !objectKey.startsWith("resumes/")) {
+        if (!objectKey.startsWith(kind.name().toLowerCase(Locale.ROOT) + "/") && !objectKey.startsWith("users/") && !objectKey.startsWith("avatars/") && !objectKey.startsWith("resumes/")) {
             // MediaKind already enforces prefix, but double-check
             if (!objectKey.contains(principal.id().toString())) {
                 throw ApiException.forbidden("Invalid object key prefix");
@@ -101,8 +108,12 @@ public class StorageController {
 
     @GetMapping("/public-url")
     public Map<String, String> publicUrl(@RequestParam String key) {
-        // Simple helper to resolve public URL for a given objectKey (no auth needed for public objects)
-        return Map.of("publicUrl", storage.publicUrl(key), "objectKey", key);
+        String normalizedKey = MediaKind.normalizeObjectKey(key);
+        if (MediaKind.isNormalizedPrivateKey(normalizedKey)) {
+            throw ApiException.forbidden("Private media does not expose a public URL");
+        }
+        // Simple helper to resolve public URL for a given normalized objectKey
+        return Map.of("publicUrl", storage.publicUrl(normalizedKey), "objectKey", normalizedKey);
     }
 
     private String contentTypeToExt(String ct) {

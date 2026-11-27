@@ -19,10 +19,28 @@ public interface SupportTicketMessageRepository extends JpaRepository<SupportTic
     Page<SupportTicketMessage> findByTicketNumberOrderByCreatedAtAsc(@Param("ticketNumber") Long ticketNumber,
                                                                      Pageable pageable);
 
+    default boolean isAuthorizedTicketParticipant(UUID mediaId, UUID userId) {
+        return isAuthorizedTicketParticipant(mediaId, userId, SupportTicketMessage.Type.USER_VISIBLE);
+    }
+
+    /**
+     * Явные LEFT JOIN исключают потерю неназначенных тикетов (assignedAdmin IS NULL)
+     * и файловых вложений без миниатюры (thumbnail IS NULL) в Hibernate.
+     */
     @Query("""
             select count(m) > 0 from SupportTicketMessage m
-            where (m.attachment.media.id = :mediaId or (m.attachment.thumbnail is not null and m.attachment.thumbnail.id = :mediaId))
-            and (m.ticket.author.id = :userId or (m.ticket.assignedAdmin is not null and m.ticket.assignedAdmin.id = :userId))
+            join m.ticket t
+            join m.attachment a
+            join a.media med
+            left join a.thumbnail th
+            left join t.assignedAdmin adm
+            where (med.id = :mediaId or th.id = :mediaId)
+              and (
+                  (t.author.id = :userId and m.type = :visibleType)
+                  or adm.id = :userId
+              )
             """)
-    boolean isAuthorizedTicketParticipant(@Param("mediaId") UUID mediaId, @Param("userId") UUID userId);
+    boolean isAuthorizedTicketParticipant(@Param("mediaId") UUID mediaId,
+                                          @Param("userId") UUID userId,
+                                          @Param("visibleType") SupportTicketMessage.Type visibleType);
 }
