@@ -68,6 +68,19 @@
   --color-primary-soft: #EDF2FF;
   --color-primary-foreground: #FFFFFF;
 
+  /* KIT DESIGN TOKEN ALIASES (LIGHT) */
+  --bg-base: #F6F7FB;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --border: #E5E9F0;
+  --text-primary: #101727;
+  --text-secondary: #475367;
+  --text-muted: #98A6BE;
+  --accent: #3563E9;
+  --accent-hover: #1A3BC7;
+  --accent-subtle: #EDF2FF;
+  --accent-icon: #3563E9;
+
   /* SPECIAL */
   --color-overlay: rgba(16, 23, 39, 0.5);
   --color-disabled: #D0D4D8;
@@ -271,6 +284,19 @@
   --color-accent: #3B82F6;
   --color-primary-soft: #1E3A8A;
   --color-primary-foreground: #FFFFFF;
+
+  /* KIT DESIGN TOKEN ALIASES (DARK - Apple Space Gray) */
+  --bg-base: #1C1C1E;
+  --bg-surface: #242426;
+  --bg-elevated: #2C2C2E;
+  --border: #2C2C2E;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #636366;
+  --accent: #3B82F6;
+  --accent-hover: #2563EB;
+  --accent-subtle: #1E3A8A;
+  --accent-icon: #8FB0FF;
 
   /* SPECIAL */
   --color-overlay: rgba(28, 28, 30, 0.75);
