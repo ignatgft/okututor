@@ -1,6 +1,8 @@
 package com.okututor.backend.media;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -9,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.okututor.backend.common.config.JacksonConfig;
 import com.okututor.backend.security.JwtService;
 import com.okututor.backend.security.UserPrincipal;
+import com.okututor.backend.support.SupportTicketMessageRepository;
 import com.okututor.backend.user.Role;
 import com.okututor.backend.user.User;
 import com.okututor.backend.user.UserRepository;
@@ -21,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,11 +39,14 @@ class MediaFileControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean ObjectStorage storage;
     @MockitoBean MediaObjectRepository mediaObjectRepository;
+    @MockitoBean SupportTicketMessageRepository supportTicketMessageRepository;
+    @MockitoBean JdbcTemplate jdbcTemplate;
     @MockitoBean JwtService jwtService;
     @MockitoBean UserRepository userRepository;
     @MockitoBean com.okututor.backend.observability.ObservabilityMetrics observabilityMetrics;
 
     private UUID ownerId;
+    private UUID recipientId;
     private UUID strangerId;
     private UUID adminId;
     private MediaObject sampleMedia;
@@ -47,6 +54,7 @@ class MediaFileControllerTest {
     @BeforeEach
     void setUp() throws Exception {
         ownerId = UUID.randomUUID();
+        recipientId = UUID.randomUUID();
         strangerId = UUID.randomUUID();
         adminId = UUID.randomUUID();
 
@@ -55,6 +63,7 @@ class MediaFileControllerTest {
         owner.setRole(Role.USER);
 
         sampleMedia = new MediaObject();
+        sampleMedia.setId(UUID.randomUUID());
         sampleMedia.setOwner(owner);
 
         when(storage.contentLength(anyString())).thenReturn(11L);
@@ -69,11 +78,22 @@ class MediaFileControllerTest {
     }
 
     @Test
-    void read_publicFile_anonymousOk() throws Exception {
+    void read_publicFile_anonymousOk_andHasPublicCacheControl() throws Exception {
         SecurityContextHolder.clearContext();
         mockMvc.perform(get("/api/v1/files/media/users/avatar/test.webp"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Content-Type", "image/webp"));
+                .andExpect(header().string("Content-Type", "image/webp"))
+                .andExpect(header().string("Cache-Control", "public, max-age=31536000, immutable"));
+    }
+
+    @Test
+    void read_publicFile_304NotModified_hasPublicCacheControl() throws Exception {
+        SecurityContextHolder.clearContext();
+        String etag = "W/\"" + Integer.toHexString("users/avatar/test.webp".hashCode()) + "\"";
+        mockMvc.perform(get("/api/v1/files/media/users/avatar/test.webp")
+                        .header("If-None-Match", etag))
+                .andExpect(status().isNotModified())
+                .andExpect(header().string("Cache-Control", "public, max-age=31536000, immutable"));
     }
 
     @Test
@@ -84,13 +104,57 @@ class MediaFileControllerTest {
     }
 
     @Test
-    void read_privateFile_ownerOk() throws Exception {
+    void read_privateFile_ownerOk_andHasPrivateNoStoreCacheControl() throws Exception {
         authenticate(ownerId, Role.USER);
         when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
                 .thenReturn(Optional.of(sampleMedia));
 
         mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
+    }
+
+    @Test
+    void read_privateFile_304NotModified_hasPrivateNoStoreCacheControl() throws Exception {
+        authenticate(ownerId, Role.USER);
+        when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
+                .thenReturn(Optional.of(sampleMedia));
+
+        String etag = "W/\"" + Integer.toHexString("messages/attachments/test.pdf".hashCode()) + "\"";
+        mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf")
+                        .header("If-None-Match", etag))
+                .andExpect(status().isNotModified())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"))
+                .andExpect(header().string("Pragma", "no-cache"));
+    }
+
+    @Test
+    void read_privateFile_recipientAuthorizedByTicket_ok() throws Exception {
+        authenticate(recipientId, Role.USER);
+        when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
+                .thenReturn(Optional.of(sampleMedia));
+        when(supportTicketMessageRepository.isAuthorizedTicketParticipant(sampleMedia.getId(), recipientId))
+                .thenReturn(true);
+
+        mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"));
+    }
+
+    @Test
+    void read_privateFile_recipientAuthorizedByConversation_ok() throws Exception {
+        authenticate(recipientId, Role.USER);
+        when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
+                .thenReturn(Optional.of(sampleMedia));
+        when(supportTicketMessageRepository.isAuthorizedTicketParticipant(sampleMedia.getId(), recipientId))
+                .thenReturn(false);
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(sampleMedia.getId()), eq(sampleMedia.getId()), eq(recipientId), eq(recipientId)))
+                .thenReturn(1);
+
+        mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"));
     }
 
     @Test
@@ -98,6 +162,8 @@ class MediaFileControllerTest {
         authenticate(strangerId, Role.USER);
         when(mediaObjectRepository.findByObjectKey("messages/attachments/test.pdf"))
                 .thenReturn(Optional.of(sampleMedia));
+        when(supportTicketMessageRepository.isAuthorizedTicketParticipant(sampleMedia.getId(), strangerId))
+                .thenReturn(false);
 
         mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
                 .andExpect(status().isForbidden());
@@ -110,7 +176,8 @@ class MediaFileControllerTest {
                 .thenReturn(Optional.of(sampleMedia));
 
         mockMvc.perform(get("/api/v1/files/media/messages/attachments/test.pdf"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "private, no-store, must-revalidate"));
     }
 
     @Test

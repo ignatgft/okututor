@@ -18,4 +18,11 @@ public interface SupportTicketMessageRepository extends JpaRepository<SupportTic
             countQuery = "select count(m) from SupportTicketMessage m where m.ticket.number = :ticketNumber")
     Page<SupportTicketMessage> findByTicketNumberOrderByCreatedAtAsc(@Param("ticketNumber") Long ticketNumber,
                                                                      Pageable pageable);
+
+    @Query("""
+            select count(m) > 0 from SupportTicketMessage m
+            where (m.attachment.media.id = :mediaId or (m.attachment.thumbnail is not null and m.attachment.thumbnail.id = :mediaId))
+            and (m.ticket.author.id = :userId or (m.ticket.assignedAdmin is not null and m.ticket.assignedAdmin.id = :userId))
+            """)
+    boolean isAuthorizedTicketParticipant(@Param("mediaId") UUID mediaId, @Param("userId") UUID userId);
 }

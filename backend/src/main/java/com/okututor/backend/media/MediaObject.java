@@ -76,6 +76,7 @@ public class MediaObject {
     }
 
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
     public UUID getCourseId() { return courseId; }
