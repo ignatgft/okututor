@@ -2,13 +2,15 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend.yml'
   pull_request:
-    branches: [main, master]
+    branches: [main, master, develop]
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
