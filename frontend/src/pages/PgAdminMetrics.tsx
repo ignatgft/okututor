@@ -72,14 +72,12 @@ export default function PgAdminMetrics() {
   }, [loadSys]);
 
   const cards: { key: string; label: string; value: number; icon: string }[] = [
-    { key: "total_users", label: t("admin.users", "Users"), value: num(overview["total_users"] ?? overview["totalUsers"]), icon: "👥" },
-    // Бэкенд metricsOverview отдаёт total_tutors = только PUBLISHED, а дашборд показывает pending.
-    // Для консистентности "Заявки репетиторов" = очередь модерации (pending), с фолбэками на total.
-    { key: "total_tutors", label: t("admin.tutor_applications", "Резюме"), value: num(overview["pending_tutor_profiles"] ?? overview["pendingTutors"] ?? overview["total_tutor_profiles"] ?? overview["total_tutors"] ?? overview["totalTutors"] ?? overview["total_resumes"] ?? overview["totalResumes"]), icon: "🧑‍🏫" },
-    { key: "total_requests", label: t("navigation.requests", "Обращения"), value: num(overview["total_tutor_requests"] ?? overview["total_requests"] ?? overview["totalRequests"] ?? overview["total_bookings"] ?? overview["totalBookings"]), icon: "📨" },
-    { key: "active_users", label: t("admin.metrics.active_users", "Active (24h)"), value: num(overview["active_tutor_profiles"] ?? overview["active_users"] ?? overview["activeUsers"] ?? overview["new_in_period"]), icon: "🟢" },
-    { key: "total_reviews", label: t("course.reviews", "Reviews"), value: num(overview["total_reviews"] ?? overview["totalReviews"]), icon: "⭐" },
-    { key: "revenue_total", label: t("admin.metrics.revenue", "Revenue"), value: num(overview["revenue_total"] ?? overview["revenueTotal"]), icon: "💰" },
+    { key: "total_users", label: t("admin.users", "Пользователи"), value: num(overview["total_users"] ?? overview["totalUsers"]), icon: "👥" },
+    { key: "published_tutors", label: t("admin.published_resumes", "Опубликовано анкет"), value: num(overview["published_tutor_profiles"] ?? overview["total_tutors"] ?? overview["totalTutors"]), icon: "🧑‍🏫" },
+    { key: "pending_tutors", label: t("admin.pending_resumes", "Очередь модерации"), value: num(overview["pending_tutor_profiles"] ?? overview["pendingTutors"]), icon: "⏳" },
+    { key: "active_tutors", label: t("admin.active_resumes", "Активные анкеты"), value: num(overview["active_tutor_profiles"]), icon: "🟢" },
+    { key: "expiring_soon", label: t("admin.expiring_resumes", "Истекают скоро (7 дн)"), value: num(overview["expiring_soon_tutor_profiles"]), icon: "⚠️" },
+    { key: "total_requests", label: t("navigation.requests", "Обращения"), value: num(overview["total_tutor_requests"] ?? overview["total_requests"] ?? overview["totalRequests"]), icon: "📨" },
   ];
 
   const fmtBytes = (v: unknown) => {
