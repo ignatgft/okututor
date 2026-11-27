@@ -50,21 +50,30 @@ public class SupportTicketUserService {
         if (subject == null || subject.isBlank()) {
             throw new FieldValidationException(Map.of("subject", "Subject is required"));
         }
+        if (subject.length() > 250) {
+            throw new FieldValidationException(Map.of("subject", "Subject must not exceed 250 characters"));
+        }
         if (description == null || description.isBlank()) {
             throw new FieldValidationException(Map.of("description", "Description is required"));
         }
+        if (description.length() > 10000) {
+            throw new FieldValidationException(Map.of("description", "Description must not exceed 10000 characters"));
+        }
+
+        String cleanSubject = org.jsoup.Jsoup.clean(subject.trim(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
+        String cleanDescription = org.jsoup.Jsoup.clean(description.trim(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
 
         SupportTicket ticket = new SupportTicket();
         ticket.setNumber(ticketRepository.nextNumber());
         ticket.setAuthor(author);
         ticket.setCategory(SupportTicket.Category.valueOf(category));
         ticket.setPriority(priority == null ? SupportTicket.Priority.NORMAL : SupportTicketCore.parsePriority(priority));
-        ticket.setSubject(subject.trim());
-        ticket.setDescription(description.trim());
-        ticket.setLastMessagePreview(SupportTicketCore.preview(description));
+        ticket.setSubject(cleanSubject);
+        ticket.setDescription(cleanDescription);
+        ticket.setLastMessagePreview(SupportTicketCore.preview(cleanDescription));
         ticket = ticketRepository.save(ticket);
 
-        core.postMessage(ticket, author, description, false);
+        core.postMessage(ticket, author, cleanDescription, false);
         return SupportService.toResponse(ticketRepository.save(ticket), false);
     }
 

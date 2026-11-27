@@ -1,6 +1,9 @@
 package com.okututor.backend.user;
 
+import com.okututor.backend.auth.RefreshTokenService;
 import com.okututor.backend.common.error.ApiException;
+import com.okututor.backend.security.JwtAuthenticationFilter;
+import com.okututor.backend.tutor.TutorProfileRepository;
 import com.okututor.backend.user.dto.PublicUserResponse;
 import com.okututor.backend.user.dto.UpdateProfileRequest;
 import com.okututor.backend.user.dto.UserResponse;
@@ -15,10 +18,44 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final TutorProfileRepository tutorProfileRepository;
+    private final RefreshTokenService refreshTokenService;
+    private final JwtAuthenticationFilter jwtAuthFilter;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository,
+                       UserMapper userMapper,
+                       TutorProfileRepository tutorProfileRepository,
+                       RefreshTokenService refreshTokenService,
+                       JwtAuthenticationFilter jwtAuthFilter) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.tutorProfileRepository = tutorProfileRepository;
+        this.refreshTokenService = refreshTokenService;
+        this.jwtAuthFilter = jwtAuthFilter;
+    }
+
+    @Transactional
+    public void deleteAccount(User user) {
+        if (user == null) return;
+        // 1. Archive tutor profile if exists
+        tutorProfileRepository.findByUserId(user.getId()).ifPresent(profile -> {
+            profile.archive();
+            tutorProfileRepository.save(profile);
+        });
+        // 2. Revoke all refresh tokens & auth cache
+        refreshTokenService.revokeAllForUser(user.getId());
+        jwtAuthFilter.invalidate(user.getId());
+        // 3. Anonymize user PII (Право на удаление персональных данных / GDPR)
+        user.setFirstName("Удаленный");
+        user.setLastName("Пользователь");
+        user.setBio(null);
+        user.setPhone(null);
+        user.setLocation(null);
+        user.setAvatarUrl(null);
+        user.setPasswordHash(null);
+        user.setBlocked(true);
+        user.setEmail("deleted_" + user.getId() + "@okututor.local");
+        userRepository.save(user);
     }
 
     @Transactional(readOnly = true)

@@ -102,7 +102,9 @@ public class RefreshTokenService {
         next.setExpiresAt(now.plus(Duration.ofDays(properties.getJwt().getRefreshTtlDays())));
         applySession(next, session);
         repository.save(next);
-        stored.setRotatedAt(now);
+        if (stored.getRotatedAt() == null) {
+            stored.setRotatedAt(now);
+        }
         repository.save(stored);
         return new RotationResult(freshRaw, user);
     }

@@ -60,4 +60,24 @@ class ReviewServiceTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.create(student, courseId, 5, "Great!"))
                 .isInstanceOf(com.okututor.backend.common.error.ApiException.class);
     }
+
+    @Test
+    void create_rejectsOversizedComment() {
+        String longComment = "a".repeat(2001);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.create(student, courseId, 5, longComment))
+                .isInstanceOf(com.okututor.backend.common.error.FieldValidationException.class)
+                .satisfies(ex -> {
+                    com.okututor.backend.common.error.FieldValidationException fve = (com.okututor.backend.common.error.FieldValidationException) ex;
+                    assertThat(fve.getFieldErrors()).containsKey("comment");
+                });
+    }
+
+    @Test
+    void create_sanitizesHtmlInComment() {
+        when(reviewRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        String rawComment = "Great tutor! <script>alert('xss')</script><b>Bold</b>";
+        ReviewService.ReviewResponse res = service.create(student, courseId, 5, rawComment);
+        assertThat(res.comment()).doesNotContain("<script>");
+        assertThat(res.comment()).contains("Great tutor!");
+    }
 }

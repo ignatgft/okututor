@@ -40,6 +40,10 @@ public class SupportTicketCore {
         if (text.isEmpty() && attachment == null) {
             throw new FieldValidationException(Map.of("body", "Message must not be empty"));
         }
+        if (text.length() > 5000) {
+            throw new FieldValidationException(Map.of("body", "Message must not exceed 5000 characters"));
+        }
+        text = org.jsoup.Jsoup.clean(text, "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
         SupportTicketMessage message = new SupportTicketMessage();
         message.setTicket(ticket);
         message.setSender(sender);
