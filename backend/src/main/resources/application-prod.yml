@@ -17,6 +17,9 @@ spring:
       validation-timeout: 1000
 
 app:
+  api-docs-enabled: ${APP_API_DOCS_ENABLED:false}
+  telegram:
+    alert-secret: ${TG_ALERT_SECRET:}
   jwt:
     # пустой дефолт обязателен: иначе неразрешённый плейсхолдер свяжется как
     # литерал "${JWT_SECRET}"; отсутствие значения ловит ProdEnvValidator

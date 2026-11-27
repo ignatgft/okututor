@@ -27,9 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MediaFileController {
 
     private final ObjectStorage storage;
+    private final MediaObjectRepository mediaObjectRepository;
 
-    public MediaFileController(ObjectStorage storage) {
+    public MediaFileController(ObjectStorage storage, MediaObjectRepository mediaObjectRepository) {
         this.storage = storage;
+        this.mediaObjectRepository = mediaObjectRepository;
     }
 
     @GetMapping("/api/v1/files/media/{*key}")
@@ -40,12 +42,26 @@ public class MediaFileController {
         if (lower.contains("..") || normalized.contains("//") || normalized.contains("\\") || lower.contains("%2e")) {
             throw ApiException.notFound("File not found");
         }
-        // Private objects (chat attachments, support) require authentication
+        // Private objects (chat attachments, support) require authentication and ownership/admin authorization
         if (isPrivateKey(normalized)) {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             boolean authed = auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken);
             if (!authed) {
                 throw ApiException.unauthorized("Authentication required for this file");
+            }
+            boolean isAdmin = auth.getAuthorities().stream().anyMatch(a ->
+                    "ROLE_ADMIN".equals(a.getAuthority()) || "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+            if (!isAdmin) {
+                if (!(auth.getPrincipal() instanceof com.okututor.backend.security.UserPrincipal principal)) {
+                    throw ApiException.unauthorized("Authentication required for this file");
+                }
+                var mediaOpt = mediaObjectRepository.findByObjectKey(normalized);
+                if (mediaOpt.isEmpty() || mediaOpt.get().getOwner() == null) {
+                    throw ApiException.forbidden("You do not have permission to access this file");
+                }
+                if (!mediaOpt.get().getOwner().getId().equals(principal.id())) {
+                    throw ApiException.forbidden("You do not have permission to access this file");
+                }
             }
         }
         // ETag handling (immutable objects — key contains UUID)

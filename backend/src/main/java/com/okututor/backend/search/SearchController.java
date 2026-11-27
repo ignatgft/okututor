@@ -18,11 +18,14 @@ public class SearchController {
 
     private final TutorSearchService tutorSearchService;
     private final com.okututor.backend.common.ratelimit.RateLimitService rateLimitService;
+    private final com.okututor.backend.common.web.ClientIpResolver clientIpResolver;
 
     public SearchController(TutorSearchService tutorSearchService,
-                            com.okututor.backend.common.ratelimit.RateLimitService rateLimitService) {
+                            com.okututor.backend.common.ratelimit.RateLimitService rateLimitService,
+                            com.okututor.backend.common.web.ClientIpResolver clientIpResolver) {
         this.tutorSearchService = tutorSearchService;
         this.rateLimitService = rateLimitService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @GetMapping("/tutors")
@@ -50,7 +53,8 @@ public class SearchController {
         BigDecimal pt = maxPrice != null ? maxPrice : priceTo;
         if (rateLimitService != null) {
             try {
-                String ip = request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For").split(",")[0].trim() : request.getRemoteAddr();
+                String ip = clientIpResolver != null ? clientIpResolver.resolve(request) :
+                        (request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For").split(",")[0].trim() : request.getRemoteAddr());
                 rateLimitService.checkSearch(ip);
             } catch (Exception ignored) {}
         }

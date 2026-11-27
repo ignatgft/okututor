@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MediaObjectRepository extends JpaRepository<MediaObject, UUID> {
 
+    Optional<MediaObject> findByObjectKey(String objectKey);
+
     Optional<MediaObject> findFirstByKindAndOwner_IdOrderByCreatedAtDesc(MediaKind kind, UUID ownerId);
 
     Optional<MediaObject> findFirstByKindAndCourseIdOrderByCreatedAtDesc(MediaKind kind, UUID courseId);
