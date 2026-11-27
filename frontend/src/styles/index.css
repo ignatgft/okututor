@@ -1,5 +1,6 @@
 /* Global Styles — Okututor Calm Academic Theme */
 @import './tokens.css';
+@import './variant-c.css';
 @import './responsive.css';
 
 /* ===== RESET & BASE ===== */

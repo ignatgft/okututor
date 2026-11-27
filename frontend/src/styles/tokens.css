@@ -1,100 +1,84 @@
-/* Okututor — Calm Academic Theme Tokens (from Figma)
-   Blue accent palette with generous whitespace
-   Light & Dark themes
-   Mobile-first responsive breakpoints:
-     base:   0–639px
-     sm:     ≥640px
-     md:     ≥768px
-     lg:     ≥1024px
-     xl:     ≥1280px
-     2xl:    ≥1536px
-*/
-
+/* OkuTutor — финальная палитра (Вариант C, Playful). Светлая по умолчанию, тёмная через data-theme="dark". */
 :root {
-  /* ===== LIGHT THEME (Default) ===== */
-
-  /* PRIMARY COLORS - Blue accent */
-  --color-primary: #3563E9;
-  --color-primary-hover: #1A3BC7;
-  --color-primary-light: #EDF2FF;
-  --color-primary-lighter: #F5F8FF;
-
-  /* SECONDARY COLORS */
-  --color-secondary: #667085;
-  --color-secondary-light: #F5F7FA;
-
-  /* TEXT COLORS */
-  --color-text-dark: #101727;
-  --color-text: #101727;
-  --color-text-primary: #101727;
-  --color-text-secondary: #475367;
-  --color-text-tertiary: #667085;
-  --color-text-muted: #98A6BE;
-
-  /* BACKGROUND COLORS */
-  --color-bg: #FFFFFF;
-  --color-bg-light: #F7F9FC;
-  --color-bg-lighter: #F8FAFB;
-  --color-bg-secondary: #F2F4F7;
-  --color-bg-tertiary: #E5E9F0;
-  --color-background: #F7F9FC;
-
-  /* SURFACE & CARDS */
-  --color-surface: #FFFFFF;
-  --color-surface-hover: #F8FAFB;
-  --color-surface-active: #F2F4F7;
-  --color-surface-alt: #F8FAFB;
-  --color-bg-elevated: #FFFFFF;
-
-  /* BORDERS */
-  --color-border: #E5E9F0;
-  --color-border-light: #F0F2F5;
-  --color-border-strong: #D0D4D8;
-
-  /* STATUS COLORS */
-  --color-success: #12B76A;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-info: #3563E9;
-
-  /* STATUS SOFT VARIANTS (badges, light backgrounds) */
-  --color-success-soft: #F0FDF4;
-  --color-warning-soft: #FEF3C7;
-  --color-danger-soft: #FEE2E2;
-  --color-info-soft: #EFF6FF;
-
-  /* ACCENT / SEMANTIC */
-  --color-accent: #3563E9;
-  --color-primary-soft: #EDF2FF;
-  --color-primary-foreground: #FFFFFF;
-
-  /* KIT DESIGN TOKEN ALIASES (LIGHT) */
-  --bg-base: #F6F7FB;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #FFFFFF;
-  --border: #E5E9F0;
-  --text-primary: #101727;
-  --text-secondary: #475367;
-  --text-muted: #98A6BE;
-  --accent: #3563E9;
-  --accent-hover: #1A3BC7;
-  --accent-subtle: #EDF2FF;
-  --accent-icon: #3563E9;
-
-  /* SPECIAL */
-  --color-overlay: rgba(16, 23, 39, 0.5);
-  --color-disabled: #D0D4D8;
-
-  /* ===== TYPOGRAPHY ===== */
-  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* ===== FONTS (Nunito - Вариант C) ===== */
+  --font-sans: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-family: var(--font-sans);
+  --font-family-base: var(--font-sans);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
 
-  /* FONT SIZES (rem for accessibility scaling) */
+  /* ===== VARIANT C TOKENS (LIGHT) ===== */
+  --bg-base: #F3EFFF;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --border: #E4DCFA;
+  --text-primary: #24184A;
+  --text-secondary: #5B5279;
+  --text-muted: #6E6690;        /* 5.3:1 на белом */
+  --accent-solid: #6C4BF4;      /* фон кнопок, белый текст 5.3:1 */
+  --on-accent: #FFFFFF;
+  --accent-hover: #5A3BE0;
+  --accent: #6C4BF4;            /* ссылки и текст-акцент 5.3:1 */
+  --accent-subtle: #EEE9FF;
+  --accent-icon: #6C4BF4;
+  --coral: #FF7A59;             /* декоративный: точка логотипа */
+  --success: #1FA971;
+  --warning: #E0A100;
+  --error: #D64545;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --shadow-card: 0 6px 18px -10px rgba(36,24,74,.25);
+  --shadow-float: 0 20px 50px -20px rgba(108,75,244,.35);
+  color-scheme: light;
+
+  /* ===== SEMANTIC BRIDGES FOR COMPATIBILITY ===== */
+  --color-primary: #6C4BF4;
+  --color-primary-hover: #5A3BE0;
+  --color-primary-light: #EEE9FF;
+  --color-primary-lighter: #F7F5FF;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #5B5279;
+  --color-secondary-light: #F7F5FF;
+  --color-text-dark: #24184A;
+  --color-text: #24184A;
+  --color-text-primary: #24184A;
+  --color-text-secondary: #5B5279;
+  --color-text-tertiary: #6E6690;
+  --color-text-muted: #6E6690;
+  --color-bg: #F3EFFF;
+  --color-bg-light: #F7F5FF;
+  --color-bg-lighter: #FFFFFF;
+  --color-bg-secondary: #EEE9FF;
+  --color-bg-tertiary: #E4DCFA;
+  --color-background: #F3EFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F7F5FF;
+  --color-surface-active: #EEE9FF;
+  --color-surface-alt: #F7F5FF;
+  --color-bg-elevated: #FFFFFF;
+  --color-border: #E4DCFA;
+  --color-border-light: #F0EBFD;
+  --color-border-strong: #D5C8F7;
+  --color-accent: #6C4BF4;
+  --color-primary-soft: #EEE9FF;
+  --color-success: #1FA971;
+  --color-warning: #E0A100;
+  --color-danger: #D64545;
+  --color-info: #6C4BF4;
+  --color-success-soft: #E2F7EE;
+  --color-warning-soft: #FFF4D6;
+  --color-danger-soft: #FFE9E2;
+  --color-info-soft: #EEE9FF;
+  --color-overlay: rgba(36, 24, 74, 0.5);
+  --color-disabled: #D5C8F7;
+
+  /* ===== FONT SIZES (clamp & fluid) ===== */
   --font-size-xs: 0.6875rem;
   --font-size-sm: 0.8125rem;
   --font-size-base: 0.875rem;
@@ -106,15 +90,13 @@
   --font-size-4xl: 1.875rem;
   --font-size-5xl: 2.25rem;
   --font-size-hero: 3.5rem;
-
-  /* FLUID SIZES */
-  --font-size-hero-fluid: clamp(1.625rem, 1.1rem + 2.5vw, 3.25rem);
+  --font-size-hero-fluid: clamp(2.2rem, 5.5vw, 3.8rem);
   --font-size-5xl-fluid: clamp(1.75rem, 1.15rem + 2.4vw, 2.25rem);
   --font-size-4xl-fluid: clamp(1.5rem, 1.05rem + 1.8vw, 1.875rem);
   --font-size-3xl-fluid: clamp(1.35rem, 1rem + 1.4vw, 1.75rem);
   --font-size-2xl-fluid: clamp(1.25rem, 1.05rem + 0.8vw, 1.5rem);
 
-  /* Aliases for backward compat */
+  /* Aliases */
   --text-xs: var(--font-size-xs);
   --text-sm: var(--font-size-sm);
   --text-base: var(--font-size-base);
@@ -128,7 +110,7 @@
   /* LINE HEIGHTS */
   --line-height-tight: 1.2;
   --line-height-snug: 1.3;
-  --line-height-normal: 1.5;
+  --line-height-normal: 1.55;
   --line-height-relaxed: 1.6;
 
   /* SPACING (4px base grid) */
@@ -148,39 +130,38 @@
   --space-16: 4rem;
   --space-20: 5rem;
 
-  /* ===== BORDER RADIUS ===== */
+  /* RADIUS SCALE */
   --radius-none: 0;
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-2xl: 24px;
-  --radius-3xl: 28px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 28px;
+  --radius-3xl: 32px;
   --radius-full: 9999px;
 
-  /* ===== SHADOWS ===== */
-  --shadow-xs: 0 1px 2px rgba(16, 23, 39, 0.05);
-  --shadow-sm: 0 1px 3px rgba(16, 23, 39, 0.06), 0 1px 2px rgba(16, 23, 39, 0.04);
-  --shadow-md: 0 4px 8px -2px rgba(16, 23, 39, 0.06), 0 2px 4px -2px rgba(16, 23, 39, 0.04);
-  --shadow-lg: 0 12px 16px -4px rgba(16, 23, 39, 0.08), 0 4px 6px -2px rgba(16, 23, 39, 0.03);
-  --shadow-xl: 0 20px 24px -4px rgba(16, 23, 39, 0.08), 0 8px 8px -4px rgba(16, 23, 39, 0.03);
-  --shadow-2xl: 0 24px 48px -12px rgba(16, 23, 39, 0.18);
+  /* SHADOWS */
+  --shadow-xs: 0 1px 2px rgba(36, 24, 74, 0.05);
+  --shadow-sm: 0 2px 6px -1px rgba(36, 24, 74, 0.08);
+  --shadow-md: 0 6px 18px -10px rgba(36, 24, 74, 0.25);
+  --shadow-lg: 0 12px 28px -10px rgba(108, 75, 244, 0.25);
+  --shadow-xl: 0 20px 50px -20px rgba(108, 75, 244, 0.35);
+  --shadow-2xl: 0 24px 60px -15px rgba(108, 75, 244, 0.45);
 
-  /* ===== LAYOUT ===== */
+  /* LAYOUT */
   --sidebar-width: 260px;
   --sidebar-width-collapsed: 72px;
-  --header-height: 64px;
-  --header-height-tablet: 56px;
+  --header-height: 68px;
+  --header-height-tablet: 68px;
   --bottom-nav-height: 64px;
-  --container-max: 1440px;
+  --container-max: 1120px;
 
-  /* Responsive tokens (mobile-first, overridden at breakpoints below) */
   --page-padding: 16px;
   --section-gap: 32px;
-  --card-padding: 20px;
+  --card-padding: 24px;
 
-  /* ===== Z-INDEX SCALE (single source of truth) ===== */
+  /* Z-INDEX SCALE */
   --z-base: 0;
   --z-header: 100;
   --z-sidebar: 200;
@@ -188,29 +169,18 @@
   --z-overlay: 400;
   --z-modal: 500;
   --z-toast: 600;
-
-  /* Legacy aliases */
   --z-sticky: var(--z-header);
 
-  /* ===== TRANSITIONS — сдержанно красиво (ease-out) ===== */
+  /* TRANSITIONS */
   --transition-fast: 160ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: 220ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-slow: 300ms cubic-bezier(0.22, 1, 0.36, 1);
-  --transition-slower: 400ms cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* ===== TOUCH & SAFE AREA (mobile-first) ===== */
+  /* TOUCH & SAFE AREA */
   --touch-target: 44px;
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* ===== RESPONSIVE TOKEN OVERRIDES (mobile-first) ===== */
-@media (max-width: 480px) {
-  :root {
-    --page-padding: 12px;
-  }
 }
 
 @media (min-width: 768px) {
@@ -228,85 +198,84 @@
   }
 }
 
-/* ===== DARK THEME (Apple Space Gray / Dark Charcoal) ===== */
+/* ===== DARK THEME (Playful Deep Violet-Blue + Aurora) ===== */
 [data-theme="dark"] {
-  /* PRIMARY COLORS - Blue accent */
-  --color-primary: #3B82F6;
-  --color-primary-hover: #2563EB;
-  --color-primary-light: #1E3A8A;
-  --color-primary-lighter: #172554;
+  --bg-base: #17132B;           /* фон + aurora-градиенты в CSS */
+  --bg-surface: #221C3B;
+  --bg-elevated: #2B2448;
+  --border: #3A3163;
+  --text-primary: #F2EFFF;
+  --text-secondary: #BDB5DA;
+  --text-muted: #8D85B0;        /* 4.9:1 на surface */
+  --accent-solid: #7457F5;      /* белый текст 4.75:1 */
+  --on-accent: #FFFFFF;
+  --accent-hover: #8A6DFF;
+  --accent: #B7A6FF;            /* 7.9:1 на surface */
+  --accent-subtle: #2F2757;
+  --accent-icon: #B7A6FF;
+  --coral: #FF7A59;
+  --success: #6FDBA9;
+  --warning: #F5C84C;
+  --error: #FF8A80;
+  --shadow-card: 0 8px 22px -12px rgba(0,0,0,.6);
+  --shadow-float: 0 20px 50px -20px rgba(0,0,0,.6);
+  color-scheme: dark;
 
-  /* SECONDARY COLORS */
-  --color-secondary: #8E8E93;
-  --color-secondary-light: #2C2C2E;
-
-  /* TEXT COLORS */
-  --color-text-dark: #FFFFFF;
-  --color-text: #FFFFFF;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A1A1AA;
-  --color-text-tertiary: #8E8E93;
-  --color-text-muted: #636366;
-
-  /* BACKGROUND COLORS - Apple Space Gray (#1C1C1E / #202023) */
-  --color-bg: #1C1C1E;
-  --color-bg-light: #202023;
-  --color-bg-lighter: #2C2C2E;
-  --color-bg-secondary: #202023;
-  --color-bg-tertiary: #2C2C2E;
-  --color-background: #1C1C1E;
-
-  /* SURFACE & CARDS - Apple Secondary System Background (#242426 / #2C2C2E) */
-  --color-surface: #242426;
-  --color-surface-hover: #2C2C2E;
-  --color-surface-active: #3A3A3C;
-  --color-surface-alt: #202023;
-  --color-bg-elevated: #2C2C2E;
-
-  /* BORDERS - Apple Space Gray borders */
-  --color-border: #2C2C2E;
-  --color-border-light: #3A3A3C;
-  --color-border-strong: #48484A;
-
-  /* STATUS COLORS */
-  --color-success: #22C55E;
-  --color-warning: #EAB308;
-  --color-danger: #EF4444;
-  --color-info: #38BDF8;
-
-  /* STATUS SOFT VARIANTS (for error states, badges, etc.) */
-  --color-success-soft: #14532d;
-  --color-warning-soft: #713f12;
-  --color-danger-soft: #7f1d1d;
-  --color-info-soft: #1e3a5f;
-
-  /* ACCENT / SEMANTIC */
-  --color-accent: #3B82F6;
-  --color-primary-soft: #1E3A8A;
+  /* Semantic bridges (dark) */
+  --color-primary: #7457F5;
+  --color-primary-hover: #8A6DFF;
+  --color-primary-light: #2F2757;
+  --color-primary-lighter: #221C3B;
   --color-primary-foreground: #FFFFFF;
+  --color-secondary: #BDB5DA;
+  --color-secondary-light: #2B2448;
+  --color-text-dark: #FFFFFF;
+  --color-text: #F2EFFF;
+  --color-text-primary: #F2EFFF;
+  --color-text-secondary: #BDB5DA;
+  --color-text-tertiary: #8D85B0;
+  --color-text-muted: #8D85B0;
+  --color-bg: #17132B;
+  --color-bg-light: #221C3B;
+  --color-bg-lighter: #2B2448;
+  --color-bg-secondary: #221C3B;
+  --color-bg-tertiary: #3A3163;
+  --color-background: #17132B;
+  --color-surface: #221C3B;
+  --color-surface-hover: #2B2448;
+  --color-surface-active: #3A3163;
+  --color-surface-alt: #221C3B;
+  --color-bg-elevated: #2B2448;
+  --color-border: #3A3163;
+  --color-border-light: #4A3F7A;
+  --color-border-strong: #594D91;
+  --color-accent: #B7A6FF;
+  --color-primary-soft: #2F2757;
+  --color-success: #6FDBA9;
+  --color-warning: #F5C84C;
+  --color-danger: #FF8A80;
+  --color-info: #B7A6FF;
+  --color-success-soft: #183A33;
+  --color-warning-soft: #3A3217;
+  --color-danger-soft: #3A2440;
+  --color-info-soft: #2F2757;
+  --color-overlay: rgba(10, 8, 20, 0.75);
+  --color-disabled: #4A3F7A;
 
-  /* KIT DESIGN TOKEN ALIASES (DARK - Apple Space Gray) */
-  --bg-base: #1C1C1E;
-  --bg-surface: #242426;
-  --bg-elevated: #2C2C2E;
-  --border: #2C2C2E;
-  --text-primary: #FFFFFF;
-  --text-secondary: #A1A1AA;
-  --text-muted: #636366;
-  --accent: #3B82F6;
-  --accent-hover: #2563EB;
-  --accent-subtle: #1E3A8A;
-  --accent-icon: #8FB0FF;
-
-  /* SPECIAL */
-  --color-overlay: rgba(28, 28, 30, 0.75);
-  --color-disabled: #3A3A3C;
-
-  /* SHADOWS - Apple Dark Depth */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 16px rgba(0, 0, 0, 0.6);
-  --shadow-xl: 0 20px 24px rgba(0, 0, 0, 0.6);
-  --shadow-2xl: 0 24px 48px rgba(0, 0, 0, 0.7);
+  --shadow-sm: 0 2px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 22px -12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 14px 30px -12px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+  --shadow-2xl: 0 28px 65px -15px rgba(0, 0, 0, 0.9);
+}
+
+/* Aurora light spots on dark theme body (fixed, no animation) */
+[data-theme="dark"] body {
+  background-color: #17132B;
+  background-image:
+    radial-gradient(900px 500px at 15% -10%, rgba(116,87,245,.45), transparent 60%),
+    radial-gradient(700px 480px at 95% 5%, rgba(255,122,89,.22), transparent 60%),
+    radial-gradient(800px 600px at 50% 110%, rgba(46,196,182,.18), transparent 60%);
+  background-attachment: fixed;
 }

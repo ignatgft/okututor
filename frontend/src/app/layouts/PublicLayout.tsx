@@ -1,7 +1,7 @@
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
 import useAuthStore from "../../store/authStore";
+import { useUIStore } from "../../store/uiStore";
 import { getDashboardPath } from "../../config/navigation";
 import Footer from "../../components/HomeSection/Footer";
 import ThemeSwitch from "../../components/ui/ThemeSwitch";
@@ -9,68 +9,102 @@ import ThemeSwitch from "../../components/ui/ThemeSwitch";
 export default function PublicLayout(): JSX.Element {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuthStore();
+  const openAuth = useUIStore((s) => s.openAuth);
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  const isTutorsActive = location.pathname === "/" || location.pathname.startsWith("/tutors");
+
+  const handleLoginClick = () => {
+    openAuth();
+  };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--color-background, #f8fafc)" }}>
-      <header style={{ position: "sticky", top: 0, zIndex: 40, background: "var(--color-surface, #fff)", borderBottom: "1px solid var(--color-border, #e5e7eb)" }}>
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <Link to="/" style={{ fontWeight: 800, fontSize: 20, color: "var(--color-text)", textDecoration: "none" }}>OkuTutor</Link>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg-base)" }}>
+      <div className="wrap">
+        <header className="top">
+          <Link to="/" className="wordmark" aria-label="OkuTutor Главная">
+            OkuTutor
+          </Link>
 
-          {/* Desktop Navigation */}
-          <nav style={{ display: "flex", gap: 16, alignItems: "center" }} className="public-nav-desktop">
-            <Link to="/tutors" style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.find_tutor", "Найти репетитора")}</Link>
-            <Link to="/become-tutor" style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.for_tutors", "Разместить резюме")}</Link>
-            <ThemeSwitch />
-            {!isAuthenticated ? (
-              <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600, cursor: "pointer" }}>{t("navbar.login", "Войти")}</button>
-            ) : (
-              <button onClick={() => navigate(getDashboardPath(user?.role))} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 9999, border: "1px solid var(--color-border)", background: "var(--color-surface)", cursor: "pointer" }}>
-                {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{user?.full_name?.[0] ?? "U"}</span>}
-                <span style={{ fontWeight: 600, fontSize: 14 }}>{t("navbar.dashboard", "Моё приложение")}</span>
-              </button>
-            )}
+          {/* Desktop Navigation (>=900px) */}
+          <nav className="top-nav" aria-label="Основная навигация">
+            <Link to="/tutors" className={isTutorsActive ? "on" : ""}>
+              {t("navbar.find_tutor", "Найти репетитора")}
+            </Link>
+            <Link to="/become-tutor">
+              {t("navbar.for_tutors", "Для преподавателей")}
+            </Link>
           </nav>
 
-          {/* Mobile Right Controls: Theme switch + Hamburger */}
-          <div className="public-mobile-actions" style={{ display: "none", alignItems: "center", gap: 8 }}>
+          {/* Header Actions */}
+          <div className="top-actions">
             <ThemeSwitch />
-            <button className="public-mobile-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-label="menu" style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-              <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
-              <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
-              <span style={{ display: "block", width: 22, height: 2, background: "var(--color-text)", margin: "4px 0" }} />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Dropdown Menu */}
-        {mobileOpen && (
-          <div style={{ padding: "12px 16px", borderTop: "1px solid var(--color-border)", display: "flex", flexDirection: "column", gap: 12, background: "var(--color-surface)" }}>
-            <Link to="/tutors" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.find_tutor", "Найти репетитора")}</Link>
-            <Link to="/become-tutor" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", color: "var(--color-text)", fontWeight: 500 }}>{t("navbar.for_tutors", "Разместить резюме")}</Link>
-            <div style={{ padding: "4px 0" }}>
-              <ThemeSwitch showLabel />
-            </div>
             {!isAuthenticated ? (
-              <button onClick={() => { setMobileOpen(false); navigate("/login"); }} style={{ padding: "10px 16px", borderRadius: 8, background: "var(--color-primary)", color: "#fff", border: "none", fontWeight: 600, width: "100%", textAlign: "center", cursor: "pointer" }}>
+              <button
+                type="button"
+                className="signin"
+                onClick={handleLoginClick}
+              >
                 {t("navbar.login", "Войти")}
               </button>
             ) : (
-              <button onClick={() => { setMobileOpen(false); navigate(getDashboardPath(user?.role)); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-surface)", width: "100%", cursor: "pointer" }}>
-                {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{user?.full_name?.[0] ?? "U"}</span>}
-                <span style={{ fontWeight: 600, fontSize: 14 }}>{t("navbar.dashboard", "Моё приложение")}</span>
+              <button
+                type="button"
+                onClick={() => navigate(getDashboardPath(user?.role))}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 14px",
+                  borderRadius: "var(--radius-full)",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-surface)",
+                  color: "var(--text-primary)",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
+                {user?.avatar ? (
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    src={user.avatar}
+                    alt=""
+                    style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      background: "var(--accent-subtle)",
+                      color: "var(--accent)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {user?.full_name?.[0] ?? "U"}
+                  </span>
+                )}
+                <span>{t("navbar.dashboard", "Кабинет")}</span>
               </button>
             )}
           </div>
-        )}
-      </header>
+        </header>
 
-      <main id="main-content" style={{ flex: 1, width: "100%", boxSizing: "border-box" }}>
-        <Outlet />
-      </main>
+        <main id="main-content" style={{ flex: 1, width: "100%", boxSizing: "border-box" }}>
+          <Outlet />
+        </main>
 
-      <Footer />
+        <Footer />
+      </div>
     </div>
   );
 }

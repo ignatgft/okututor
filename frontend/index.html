@@ -31,18 +31,25 @@
     <meta name="twitter:description" content="Образовательная платформа: репетиторы по математике, языкам и IT." />
     <meta name="twitter:image" content="https://okututor.com/og-cover.png" />
 
-    <!-- Fonts: preconnect + preload, trimmed to actually used weights -->
+    <!-- Fonts: Nunito (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
-    />
-    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap"
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
     />
+
+    <!-- Early theme init to prevent flash of wrong theme -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Optimization -->
     <link rel="dns-prefetch" href="https://api.okututor.local" />
