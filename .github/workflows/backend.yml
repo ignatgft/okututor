@@ -76,7 +76,15 @@ jobs:
           push: false
           tags: okututor-backend:ci
       - name: Trivy scan (fs)
-        run: docker run --rm -v ${{ github.workspace }}:/app aquasec/trivy:latest fs /app/backend --severity HIGH,CRITICAL --ignore-unfixed
+        run: |
+          if [ ! -d "${HOME}/.m2/repository" ] || [ -z "$(ls -A "${HOME}/.m2/repository")" ]; then
+            echo "Maven cache directory ${HOME}/.m2/repository is missing or empty" >&2
+            exit 1
+          fi
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -v "${HOME}/.m2:/root/.m2:ro" \
+            aquasec/trivy:latest fs /app/backend --severity HIGH,CRITICAL --ignore-unfixed
 
   deploy:
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
