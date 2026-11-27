@@ -73,4 +73,5 @@ jobs:
           command: pages deploy frontend/dist --project-name=okututor --branch=main
         continue-on-error: true
       - name: Purge Cloudflare cache
-        run: echo "Purge via Cloudflare API if needed — curl -X POST https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache -H 'Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}' -d '{\"purge_everything\":true}' || true"
+        run: |
+          echo "Purge via Cloudflare API if needed"
