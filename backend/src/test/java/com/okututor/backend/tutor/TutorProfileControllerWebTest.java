@@ -42,6 +42,7 @@ class TutorProfileControllerWebTest {
     @MockitoBean com.okututor.backend.media.MediaService mediaService;
     @MockitoBean com.okututor.backend.user.UserService userService;
     @MockitoBean com.okututor.backend.media.MediaObjectRepository mediaObjectRepository;
+    @MockitoBean com.okututor.backend.common.web.ClientIpResolver clientIpResolver;
 
     private TutorProfileResponse sample() {
         return new TutorProfileResponse(
