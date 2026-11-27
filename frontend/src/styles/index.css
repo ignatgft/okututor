@@ -1,5 +1,6 @@
 /* Global Styles — Okututor Calm Academic Theme */
 @import './tokens.css';
+@import './variant-c.css';
 @import './responsive.css';
 
 /* ===== RESET & BASE ===== */
@@ -788,6 +789,15 @@ input[type="checkbox"]:focus-visible {
   line-height: 1.5;
 }
 
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .empty-state-hint {
+  color: #a1a1aa;
+}
+
+[data-theme="dark"] .empty-state-icon {
+  opacity: 0.85;
+}
+
 .empty-state-action {
   margin-top: var(--space-4);
 }
@@ -1420,4 +1430,50 @@ button, a, input, textarea, select, [role="button"], label {
 .skip-link:focus {
   left: 0;
   top: 0;
+}
+
+/* ===== TUTOR RESUME CARD COMPONENT STYLES ===== */
+.tutor-resume-divider {
+  height: 1px;
+  background: var(--color-border, #e5e7eb);
+  margin: 0 16px;
+}
+@media (min-width: 768px) {
+  .tutor-resume-divider {
+    display: none !important;
+  }
+}
+.tutor-resume-details {
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 768px) {
+  .tutor-resume-details {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .tutor-resume-details > div {
+    border-right: 1px solid var(--color-border, #f3f4f6);
+  }
+  .tutor-resume-details > div:last-child {
+    border-right: none;
+  }
+}
+@media (max-width: 768px) {
+  .public-nav-desktop {
+    display: none !important;
+  }
+  .public-mobile-toggle {
+    display: block !important;
+  }
+  .public-mobile-actions {
+    display: flex !important;
+  }
+}
+@media (min-width: 769px) {
+  .public-mobile-toggle,
+  .public-mobile-actions {
+    display: none !important;
+  }
 }

@@ -14,7 +14,49 @@ import { tutorsApi } from "../api/tutors.api";
 import AvatarUploader from "./avatar/AvatarUploader";
 import { isStudent } from "../constants/roles";
 import { TUTOR_STATUS } from "../constants/enums";
+import { extractError, errorText } from "../utils/apiHelpers";
+import type { TutorApplicationDTO } from "../types/api";
 import "../styles/Profile.css";
+
+const str = (value: unknown): string => (typeof value === "string" ? value : "");
+const num = (value: unknown): number => (typeof value === "number" ? value : Number(value) || 0);
+
+interface ProfileFormState {
+  full_name: string;
+  email: string;
+  phone: string;
+  location: string;
+  bio: string;
+  telegram: string;
+  instagram: string;
+  whatsapp: string;
+  avatar: string;
+  experience_years: string | number;
+  education: string;
+  photoURL?: string;
+}
+
+interface SocialErrors {
+  telegram: string;
+  instagram: string;
+  whatsapp: string;
+}
+
+interface AppFormState {
+  full_name: string;
+  phone: string;
+  location: string;
+  experience_years: number;
+  experience_description: string;
+  education: string;
+  languages: string[];
+  subjects: string[];
+  bio: string;
+}
+
+type TutorAppView = Pick<TutorApplicationDTO, "status"> & Partial<TutorApplicationDTO>;
+type AppTextField = "full_name" | "phone" | "experience_years";
+type SocialField = "telegram" | "instagram" | "whatsapp";
 
 const Profile = () => {
   const { t } = useTranslation();
@@ -24,7 +66,7 @@ const Profile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProfileFormState>({
     full_name: "",
     email: "",
     phone: "",
@@ -37,12 +79,12 @@ const Profile = () => {
     experience_years: 0,
     education: "",
   });
-  const [errors, setErrors] = useState({ telegram: "", instagram: "", whatsapp: "" });
+  const [errors, setErrors] = useState<SocialErrors>({ telegram: "", instagram: "", whatsapp: "" });
 
-  const [tutorApp, setTutorApp] = useState(null);
+  const [tutorApp, setTutorApp] = useState<TutorAppView | null>(null);
   const [tutorAppLoading, setTutorAppLoading] = useState(false);
   const [tutorAppError, setTutorAppError] = useState("");
-  const [appForm, setAppForm] = useState({
+  const [appForm, setAppForm] = useState<AppFormState>({
     full_name: "",
     phone: "",
     location: "",
@@ -60,8 +102,9 @@ const Profile = () => {
 
   const isStudentRole = isStudent(user?.role);
 
-  const roleBadge = (role) => {
-    const map = {
+  const roleBadge = (role: string): { label: string; className: string } => {
+    const map: Record<string, { labelKey: string; className: string }> = {
+      USER: { labelKey: "admin.role_student", className: "badge-student" },
       STUDENT: { labelKey: "admin.role_student", className: "badge-student" },
       TUTOR: { labelKey: "admin.role_tutor", className: "badge-tutor" },
       ADMIN: { labelKey: "admin.role_admin", className: "badge-admin" },
@@ -70,8 +113,8 @@ const Profile = () => {
     return entry ? { label: t(entry.labelKey), className: entry.className } : { label: role, className: "" };
   };
 
-  const validateUrl = (url, fieldName) => {
-    if (!url) return "";
+  const validateUrl = (url: unknown, fieldName: string): string => {
+    if (typeof url !== "string" || !url) return "";
     try {
       const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
       if (!["http:", "https:"].includes(parsed.protocol)) return `${fieldName} link is invalid`;
@@ -81,8 +124,8 @@ const Profile = () => {
     return "";
   };
 
-  const sanitizeHref = (url) => {
-    if (!url) return "#";
+  const sanitizeHref = (url: unknown): string => {
+    if (typeof url !== "string" || !url) return "#";
     try {
       const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
       if (["http:", "https:"].includes(parsed.protocol)) return parsed.href;
@@ -100,22 +143,22 @@ const Profile = () => {
         setTutorApp(data);
         setAppForm((prev) => ({
           ...prev,
-          full_name: data.full_name || user?.full_name || "",
-          phone: data.phone || user?.phone || "",
-          location: data.location || "",
-          experience_years: data.experience_years || 0,
-          experience_description: data.experience_description || "",
-          education: data.education || "",
+          full_name: str(data.full_name || user?.full_name),
+          phone: str(data.phone || user?.phone),
+          location: str(data.location),
+          experience_years: num(data.experience_years),
+          experience_description: str(data.experience_description),
+          education: str(data.education),
           languages: (data.languages ? String(data.languages).split(",").filter(Boolean) : []),
-          subjects: (data.subjects ? String(data.subjects).split(",").filter(Boolean) : Array.isArray(data.subject_list) ? data.subject_list : []),
-          bio: data.bio || "",
+          subjects: (data.subjects ? String(data.subjects).split(",").filter(Boolean) : Array.isArray(data.subject_list) ? (data.subject_list as string[]) : []),
+          bio: str(data.bio),
         }));
       } else {
         setTutorApp(null);
-        setAppForm((prev) => ({ ...prev, full_name: prev.full_name || user?.full_name || "", phone: prev.phone || user?.phone || "" }));
+        setAppForm((prev) => ({ ...prev, full_name: prev.full_name || str(user?.full_name), phone: prev.phone || str(user?.phone) }));
       }
     } catch (e) {
-      setTutorAppError(e.message || t("errors.default", "Something went wrong"));
+      setTutorAppError(errorText(e) || t("errors.default", "Something went wrong"));
       setTutorApp(null);
     } finally {
       setTutorAppLoading(false);
@@ -127,19 +170,19 @@ const Profile = () => {
       navigate("/");
       return;
     }
-    const initialData = {
-      full_name: user.full_name || user.displayName || t("profile.not_provided"),
-      email: user.email || t("profile.not_provided"),
-      photoURL: user.avatar || user.photoURL || genericPlaceholder(150),
-      phone: user.phone || "",
-      location: user.location || t("profile.choose_location"),
-      bio: user.bio || "",
-      telegram: user.telegram || "",
-      instagram: user.instagram || "",
-      whatsapp: user.whatsapp || "",
-      avatar: user.avatar || "",
-      experience_years: user.experience_years || 0,
-      education: user.education || "",
+    const initialData: ProfileFormState = {
+      full_name: str(user.full_name || user.displayName) || t("profile.not_provided"),
+      email: str(user.email) || t("profile.not_provided"),
+      photoURL: str(user.avatar || user.photoURL) || genericPlaceholder(150),
+      phone: str(user.phone),
+      location: str(user.location) || t("profile.choose_location"),
+      bio: str(user.bio),
+      telegram: str(user.telegram),
+      instagram: str(user.instagram),
+      whatsapp: str(user.whatsapp),
+      avatar: str(user.avatar),
+      experience_years: num(user.experience_years),
+      education: str(user.education),
     };
     setFormData(initialData);
   }, [user, navigate, t]);
@@ -149,22 +192,23 @@ const Profile = () => {
     loadTutorApplication();
   }, [isStudentRole, loadTutorApplication]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value } as ProfileFormState));
     if (["telegram", "instagram", "whatsapp"].includes(name)) {
       const fieldName = name.charAt(0).toUpperCase() + name.slice(1);
-      setErrors((prev) => ({ ...prev, [name]: validateUrl(value, fieldName) }));
+      setErrors((prev) => ({ ...prev, [name]: validateUrl(value, fieldName) } as SocialErrors));
     }
   };
 
   const handleEditProfile = async () => {
+    if (!user) return;
     if (!isEditing) {
       setIsEditing(true);
       return;
     }
 
-    const validationErrors = {
+    const validationErrors: SocialErrors = {
       telegram: validateUrl(formData.telegram, "Telegram"),
       instagram: validateUrl(formData.instagram, "Instagram"),
       whatsapp: validateUrl(formData.whatsapp, "WhatsApp"),
@@ -177,42 +221,45 @@ const Profile = () => {
     try {
       const { response, data } = await apiClient.put(endpoints.users.update, formData);
       if (response.ok) {
-        const updated = { ...user, ...formData };
+        const updated = { ...user, ...formData, experience_years: num(formData.experience_years) };
         setUser(updated);
         setFormData((prev) => ({ ...prev, ...formData }));
         toast.success(t("profile.saved", "Profile updated"));
       } else {
-        toast.error(
-          (data && (data.message || data.error)) ||
-            t("errors.save_failed", "Failed to save. Please try again.")
-        );
+        toast.error(extractError(data) || t("errors.save_failed", "Failed to save. Please try again."));
       }
     } catch (err) {
-      toast.error(err.message || t("errors.save_failed", "Failed to save. Please try again."));
+      toast.error(errorText(err) || t("errors.save_failed", "Failed to save. Please try again."));
     } finally {
       setIsEditing(false);
     }
   };
 
   const handleCancelEdit = () => {
+    if (!user) return;
     setFormData({
-      full_name: user.full_name || "",
-      email: user.email || "",
-      phone: user.phone || "",
-      location: user.location || "",
-      bio: user.bio || "",
-      telegram: user.telegram || "",
-      instagram: user.instagram || "",
-      whatsapp: user.whatsapp || "",
-      avatar: user.avatar || "",
-      experience_years: user.experience_years || 0,
-      education: user.education || "",
+      full_name: str(user.full_name),
+      email: str(user.email),
+      phone: str(user.phone),
+      location: str(user.location),
+      bio: str(user.bio),
+      telegram: str(user.telegram),
+      instagram: str(user.instagram),
+      whatsapp: str(user.whatsapp),
+      avatar: str(user.avatar),
+      experience_years: num(user.experience_years),
+      education: str(user.education),
     });
     setErrors({ telegram: "", instagram: "", whatsapp: "" });
     setIsEditing(false);
   };
 
-  const appField = (label, key, type = "text", props = {}) => (
+  const appField = (
+    label: string,
+    key: AppTextField,
+    type = "text",
+    props: React.InputHTMLAttributes<HTMLInputElement> = {}
+  ) => (
     <div className="auth-form-field">
       <label htmlFor={`app-${key}`}>{label}</label>
       <input
@@ -220,27 +267,30 @@ const Profile = () => {
         type={type}
         value={appForm[key] ?? ""}
         onChange={(e) =>
-          setAppForm((prev) => ({
-            ...prev,
-            [key]: type === "number" ? Number(e.target.value) || 0 : e.target.value,
-          }))
+          setAppForm(
+            (prev) =>
+              ({
+                ...prev,
+                [key]: type === "number" ? Number(e.target.value) || 0 : e.target.value,
+              }) as AppFormState
+          )
         }
         {...props}
       />
     </div>
   );
 
-  const _toggleAppValue = (field, value) =>
+  const _toggleAppValue = (field: "languages" | "subjects", value: string) =>
     setAppForm((prev) => {
-      const arr = Array.isArray(prev[field]) ? prev[field] : [];
+      const arr = prev[field];
       return {
         ...prev,
         [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
-      };
+      } as AppFormState;
     });
   void _toggleAppValue;
 
-  const submitTutorApplication = async (e) => {
+  const submitTutorApplication = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!appForm.full_name.trim()) {
       toast.error(t("become_tutor.error_name", "Name is required"));
@@ -260,7 +310,7 @@ const Profile = () => {
       toast.success(t("success.action_completed", "Action completed"));
       setTutorApp({ status: TUTOR_STATUS.PENDING, created_at: new Date().toISOString() });
     } catch (err) {
-      toast.error(err.message || t("become_tutor.error_submit", "Failed to submit application"));
+      toast.error(errorText(err) || t("become_tutor.error_submit", "Failed to submit application"));
     } finally {
       setAppSubmitting(false);
     }
@@ -271,23 +321,27 @@ const Profile = () => {
       await logout();
       navigate("/");
     } catch (err) {
-      toast.error(err.message || t("errors.default", "Something went wrong."));
+      toast.error(errorText(err) || t("errors.default", "Something went wrong."));
     }
   };
 
-  const handleAvatarSaved = (url) => {
+  const handleAvatarSaved = (url: string) => {
+    if (!user) return;
     const updated = { ...user, avatar: url };
     setUser(updated);
     setFormData((prev) => ({ ...prev, avatar: url }));
   };
 
   const handleAvatarRemoved = () => {
+    if (!user) return;
     const updated = { ...user, avatar: "" };
     setUser(updated);
     setFormData((prev) => ({ ...prev, avatar: "" }));
   };
 
   if (!user) return null;
+
+  const hasSocials = Boolean(user.telegram || user.instagram || user.whatsapp);
 
   const renderTutorApplication = () => {
     if (tutorAppError) {
@@ -427,29 +481,35 @@ const Profile = () => {
             )}
           </div>
 
+          {(isEditing || hasSocials) && (
           <div className="social-links">
             <h3>{t("profile.on_the_web")}</h3>
-            {["telegram", "instagram", "whatsapp"].map((name) => (
-              <div key={name} className="social-item">
-                <span>{name.charAt(0).toUpperCase() + name.slice(1)}</span>
-                {isEditing ? (
-                  <>
-                    <input
-                      type="text"
-                      name={name}
-                      value={formData[name]}
-                      onChange={handleInputChange}
-                      placeholder={t("profile.link_placeholder", "Link")}
-                      className="social-input"
-                    />
-                    {errors[name] && <p className="error-message">{errors[name]}</p>}
-                  </>
-                ) : (
-                  user[name] && <a href={sanitizeHref(user[name])} target="_blank" rel="noopener noreferrer">{user[name]}</a>
-                )}
-              </div>
-            ))}
+            {(["telegram", "instagram", "whatsapp"] as SocialField[]).map((name) => {
+              const value = user[name];
+              if (!isEditing && !value) return null;
+              return (
+                <div key={name} className="social-item">
+                  <span>{name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                  {isEditing ? (
+                    <>
+                      <input
+                        type="text"
+                        name={name}
+                        value={formData[name]}
+                        onChange={handleInputChange}
+                        placeholder={t("profile.link_placeholder", "Link")}
+                        className="social-input"
+                      />
+                      {errors[name] && <p className="error-message">{errors[name]}</p>}
+                    </>
+                  ) : (
+                    value && <a href={sanitizeHref(value)} target="_blank" rel="noopener noreferrer">{value}</a>
+                  )}
+                </div>
+              );
+            })}
           </div>
+          )}
         </div>
 
         <div className="profile-info">
@@ -487,7 +547,7 @@ const Profile = () => {
                   <datalist id="locations">{locations.map((loc) => <option key={loc} value={loc} />)}</datalist>
                 </>
               ) : (
-                <p>{user.location}</p>
+                <p>{user.location || t("profile.not_provided")}</p>
               )}
             </div>
 

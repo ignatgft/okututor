@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { UploadCloud, X, Pencil, Image as ImageIcon, AlertCircle } from "lucide-react";
 import PhotoCropModal from "./PhotoCropModal";
 import { normalizeMediaUrl } from "../../utils/mediaUrl";
@@ -19,6 +20,7 @@ const ACCEPT = "image/jpeg,image/png,image/jpg";
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export default function PhotoDropzone({ value, onChange, onRemove, required, error, compact = false, disabled, hint }: Props): JSX.Element {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -28,13 +30,13 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
 
   const displayError = error || localError;
 
-  const validate = (file: File): string | null => {
+  const validate = useCallback((file: File): string | null => {
     if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
-      return "Поддерживаются только JPG и PNG";
+      return t("photo.errors_only_type", "Поддерживаются только JPG и PNG") as string;
     }
-    if (file.size > MAX_BYTES) return "Фото до 5 МБ";
+    if (file.size > MAX_BYTES) return t("photo.errors_max_size", "Фото до 5 МБ") as string;
     return null;
-  };
+  }, [t]);
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -49,7 +51,7 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
     const url = URL.createObjectURL(file);
     setCropSrc(url);
     setCropOpen(true);
-  }, []);
+  }, [validate]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -115,24 +117,24 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
           role="button"
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!value) openFileDialog(); }}}
-          aria-label="Загрузите фото"
+          aria-label={t("photo.upload_label", "Загрузите фото") as string}
         >
           {displayValue ? (
             <>
-              <img loading="lazy" decoding="async" src={displayValue} alt="Фото резюме" className="photo-dropzone-compact-thumb" />
+              <img loading="lazy" decoding="async" src={displayValue} alt={t("photo.alt_resume", "Фото резюме") as string} className="photo-dropzone-compact-thumb" />
               <div className="photo-dropzone-compact-info">
                 <p className="photo-dropzone-compact-title">
-                  {hint ? "Фото загружено" : "Загрузите чёткое фото"}
+                  {hint ? t("photo.uploaded", "Фото загружено") : t("photo.upload_clear", "Загрузите чёткое фото")}
                   <span className="photo-dropzone-compact-badge">✓</span>
                 </p>
-                <p className="photo-dropzone-compact-hint">Нажмите для замены · JPG, PNG до 5 МБ · 600×600 px</p>
+                <p className="photo-dropzone-compact-hint">{t("photo.replace_hint", "Нажмите для замены · JPG, PNG до 5 МБ · 600×600 px")}</p>
               </div>
               <div className="photo-dropzone-compact-actions" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="photo-dropzone-icon-btn" onClick={handleEditExisting} aria-label="Редактировать">
+                <button type="button" className="photo-dropzone-icon-btn" onClick={handleEditExisting} aria-label={t("photo.edit", "Редактировать") as string}>
                   <Pencil size={16} />
                 </button>
                 {onRemove && (
-                  <button type="button" className="photo-dropzone-icon-btn danger" onClick={onRemove} aria-label="Удалить">
+                  <button type="button" className="photo-dropzone-icon-btn danger" onClick={onRemove} aria-label={t("photo.remove", "Удалить") as string}>
                     <X size={16} />
                   </button>
                 )}
@@ -144,9 +146,9 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
                 <UploadCloud size={24} />
               </div>
               <div className="photo-dropzone-compact-info">
-                <p className="photo-dropzone-compact-title">Загрузите чёткое фото</p>
-                <p className="photo-dropzone-compact-hint">Перетащите фото сюда или нажмите для выбора</p>
-                <p className="photo-dropzone-compact-meta">JPG, PNG до 5 МБ · Рекомендуемый размер: 600×600 px</p>
+                <p className="photo-dropzone-compact-title">{t("photo.upload_clear", "Загрузите чёткое фото")}</p>
+                <p className="photo-dropzone-compact-hint">{t("photo.drop_hint", "Перетащите фото сюда или нажмите для выбора")}</p>
+                <p className="photo-dropzone-compact-meta">{t("photo.drop_meta", "JPG, PNG до 5 МБ · Рекомендуемый размер: 600×600 px")}</p>
               </div>
             </>
           )}
@@ -154,7 +156,7 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
         {displayError ? (
           <p className="photo-dropzone-error" role="alert"><AlertCircle size={14} /> {displayError}</p>
         ) : required && !value ? (
-          <p className="photo-dropzone-error" role="alert"><AlertCircle size={14} /> Фото обязательно для публикации</p>
+          <p className="photo-dropzone-error" role="alert"><AlertCircle size={14} /> {t("photo.required", "Фото обязательно для публикации")}</p>
         ) : null}
         <input ref={inputRef} type="file" accept={ACCEPT} className="sr-only" onChange={onInputChange} tabIndex={-1} />
         {cropSrc && <PhotoCropModal open={cropOpen} src={cropSrc} onClose={handleCropClose} onSave={handleCropSave} initialAspect="1:1" />}
@@ -179,26 +181,26 @@ export default function PhotoDropzone({ value, onChange, onRemove, required, err
           <div className="photo-dropzone-icon-lg">
             <UploadCloud size={48} strokeWidth={1.5} />
           </div>
-          <p className="photo-dropzone-title">Перетащите фото сюда<br />или нажмите для выбора</p>
-          <p className="photo-dropzone-hint">JPG, PNG до 5 МБ</p>
+          <p className="photo-dropzone-title">{t("photo.drop_title_a", "Перетащите фото сюда")}<br />{t("photo.drop_title_b", "или нажмите для выбора")}</p>
+          <p className="photo-dropzone-hint">{t("photo.drop_hint_short", "JPG, PNG до 5 МБ")}</p>
         </div>
       ) : (
         <div className="photo-dropzone-preview">
-          <img loading="lazy" decoding="async" src={displayValue} alt="Фото" className="photo-dropzone-preview-img" />
+          <img loading="lazy" decoding="async" src={displayValue} alt={t("photo.alt", "Фото") as string} className="photo-dropzone-preview-img" />
           <div className="photo-dropzone-preview-overlay">
             <button type="button" className="photo-dropzone-preview-btn" onClick={handleEditExisting}>
-              <Pencil size={16} /> Редактировать
+              <Pencil size={16} /> {t("photo.edit", "Редактировать")}
             </button>
             <button type="button" className="photo-dropzone-preview-btn secondary" onClick={openFileDialog}>
-              <ImageIcon size={16} /> Заменить
+              <ImageIcon size={16} /> {t("photo.replace", "Заменить")}
             </button>
             {onRemove && (
               <button type="button" className="photo-dropzone-preview-btn danger" onClick={onRemove}>
-                <X size={16} /> Удалить
+                <X size={16} /> {t("photo.remove", "Удалить")}
               </button>
             )}
           </div>
-          <p className="photo-dropzone-preview-hint">Перетащите новое фото для замены · JPG, PNG до 5 МБ</p>
+          <p className="photo-dropzone-preview-hint">{t("photo.drag_new", "Перетащите новое фото для замены · JPG, PNG до 5 МБ")}</p>
         </div>
       )}
       {displayError && <p className="photo-dropzone-error" role="alert"><AlertCircle size={14} /> {displayError}</p>}

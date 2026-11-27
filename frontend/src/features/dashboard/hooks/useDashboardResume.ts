@@ -28,12 +28,12 @@ export function useDashboardResume(enabled = true, opts?: { refetchInterval?: nu
       }
     },
     enabled,
-    staleTime: 60_000,
+    staleTime: 0,
     gcTime: 5 * 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    // live sync: poll раз в 60s только когда вкладка видима — без спама на каждый фокус
-    refetchInterval: opts?.refetchInterval ?? (enabled ? 60_000 : false),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    // live sync: poll раз в 30s только когда вкладка видима — актуальный статус резюме
+    refetchInterval: opts?.refetchInterval ?? (enabled ? 30_000 : false),
     refetchIntervalInBackground: false,
     retry: false,
   });

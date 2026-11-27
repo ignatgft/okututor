@@ -7,20 +7,39 @@ import "../../styles/Avatar.css";
 
 const CROP_OUTPUT = 512;
 
-function clamp(value, min, max) {
+interface DragState {
+  id: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+}
+
+interface PanState {
+  x: number;
+  y: number;
+}
+
+interface AvatarCropModalProps {
+  imageSrc: string;
+  onCancel?: () => void;
+  onConfirm?: (blob: Blob) => void;
+}
+
+function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export default function AvatarCropModal({ imageSrc, onCancel, onConfirm }: Record<string, unknown>) {
+export default function AvatarCropModal({ imageSrc, onCancel, onConfirm }: AvatarCropModalProps) {
   const { t } = useTranslation();
-  const [img, setImg] = useState(null);
+  const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [drag, setDrag] = useState(null);
+  const [pan, setPan] = useState<PanState>({ x: 0, y: 0 });
+  const [drag, setDrag] = useState<DragState | null>(null);
   const [saving, setSaving] = useState(false);
   const [containerSize, setContainerSize] = useState(0);
-  const viewportRef = useRef(null);
-  const imgRef = useRef(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const el = imgRef.current;
@@ -45,7 +64,7 @@ export default function AvatarCropModal({ imageSrc, onCancel, onConfirm }: Recor
   }, [img, containerSize, minZoom]);
 
   const clampPan = useCallback(
-    (next, z) => {
+    (next: PanState, z: number): PanState => {
       if (!img) return next;
       const rangeX = (img.naturalWidth * z - containerSize) / 2;
       const rangeY = (img.naturalHeight * z - containerSize) / 2;
@@ -57,20 +76,20 @@ export default function AvatarCropModal({ imageSrc, onCancel, onConfirm }: Recor
     [img, containerSize]
   );
 
-  const handlePointerDown = (e) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (saving) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
     setDrag({ id: e.pointerId, startX: e.clientX, startY: e.clientY, originX: pan.x, originY: pan.y });
   };
 
-  const handlePointerMove = (e) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!drag || drag.id !== e.pointerId) return;
     const dx = e.clientX - drag.startX;
     const dy = e.clientY - drag.startY;
     setPan(() => clampPan({ x: drag.originX + dx, y: drag.originY + dy }, zoom));
   };
 
-  const endDrag = (e) => {
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     if (drag?.id === e.pointerId) setDrag(null);
   };
 
@@ -87,6 +106,11 @@ export default function AvatarCropModal({ imageSrc, onCancel, onConfirm }: Recor
     canvas.width = CROP_OUTPUT;
     canvas.height = CROP_OUTPUT;
     const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setSaving(false);
+      onCancel?.();
+      return;
+    }
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, CROP_OUTPUT, CROP_OUTPUT);
@@ -121,7 +145,7 @@ export default function AvatarCropModal({ imageSrc, onCancel, onConfirm }: Recor
             role="img"
             aria-label={t("profile.crop_drag_hint", "Drag to position the photo")}
           >
-            <img loading="lazy" decoding="async"
+            <img loading="eager" decoding="async"
               ref={imgRef}
               className="avatar-crop-image"
               src={imageSrc}

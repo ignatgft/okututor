@@ -50,7 +50,10 @@ public class PasswordResetService {
 
     @Transactional
     public StatusResponse verifyResetCode(String email, String code) {
-        emailCodeService.verify(normalizeEmail(email), EmailCodePurpose.PASSWORD_RESET, code);
+        String normalized = normalizeEmail(email);
+        // Rate limit на подбор кода поверх лимита 5 попыток на код
+        rateLimitService.checkVerify(normalized);
+        emailCodeService.validateOnly(normalized, EmailCodePurpose.PASSWORD_RESET, code);
         return new StatusResponse("RESET_CODE_VERIFIED", null);
     }
 
@@ -58,6 +61,7 @@ public class PasswordResetService {
     public StatusResponse resetPassword(String email, String code, String newPassword) {
         AuthService.validatePassword(newPassword);
         String normalized = normalizeEmail(email);
+        rateLimitService.checkVerify(normalized);
         emailCodeService.verify(normalized, EmailCodePurpose.PASSWORD_RESET, code);
         User user = userRepository.findByEmail(normalized)
                 .orElseThrow(() -> ApiException.invalidCode("Invalid verification code"));

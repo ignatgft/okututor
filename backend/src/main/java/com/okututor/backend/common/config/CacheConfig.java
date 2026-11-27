@@ -15,7 +15,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 @Configuration
 @EnableCaching
-public class CacheConfig extends org.springframework.cache.annotation.CachingConfigurerSupport {
+public class CacheConfig implements org.springframework.cache.annotation.CachingConfigurer {
 
     @Override
     public org.springframework.cache.interceptor.CacheErrorHandler errorHandler() {
@@ -48,6 +48,21 @@ public class CacheConfig extends org.springframework.cache.annotation.CachingCon
             mapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
             // tolerate lazy proxies / unknown types for cached DTOs
             mapper.configure(com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+            // Type hints are mandatory: without them every cached value deserializes to
+            // LinkedHashMap and breaks endpoints whose declared type is a record/DTO.
+            // EVERYTHING (not NON_FINAL) is required because records/entities are final classes.
+            com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator ptv =
+                    com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator.builder()
+                            .allowIfSubType("com.okututor.backend")
+                            .allowIfSubType("java.lang")
+                            .allowIfSubType("java.util")
+                            .allowIfSubType("java.time")
+                            .allowIfSubType("java.math")
+                            .build();
+            mapper.activateDefaultTyping(
+                    ptv,
+                    com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.EVERYTHING,
+                    com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY);
             // Store DTOs only, never PageImpl — type-safe JSON
             GenericJackson2JsonRedisSerializer jsonSer = new GenericJackson2JsonRedisSerializer(mapper);
             RedisCacheConfiguration defaultCfg = RedisCacheConfiguration.defaultCacheConfig()

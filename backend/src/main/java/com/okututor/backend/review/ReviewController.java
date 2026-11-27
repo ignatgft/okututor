@@ -43,7 +43,7 @@ public class ReviewController {
     }
 
     @PostMapping("/api/v1/courses/{courseId}/reviews")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('USER','STUDENT')")
     public ReviewService.ReviewResponse create(@AuthenticationPrincipal UserPrincipal principal,
                                                @PathVariable UUID courseId,
                                                @RequestBody(required = false) ReviewService.ReviewRequest request) {
@@ -54,7 +54,7 @@ public class ReviewController {
     }
 
     @PostMapping("/api/v1/courses/{courseId}/reviews/booking/{bookingId}")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('USER','STUDENT')")
     public ReviewService.ReviewResponse createForBooking(@AuthenticationPrincipal UserPrincipal principal,
                                                          @PathVariable UUID courseId,
                                                          @PathVariable UUID bookingId,

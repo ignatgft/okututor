@@ -20,24 +20,32 @@ public class ResumeExpiryScheduler {
     private final TutorProfileRepository profileRepository;
     private final NotificationService notificationService;
     private final CacheManager cacheManager;
+    private final com.okututor.backend.observability.ObservabilityMetrics metrics;
 
-    public ResumeExpiryScheduler(TutorProfileRepository profileRepository, NotificationService notificationService, CacheManager cacheManager) {
+    public ResumeExpiryScheduler(TutorProfileRepository profileRepository,
+                                 NotificationService notificationService,
+                                 CacheManager cacheManager,
+                                 com.okututor.backend.observability.ObservabilityMetrics metrics) {
         this.profileRepository = profileRepository;
         this.notificationService = notificationService;
         this.cacheManager = cacheManager;
+        this.metrics = metrics;
     }
 
     // Every hour, expire old resumes (idempotent)
     @Scheduled(fixedDelay = 3600_000, initialDelay = 60_000)
     @Transactional
     public void expireOld() {
+        if (metrics != null) metrics.recordExpiryRun();
         int updated = profileRepository.expireOldProfiles();
         if (updated > 0) {
             log.info("[ResumeExpiry] expired {} profiles", updated);
             // evict public caches so expired resumes disappear from listing/search immediately
             try {
-                if (cacheManager.getCache("tutorPublicList") != null) cacheManager.getCache("tutorPublicList").clear();
-                if (cacheManager.getCache("tutorSearch") != null) cacheManager.getCache("tutorSearch").clear();
+                for (String cacheName : new String[]{"tutorPublicList:v2", "tutorSearch:v2", "tutorPopular:v2", "tutorPublicList", "tutorSearch"}) {
+                    var cache = cacheManager.getCache(cacheName);
+                    if (cache != null) cache.clear();
+                }
             } catch (Exception e) {
                 log.warn("Failed to evict cache after expiry", e);
             }

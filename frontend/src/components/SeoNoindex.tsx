@@ -43,9 +43,13 @@ export default function SeoNoindex(): null {
     return false;
   })();
 
+  const isTutorProfile = location.pathname.startsWith("/repetitor/") || location.pathname.startsWith("/tutor/");
   const shouldNoindex = isPrivate || isFilterNoindex;
 
   useEffect(() => {
+    // Marketplace tutor profiles manage their own robots & canonical via applyTutorSeo
+    if (isTutorProfile) return;
+
     setMeta("name", "robots", shouldNoindex ? "noindex, nofollow, noarchive" : "index, follow, max-image-preview:large");
 
     if (shouldNoindex) {
@@ -70,7 +74,7 @@ export default function SeoNoindex(): null {
       }
       link.href = SITE_URL + location.pathname;
     }
-  }, [location.pathname, location.search, shouldNoindex, isPrivate]);
+  }, [location.pathname, location.search, shouldNoindex, isPrivate, isTutorProfile]);
 
   return null;
 }

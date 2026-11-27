@@ -74,14 +74,14 @@ function TutorCardInner({ tutor }: TutorCardProps) {
                 fontSize: "var(--font-size-xs)",
                 fontWeight: 600,
               }}
-              title={isStudent ? "Студент-репетитор — доступная цена, свежие знания" : undefined}
+              title={isStudent ? (t("tutor_card.student_hint", "Студент-репетитор — доступная цена, свежие знания") as string) : undefined}
             >
               {typeLabel}
             </span>
           )}
           {city && <span>• {city}</span>}
           {format && <span>• {format}</span>}
-          {priceNum != null && !Number.isNaN(priceNum) && <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{priceNum} {currency}/час</span>}
+          {priceNum != null && !Number.isNaN(priceNum) && <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{t("tutor_card.per_hour", "{{price}} {{currency}}/час", { price: priceNum, currency })}</span>}
         </div>
 
         {shortDesc && (

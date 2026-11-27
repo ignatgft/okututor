@@ -149,7 +149,7 @@ export default function PgResumeEditor(): JSX.Element {
     setPhotoPending(null);
     try {
       await apiClient.request("DELETE", "/api/v1/tutors/me/photo");
-      toast.success("Фото удалено");
+      toast.success(t("editor.photo_deleted", "Фото удалено") as string);
     } catch { /* ignore */ }
   };
 
@@ -212,7 +212,7 @@ export default function PgResumeEditor(): JSX.Element {
         res = await tutorProfileMarketplaceApi.create(payload);
       }
       if ((res as unknown as Record<string, unknown>)?.["error"] || (res as unknown as { response?: { ok: boolean } })?.response?.ok === false) {
-        throw new Error(((res as unknown as Record<string, unknown>)?.["data"] as Record<string, unknown>)?.["message"] as string || "Ошибка сохранения");
+        throw new Error(((res as unknown as Record<string, unknown>)?.["data"] as Record<string, unknown>)?.["message"] as string || t("editor.save_error", "Ошибка сохранения"));
       }
       toast.success(t("dashboard.resume_saved", "Резюме сохранено") as string);
       // Invalidate all resume-related caches so changes propagate to dashboard, public profile, admin
@@ -254,13 +254,13 @@ export default function PgResumeEditor(): JSX.Element {
     const found = TUTOR_LANGUAGES.find((l) => l.value.toLowerCase() === v.toLowerCase() || l.value === v);
     if (found) return t(found.labelKey, found.value) as string;
     return v;
-  }).join(", ") || "Кыргызский, Русский, Английский (B1)";
+  }).join(", ") || t("editor.langs_default", "Кыргызский, Русский, Английский (B1)");
 
   return (
     <div className="resume-editor-page">
       <div className="resume-editor-header">
         <h1>{existing ? t("tutor.edit_resume", "Редактирование резюме") : t("tutor.create_resume", "Создание резюме")}</h1>
-        <p>Обновите информацию о себе и настройках резюме</p>
+        <p>{t("editor.header_sub", "Обновите информацию о себе и настройках резюме")}</p>
       </div>
 
       {activeSection && (
@@ -282,7 +282,7 @@ export default function PgResumeEditor(): JSX.Element {
       <form onSubmit={handleSave} className="resume-editor-card">
         {/* Фото */}
         <div id="section-photo" style={{ display: isSectionActive("media") || isSectionActive("photo") ? "block" : "none" }}>
-          <div className="resume-editor-section-title"><Camera size={18} /> Фото для резюме</div>
+          <div className="resume-editor-section-title"><Camera size={18} /> {t("editor.photo_title", "Фото для резюме")}</div>
           <div style={{ marginTop: 10 }}>
             <PhotoDropzone
               value={form["photoUrl"] as string | null}
@@ -290,7 +290,7 @@ export default function PgResumeEditor(): JSX.Element {
               onRemove={handlePhotoRemove}
               required
               compact
-              hint={form["photoUrl"] ? "Фото загружено" : undefined}
+              hint={form["photoUrl"] ? (t("photo.uploaded", "Фото загружено") as string) : undefined}
             />
           </div>
         </div>
@@ -299,30 +299,30 @@ export default function PgResumeEditor(): JSX.Element {
         <div id="section-main" style={{ display: isSectionActive("main") ? "block" : "none" }}>
           <div className="resume-editor-grid2">
             <div className="resume-field">
-              <label>Имя <span className="req">*</span></label>
-              <input value={String(form["firstName"] ?? "")} onChange={(e) => set("firstName", e.target.value)} required maxLength={100} placeholder="Введите имя" />
+              <label>{t("editor.first_name", "Имя")} <span className="req">*</span></label>
+              <input value={String(form["firstName"] ?? "")} onChange={(e) => set("firstName", e.target.value)} required maxLength={100} placeholder={t("editor.first_name_ph", "Введите имя") as string} />
             </div>
             <div className="resume-field">
-              <label>Фамилия</label>
-              <input value={String(form["lastName"] ?? "")} onChange={(e) => set("lastName", e.target.value)} maxLength={100} placeholder="Введите фамилию" />
+              <label>{t("editor.last_name", "Фамилия")}</label>
+              <input value={String(form["lastName"] ?? "")} onChange={(e) => set("lastName", e.target.value)} maxLength={100} placeholder={t("editor.last_name_ph", "Введите фамилию") as string} />
             </div>
           </div>
 
           <div className="resume-field" style={{ marginTop: 12 }}>
-            <label>Заголовок (до 200)</label>
+            <label>{t("editor.title_label", "Заголовок (до 200)")}</label>
             <input value={String(form["title"] ?? "")} onChange={(e) => set("title", e.target.value)} maxLength={200} placeholder="ОРТ" />
             <div className="resume-counter" style={{ color: titleLen > 200 ? "var(--color-danger)" : undefined }}>{titleLen}/200</div>
           </div>
 
           <div className="resume-field" style={{ marginTop: 4 }}>
-            <label>Краткое описание (до 300)</label>
-            <textarea value={String(form["shortDescription"] ?? "")} onChange={(e) => set("shortDescription", e.target.value)} maxLength={300} rows={2} placeholder="Репетитор по математике и физике для школьников и студентов." />
+            <label>{t("editor.short_label", "Краткое описание (до 300)")}</label>
+            <textarea value={String(form["shortDescription"] ?? "")} onChange={(e) => set("shortDescription", e.target.value)} maxLength={300} rows={2} placeholder={t("editor.short_ph", "Репетитор по математике и физике для школьников и студентов.") as string} />
             <div className="resume-counter">{shortLen}/300</div>
           </div>
 
           <div className="resume-field" style={{ marginTop: 4 }}>
-            <label>О себе (до 5000)</label>
-            <textarea value={String(form["about"] ?? "")} onChange={(e) => set("about", e.target.value)} maxLength={5000} rows={4} placeholder="Студент 3 курса, увлечённый точными науками и объясняю сложные темы простым языком. Индивидуальный подход и помощь в достижении целей." />
+            <label>{t("editor.about_label", "О себе (до 5000)")}</label>
+            <textarea value={String(form["about"] ?? "")} onChange={(e) => set("about", e.target.value)} maxLength={5000} rows={4} placeholder={t("editor.about_ph", "Студент 3 курса, увлечённый точными науками и объясняю сложные темы простым языком. Индивидуальный подход и помощь в достижении целей.") as string} />
             <div className="resume-counter">{aboutLen}/5000</div>
           </div>
         </div>
@@ -331,7 +331,7 @@ export default function PgResumeEditor(): JSX.Element {
         <div id="section-education" style={{ display: isSectionActive("education") ? "block" : "none" }}>
           <div className="resume-editor-grid2">
             <div className="resume-field">
-              <label>Тип репетитора</label>
+              <label>{t("editor.tutor_type_label", "Тип репетитора")}</label>
               <select value={String(form["tutorType"] ?? "STUDENT_TUTOR")} onChange={(e) => set("tutorType", e.target.value)}>
                 <option value="STUDENT_TUTOR">{t("tutor.type_student", "Студент") as string}</option>
                 <option value="TEACHER">{t("tutor.type_teacher", "Преподаватель") as string}</option>
@@ -339,49 +339,49 @@ export default function PgResumeEditor(): JSX.Element {
               </select>
             </div>
             <div className="resume-field">
-              <label>Опыт (лет)</label>
-              <input type="number" min={0} max={80} value={String(form["experienceYears"] ?? "")} onChange={(e) => set("experienceYears", e.target.value)} placeholder="Введите опыт в годах" />
+              <label>{t("editor.exp_label", "Опыт (лет)")}</label>
+              <input type="number" min={0} max={80} value={String(form["experienceYears"] ?? "")} onChange={(e) => set("experienceYears", e.target.value)} placeholder={t("editor.exp_ph", "Введите опыт в годах") as string} />
             </div>
           </div>
 
           <div className="resume-editor-grid2" style={{ marginTop: 12 }}>
             <div className="resume-field">
-              <label>Образование</label>
-              <input value={String(form["education"] ?? "")} onChange={(e) => set("education", e.target.value)} maxLength={500} placeholder="Например: Бакалавриат" />
+              <label>{t("editor.education_label", "Образование")}</label>
+              <input value={String(form["education"] ?? "")} onChange={(e) => set("education", e.target.value)} maxLength={500} placeholder={t("editor.education_ph", "Например: Бакалавриат") as string} />
             </div>
             <div className="resume-field">
-              <label>ВУЗ</label>
-              <input value={String(form["university"] ?? "")} onChange={(e) => set("university", e.target.value)} maxLength={200} placeholder="Например: КРСУ" />
+              <label>{t("editor.university_label", "ВУЗ")}</label>
+              <input value={String(form["university"] ?? "")} onChange={(e) => set("university", e.target.value)} maxLength={200} placeholder={t("editor.university_ph", "Например: КРСУ") as string} />
             </div>
           </div>
 
           <div className="resume-field" style={{ marginTop: 12 }}>
-            <label>Детали образования</label>
-            <textarea value={String(form["educationDetails"] ?? "")} onChange={(e) => set("educationDetails", e.target.value)} maxLength={1000} rows={2} placeholder="Кыргызско-Российский Славянский университет (КРСУ)&#10;Факультет математики, информатики и естественных наук" />
+            <label>{t("editor.edu_details_label", "Детали образования")}</label>
+            <textarea value={String(form["educationDetails"] ?? "")} onChange={(e) => set("educationDetails", e.target.value)} maxLength={1000} rows={2} placeholder={t("editor.edu_details_ph", "Кыргызско-Российский Славянский университет (КРСУ)\nФакультет математики, информатики и естественных наук") as string} />
             <div className="resume-counter">{eduDetailsLen}/1000</div>
           </div>
         </div>
 
         {/* Цена занятий */}
         <div id="section-price" style={{ display: isSectionActive("price") ? "block" : "none" }}>
-          <div className="resume-editor-section-title"><Wallet size={18} /> Цена занятий</div>
+          <div className="resume-editor-section-title"><Wallet size={18} /> {t("editor.price_title", "Цена занятий")}</div>
           <div className="resume-editor-grid3" style={{ marginTop: 10 }}>
             <div className="resume-field">
-              <label>Цена от</label>
+              <label>{t("editor.price_from", "Цена от")}</label>
               <div className="resume-price-wrap">
                 <input type="number" min={0} value={String(form["priceFrom"] ?? "")} onChange={(e) => set("priceFrom", e.target.value)} placeholder="500" />
                 <span className="resume-price-suffix">₽</span>
               </div>
             </div>
             <div className="resume-field">
-              <label>Цена до</label>
+              <label>{t("editor.price_to", "Цена до")}</label>
               <div className="resume-price-wrap">
                 <input type="number" min={0} value={String(form["priceTo"] ?? "")} onChange={(e) => set("priceTo", e.target.value)} placeholder="1000" />
                 <span className="resume-price-suffix">₽</span>
               </div>
             </div>
             <div className="resume-field">
-              <label>Валюта</label>
+              <label>{t("editor.currency_label", "Валюта")}</label>
               <select value={String(form["currency"] ?? "KGS")} onChange={(e) => set("currency", e.target.value)}>
                 <option value="KGS">KGS</option>
                 <option value="RUB">RUB</option>
@@ -391,15 +391,15 @@ export default function PgResumeEditor(): JSX.Element {
           </div>
 
           <div className="resume-field" style={{ marginTop: 12 }}>
-            <label>Формат занятий</label>
+            <label>{t("editor.format_label", "Формат занятий")}</label>
             <div className="resume-checkbox-row">
               <label className="resume-checkbox">
                 <input type="checkbox" checked={Boolean(form["online"])} onChange={(e) => set("online", e.target.checked)} />
-                Онлайн
+                {t("editor.format_online", "Онлайн")}
               </label>
               <label className="resume-checkbox">
                 <input type="checkbox" checked={Boolean(form["offline"])} onChange={(e) => set("offline", e.target.checked)} />
-                Офлайн
+                {t("editor.format_offline", "Офлайн")}
               </label>
             </div>
           </div>
@@ -407,18 +407,18 @@ export default function PgResumeEditor(): JSX.Element {
 
         {/* Контакты */}
         <div id="section-location" style={{ display: isSectionActive("location") ? "block" : "none" }}>
-          <div className="resume-editor-section-title"><Phone size={16} /> Контактный телефон</div>
+          <div className="resume-editor-section-title"><Phone size={16} /> {t("editor.phone_title", "Контактный телефон")}</div>
           <div className="resume-field" style={{ marginTop: 10 }}>
             <div className="resume-phone-wrap">
               <span className="resume-phone-prefix">+996</span>
-              <input value={String(form["phone"] ?? "")} onChange={(e) => set("phone", e.target.value)} maxLength={40} placeholder="Введите номер телефона" />
+              <input value={String(form["phone"] ?? "")} onChange={(e) => set("phone", e.target.value)} maxLength={40} placeholder={t("editor.phone_ph", "Введите номер телефона") as string} />
             </div>
           </div>
         </div>
 
         {/* Языки */}
         <div id="section-subjects" style={{ display: isSectionActive("subjects") ? "block" : "none" }}>
-          <div className="resume-editor-section-title"><Globe size={16} /> Языки</div>
+          <div className="resume-editor-section-title"><Globe size={16} /> {t("editor.langs_title", "Языки")}</div>
           <div className="resume-field" style={{ marginTop: 10, position: "relative" }} ref={langRef}>
             <button type="button" className="resume-lang-trigger" onClick={() => setLangOpen((v) => !v)}>
               <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{langDisplayRu}</span>
@@ -458,7 +458,7 @@ export default function PgResumeEditor(): JSX.Element {
                 })}
                 <div style={{ display: "flex", gap: 8, marginTop: 6, paddingTop: 8, borderTop: "1px solid var(--color-border-light)" }}>
                   <input
-                    placeholder="Добавить язык вручную"
+                    placeholder={t("editor.lang_add_ph", "Добавить язык вручную") as string}
                     style={{ flex: 1, padding: "8px 10px", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 13 }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -478,13 +478,13 @@ export default function PgResumeEditor(): JSX.Element {
                 </div>
               </div>
             )}
-            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--color-text-muted)" }}>Через запятую: например, Кыргызский, Русский, Английский</p>
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--color-text-muted)" }}>{t("editor.lang_hint", "Через запятую: например, Кыргызский, Русский, Английский")}</p>
           </div>
         </div>
 
         <div className="resume-footer">
           <button type="button" onClick={() => navigate("/app/resumes")} className="btn btn-secondary">
-            <X size={16} /> Отмена
+            <X size={16} /> {t("common.cancel", "Отмена")}
           </button>
           <button type="submit" disabled={saving} className="btn btn-primary" style={{ opacity: saving ? 0.7 : 1 }}>
             {saving ? (t("common.saving", "Сохранение...") as string) : (t("common.save", "Сохранить") as string)} <Check size={16} />

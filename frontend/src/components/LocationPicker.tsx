@@ -49,7 +49,7 @@ export function LocationPicker({ value, onChange }) {
           id="location-address"
           type="text"
           value={address}
-          placeholder="г. Бишкек, ул. Киевская 120"
+          placeholder={t("location.address_example", "г. Бишкек, ул. Киевская 120") as string}
           onChange={(e) => {
             setAddress(e.target.value);
             emit({ address: e.target.value });

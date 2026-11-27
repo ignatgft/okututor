@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { ChatMessage } from "../../api/chat.api";
 import MessageBubble from "./MessageBubble";
 import useAuthStore from "../../store/authStore";
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export default function MessageList({ messages }: Props): JSX.Element {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const currentUserId = String(user?.id ?? "");
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -30,7 +32,7 @@ export default function MessageList({ messages }: Props): JSX.Element {
       className="chat-message-list"
       role="log"
       aria-live="polite"
-      aria-label="Сообщения чата"
+      aria-label={t("messages.chat_log", "Сообщения чата") as string}
       style={{
         flex: 1,
         minHeight: 0,

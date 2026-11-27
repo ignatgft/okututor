@@ -23,7 +23,8 @@ public class UserMapper {
                 user.getPhone(),
                 user.getLocation(),
                 user.getExperienceYears(),
-                user.getEducation());
+                user.getEducation(),
+                user.getTimezone());
     }
 
     public PublicUserResponse toPublicResponse(User user) {

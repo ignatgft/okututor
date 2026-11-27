@@ -11,7 +11,16 @@ import { getContactIntent } from "../../store/authIntentStore";
 import Modal from "./Modal";
 import "../../styles/AuthRegister/Register.css";
 
-export default function Register({ isOpen, onClose }: Record<string, unknown>) {
+interface RegisterProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface RegisterFieldErrors {
+  [key: string]: string;
+}
+
+export default function Register({ isOpen, onClose }: RegisterProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { setUser, init } = useAuthStore();
@@ -26,7 +35,7 @@ export default function Register({ isOpen, onClose }: Record<string, unknown>) {
   // Marketplace unified: role is always USER (tutor = USER with resume, not separate role)
   const role = ROLES.USER;
   const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
@@ -64,15 +73,15 @@ export default function Register({ isOpen, onClose }: Record<string, unknown>) {
     return errors;
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value } as typeof prev));
     if (fieldErrors[name]) {
       setFieldErrors(prev => ({ ...prev, [name]: "" }));
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -99,7 +108,7 @@ export default function Register({ isOpen, onClose }: Record<string, unknown>) {
           state: { email: result.email || formData.email }
         });
       } else {
-        setUser(result.user);
+        if (result.user) setUser({ ...result.user, role: result.user.role ?? role });
         await init();
         onClose();
         if (getContactIntent()) return;

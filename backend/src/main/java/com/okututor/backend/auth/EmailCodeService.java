@@ -58,6 +58,17 @@ public class EmailCodeService {
      * ({@link EmailCodeAttemptPersister}), поэтому счётчик не теряется при rollback.
      */
     public EmailCode verify(String email, EmailCodePurpose purpose, String code) {
+        EmailCode stored = validateOnly(email, purpose, code);
+        stored.setConsumedAt(Instant.now());
+        repository.save(stored);
+        return stored;
+    }
+
+    /**
+     * Проверяет валидность кода БЕЗ его погашения (consumedAt остаётся null).
+     * Используется для промежуточных шагов подтверждения (например, шаг проверки кода перед вводом нового пароля).
+     */
+    public EmailCode validateOnly(String email, EmailCodePurpose purpose, String code) {
         EmailCode stored = repository.findLatestActive(email.toLowerCase(), purpose)
                 .orElseThrow(() -> ApiException.invalidCode("Invalid verification code"));
 
@@ -76,8 +87,6 @@ public class EmailCodeService {
                     : ApiException.invalidCode("Invalid verification code");
         }
 
-        stored.setConsumedAt(Instant.now());
-        repository.save(stored);
         return stored;
     }
 

@@ -41,8 +41,8 @@ const Sidebar = ({ isOpen = false, onClose, collapsed = false }) => {
     if (path.includes("?")) {
       return location.pathname + location.search === path;
     }
-    // Только точное совпадение для /dashboard, иначе подсветятся и /dashboard/resume
-    if (path === "/dashboard") return location.pathname === "/dashboard";
+    // Только точное совпадение для корневых дашбордов, иначе /admin подсвечивается и на /admin/metrics
+    if (path === "/dashboard" || path === "/admin" || path === "/app/dashboard") return location.pathname === path;
     return location.pathname === path || location.pathname.startsWith(path + "/");
   };
 
@@ -147,7 +147,7 @@ const Sidebar = ({ isOpen = false, onClose, collapsed = false }) => {
                   <IconComponent className="sidebar-icon" />
                   {!collapsed && <span className="sidebar-label">{t(item.labelKey, item.id)}</span>}
                   {!collapsed && showChatBadge && (
-                    <span className="sidebar-badge" aria-label={`${chatUnread} непрочитано`}>{chatUnread > 99 ? "99+" : chatUnread}</span>
+                    <span className="sidebar-badge" aria-label={t("messages.unread", "{{count}} непрочитано", { count: chatUnread }) as string}>{chatUnread > 99 ? "99+" : chatUnread}</span>
                   )}
                 </button>
               </li>

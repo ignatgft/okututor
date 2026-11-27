@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { getCurrentUser, logout as apiLogout } from "../api/auth";
-import { isAuthenticated, clearTokens, areTokensConsistent } from "../api/token";
+import { isAuthenticated, clearTokens, getRefreshToken } from "../api/token";
+import type { UserDTO } from "../types/api";
 
 /**
  * Auth state machine.
@@ -21,13 +22,8 @@ export const AUTH_STATUS = {
 
 export type AuthStatus = (typeof AUTH_STATUS)[keyof typeof AUTH_STATUS];
 
-export interface User {
-  id: string | number;
+export interface User extends UserDTO {
   role: string;
-  full_name?: string;
-  email?: string;
-  avatar?: string | null;
-  [key: string]: unknown;
 }
 
 export interface AuthState {
@@ -70,15 +66,15 @@ function getErrorMessage(error: unknown): string | null {
 
 // Typed wrappers for JS interop - underlying JS modules are untyped (allowJs), so we assert via unknown.
 type GetCurrentUserFn = () => Promise<User | null>;
+type GetRefreshTokenFn = () => string | null;
 type ApiLogoutFn = () => Promise<void>;
 type IsAuthenticatedFn = () => boolean;
-type AreTokensConsistentFn = () => boolean;
 type ClearTokensFn = () => void;
 
 const typedGetCurrentUser = getCurrentUser as unknown as GetCurrentUserFn;
+const typedGetRefreshToken = getRefreshToken as unknown as GetRefreshTokenFn;
 const typedApiLogout = apiLogout as unknown as ApiLogoutFn;
 const typedIsAuthenticated = isAuthenticated as unknown as IsAuthenticatedFn;
-const typedAreTokensConsistent = areTokensConsistent as unknown as AreTokensConsistentFn;
 const typedClearTokens = clearTokens as unknown as ClearTokensFn;
 
 const useAuthStore = create<AuthState>((set, get) => ({
@@ -88,8 +84,17 @@ const useAuthStore = create<AuthState>((set, get) => ({
   initError: null,
 
   init: async () => {
-    // do not clear isAuthenticated while retrying offline – keep previous session if retryable
-    if (!typedIsAuthenticated() || !typedAreTokensConsistent()) {
+    // Wipe only when there is nothing to recover from. A refresh-only state
+    // (new tab, browser restart — access in sessionStorage is gone) is
+    // recoverable: getCurrentUser 401s and the refresh flow restores access.
+    // Wiping here used to destroy a still-valid refresh token.
+    let hasRefresh = false;
+    try {
+      hasRefresh = !!typedGetRefreshToken();
+    } catch {
+      hasRefresh = false;
+    }
+    if (!typedIsAuthenticated() && !hasRefresh) {
       typedClearTokens();
       set({
         status: AUTH_STATUS.UNAUTHENTICATED,

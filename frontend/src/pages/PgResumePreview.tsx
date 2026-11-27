@@ -66,7 +66,7 @@ export default function PgResumePreview(): JSX.Element {
           <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text)" }}>
             {t("dashboard.preview_title", "Предпросмотр резюме")}
           </span>
-          <Badge status={status}>{resumeStatusLabel(statusLabel)}</Badge>
+          <Badge status={status}>{resumeStatusLabel(statusLabel, "", (k, fb) => t(k, fb) as string)}</Badge>
         </div>
       </div>
 

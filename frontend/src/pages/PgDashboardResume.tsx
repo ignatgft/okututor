@@ -13,6 +13,7 @@ import { tutorProfileMarketplaceApi } from "../api/marketplace/tutorProfileMarke
 import { tutorsApi } from "../api/tutors.api";
 import { resumeStatusLabel } from "../utils/resumeStatus";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "../components/ui/Toast";
 
 // --- styled stat card matching reference ---
 function StatCard({
@@ -61,13 +62,11 @@ function StatCard({
         <span
           style={{
             display: "block",
-            fontSize: "var(--font-size-xl)",
+            fontSize: "var(--font-size-lg)",
             fontWeight: "var(--font-weight-bold)",
             color: "var(--color-text-primary)",
-            lineHeight: 1.1,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            lineHeight: 1.2,
+            overflowWrap: "anywhere",
           }}
         >
           {value}
@@ -78,10 +77,10 @@ function StatCard({
             fontSize: "var(--font-size-xs)",
             color: "var(--color-text-muted)",
             fontWeight: "var(--font-weight-medium)",
-            marginTop: 2,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            marginTop: 4,
+            lineHeight: 1.35,
+            minHeight: "2.7em",
+            overflowWrap: "anywhere",
           }}
         >
           {label}
@@ -96,6 +95,7 @@ export default function PgDashboardResume(): JSX.Element {
   const setPageTitle = usePageTitle();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
   useEffect(() => {
     setPageTitle(t("tutor.resume", "Моё резюме") as string);
   }, [setPageTitle, t]);
@@ -133,18 +133,18 @@ export default function PgDashboardResume(): JSX.Element {
         <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 16, padding: 24, textAlign: "center" }}>
             <div style={{ width: 48, height: 48, borderRadius: 999, background: "var(--color-warning-soft)", color: "var(--color-warning)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>⏳</div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Резюме на модерации</h2>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{t("dashboard.resume_moderation_title", "Резюме на модерации")}</h2>
             <p style={{ margin: "8px 0 0", color: "var(--color-text-secondary)", fontSize: 14, lineHeight: 1.5 }}>
-              {t("become_tutor.verification_hint", "Ваша заявка будет рассмотрена нашей командой.")} Обычно до 24 часов.
+              {t("become_tutor.verification_hint", "Ваша заявка будет рассмотрена нашей командой.")} {t("dashboard.resume_moderation_24h", "Обычно до 24 часов.")}
             </p>
             <div style={{ marginTop: 12, display: "inline-flex", gap: 8, alignItems: "center", padding: "6px 12px", borderRadius: 999, background: "var(--color-warning-soft)", color: "var(--color-warning)", fontSize: 12, fontWeight: 600 }}>
               <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--color-warning)", display: "inline-block" }} />
-              {resumeStatusLabel(appStatus) || "На модерации"}
+              {resumeStatusLabel(appStatus, t("dashboard.resume_moderation_badge", "На модерации") as string, (k, fb) => t(k, fb) as string) || t("dashboard.resume_moderation_badge", "На модерации")}
             </div>
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link to="/app/dashboard" className="btn-secondary" style={{ textDecoration: "none" }}>Найти репетитора</Link>
-            <button type="button" className="btn-ghost" onClick={() => void refetch()} style={{ fontSize: 13 }}>Обновить статус</button>
+            <Link to="/app/dashboard" className="btn-secondary" style={{ textDecoration: "none" }}>{t("dashboard.find_tutors", "Найти репетитора")}</Link>
+            <button type="button" className="btn-ghost" onClick={() => void refetch()} style={{ fontSize: 13 }}>{t("dashboard.refresh_status", "Обновить статус")}</button>
           </div>
         </div>
       );
@@ -209,38 +209,59 @@ export default function PgDashboardResume(): JSX.Element {
     try {
       const res = await tutorProfileMarketplaceApi.renew();
       if ((res as unknown as { response?: { ok: boolean } })?.response?.ok ?? true) {
+        toast.success(t("dashboard.resume_renewed", "Резюме продлено на 30 дней"));
         await invalidateResume();
-      } else alert((res as unknown as { data?: { message?: string } })?.data?.message || "Ошибка");
+      } else {
+        toast.error((res as unknown as { data?: { message?: string } })?.data?.message || t("common.error", "Ошибка"));
+      }
     } catch {
       const { apiClient } = await import("../api/http");
       const res = await apiClient.post("/api/v1/tutors/me/renew", {});
-      if (res.response.ok) await invalidateResume();
-      else alert((res.data as unknown as { message?: string })?.message || "Ошибка");
+      if (res.response.ok) {
+        toast.success(t("dashboard.resume_renewed", "Резюме продлено на 30 дней"));
+        await invalidateResume();
+      } else {
+        toast.error((res.data as unknown as { message?: string })?.message || t("common.error", "Ошибка"));
+      }
     }
   };
   const handleHide = async () => {
     try {
       const res = await tutorProfileMarketplaceApi.hide();
-      if ((res as unknown as { response?: { ok: boolean } })?.response?.ok ?? true) await invalidateResume();
-      else alert("Ошибка");
+      if ((res as unknown as { response?: { ok: boolean } })?.response?.ok ?? true) {
+        toast.success(t("dashboard.resume_hidden_toast", "Резюме скрыто"));
+        await invalidateResume();
+      } else {
+        toast.error(t("common.error", "Ошибка"));
+      }
     } catch {
       const { apiClient } = await import("../api/http");
       const r = await apiClient.post("/api/v1/tutors/me/hide", {});
-      if (r.response.ok) await invalidateResume();
+      if (r.response.ok) {
+        toast.success(t("dashboard.resume_hidden_toast", "Резюме скрыто"));
+        await invalidateResume();
+      }
     }
   };
   const handleRestore = async () => {
     try {
       const res = await tutorProfileMarketplaceApi.restore();
-      if ((res as unknown as { response?: { ok: boolean } })?.response?.ok ?? true) await invalidateResume();
+      if ((res as unknown as { response?: { ok: boolean } })?.response?.ok ?? true) {
+        toast.success(t("dashboard.resume_restored", "Резюме восстановлено"));
+        await invalidateResume();
+      }
     } catch {
       const { apiClient } = await import("../api/http");
       const r = await apiClient.post("/api/v1/tutors/me/restore", {});
-      if (r.response.ok) await invalidateResume();
+      if (r.response.ok) {
+        toast.success(t("dashboard.resume_restored", "Резюме восстановлено"));
+        await invalidateResume();
+      }
     }
   };
 
   const subjectsLabel = subjects.map((s) => String(s["nameRu"] ?? s["name_ru"] ?? "")).filter(Boolean).join(", ") || t("common.not_found","—");
+  const primarySubject = subjectsLabel !== t("common.not_found","—") ? subjectsLabel.split(",")[0].trim() : "";
   const cityLabel = String(city?.["nameRu"] ?? city?.["name_ru"] ?? "") || (isOnline ? t("search.online","Онлайн") : "—");
 
   return (
@@ -265,22 +286,24 @@ export default function PgDashboardResume(): JSX.Element {
             <div style={{ minWidth: 0, flex: "1 1 260px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
                 <h2 style={{ margin: 0, fontSize: "var(--font-size-xl)", fontWeight: "var(--font-weight-bold)", color: "var(--color-text-primary)", lineHeight: 1.2 }}>{name}</h2>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-full)",
-                    background: "#7C3AED",
-                    color: "#fff",
-                    fontSize: "var(--font-size-xs)",
-                    fontWeight: "var(--font-weight-bold)",
-                    letterSpacing: "0.04em",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  ОРТ
-                </span>
+                {primarySubject && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "2px 8px",
+                      borderRadius: "var(--radius-full)",
+                      background: "#7C3AED",
+                      color: "#fff",
+                      fontSize: "var(--font-size-xs)",
+                      fontWeight: "var(--font-weight-bold)",
+                      letterSpacing: "0.04em",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {primarySubject}
+                  </span>
+                )}
                 {slug && (
                   <span
                     style={{
@@ -316,7 +339,7 @@ export default function PgDashboardResume(): JSX.Element {
               }}
             >
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-success)", display: "inline-block", flexShrink: 0 }} />
-              {resumeStatusLabel(statusLabel || status) || t("common.published", "Опубликовано")}
+              {resumeStatusLabel(statusLabel || status, t("common.published", "Опубликовано") as string, (k, fb) => t(k, fb) as string) || t("common.published", "Опубликовано")}
             </span>
           </div>
         </div>
@@ -332,7 +355,7 @@ export default function PgDashboardResume(): JSX.Element {
           />
           <StatCard
             icon={<BookOpen size={20} strokeWidth={2} />}
-            value={subjectsLabel.length > 18 ? subjectsLabel.slice(0, 18) + "…" : subjectsLabel}
+            value={subjectsLabel}
             label={t("tutor.subjects", "Предметы") as string}
             iconBg="color-mix(in srgb, var(--color-success) 12%, var(--color-surface))"
             iconColor="var(--color-success)"
@@ -527,7 +550,7 @@ export default function PgDashboardResume(): JSX.Element {
 
       {/* Hidden debug Badge kept for a11y */}
       <span style={{ display: "none" }}>
-        <Badge status={status}>{resumeStatusLabel(statusLabel || status)}</Badge>
+        <Badge status={status}>{resumeStatusLabel(statusLabel || status, "", (k, fb) => t(k, fb) as string)}</Badge>
       </span>
     </div>
   );

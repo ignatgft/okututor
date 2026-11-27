@@ -33,11 +33,19 @@ export default function PgSettings() {
     { code: "ky", label: "Кыргызча" },
   ];
 
-  const handleLanguageChange = (lang) => {
+  const isLangActive = (code: string) => {
+    const current = (i18n.resolvedLanguage || i18n.language || "").toLowerCase();
+    if (code === "ky" || code === "kg") {
+      return current.startsWith("ky") || current.startsWith("kg");
+    }
+    return current.startsWith(code);
+  };
+
+  const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
   };
 
-  const handleTimezoneChange = async (e) => {
+  const handleTimezoneChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const next = e.target.value;
     setTimezone(next);
     if (!user) return;
@@ -46,12 +54,14 @@ export default function PgSettings() {
       const { response, data } = await apiClient.put(endpoints.users.update, { timezone: next });
       if (response.ok) {
         setUser({ ...user, timezone: next });
-        toast.success(t("settings.timezone_saved", "Timezone saved"));
+        toast.success(t("settings.timezone_saved", "Часовой пояс сохранён"));
       } else {
-        toast.error(data?.error || data?.message || t("errors.default", "Something went wrong."));
+        const errorMsg = (data as Record<string, unknown>)?.error || (data as Record<string, unknown>)?.message || t("errors.default", "Что-то пошло не так.");
+        toast.error(String(errorMsg));
       }
-    } catch (err) {
-      toast.error(err.message || t("errors.default", "Something went wrong."));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("errors.default", "Что-то пошло не так.");
+      toast.error(msg);
     } finally {
       setSavingTz(false);
     }
@@ -80,7 +90,7 @@ export default function PgSettings() {
               {languages.map((lang) => (
                 <button
                   key={lang.code}
-                  className={`lang-btn ${i18n.language === lang.code ? "active" : ""}`}
+                  className={`lang-btn ${isLangActive(lang.code) ? "active" : ""}`}
                   onClick={() => handleLanguageChange(lang.code)}
                   style={{ flex: 1, justifyContent: "center" }}
                 >
@@ -114,13 +124,11 @@ export default function PgSettings() {
               <span className="settings-label">{t("settings.email_notifications", "Уведомления по email")}</span>
               <span className="settings-value" style={{ color: "var(--color-success)", fontWeight: 600 }}>● {t("settings.enabled", "Включены")}</span>
             </div>
-            <label style={{ position: "relative", display: "inline-block", width: 44, height: 24 }}>
-              <input type="checkbox" defaultChecked style={{ opacity: 0, width: 0, height: 0 }} />
-              <span style={{ position: "absolute", inset: 0, background: "var(--color-primary)", borderRadius: 9999, transition: "0.2s" }} />
-              <span style={{ position: "absolute", top: 2, left: 2, width: 20, height: 20, background: "#fff", borderRadius: "50%", transition: "0.2s", transform: "translateX(20px)" }} />
-            </label>
+            <span style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)", padding: "4px 10px", background: "var(--color-surface-hover, rgba(0,0,0,0.05))", borderRadius: 6, fontWeight: 500 }}>
+              {t("settings.enabled", "Включены")}
+            </span>
           </div>
-          <p style={{ margin: "8px 0 0", fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>Получайте письма о новых заявках, сообщениях и модерации резюме.</p>
+          <p style={{ margin: "8px 0 0", fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>{t("settings.email_updates", "Получайте письма о новых заявках, сообщениях и модерации резюме.")}</p>
         </div>
       </div>
   );

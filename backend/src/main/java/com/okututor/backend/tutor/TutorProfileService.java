@@ -44,6 +44,8 @@ public class TutorProfileService {
     private final UserRepository userRepository;
     private final AuditLogService auditLog;
     private final com.okututor.backend.observability.ObservabilityMetrics metrics;
+    /** Прокси самого себя: прямой вызов publicListingCached() обошёл бы @Cacheable. */
+    private final org.springframework.beans.factory.ObjectProvider<TutorProfileService> self;
 
     public TutorProfileService(TutorProfileRepository profileRepository,
                                SubjectRepository subjectRepository,
@@ -56,7 +58,8 @@ public class TutorProfileService {
                                ModerationActionRepository moderationRepository,
                                UserRepository userRepository,
                                AuditLogService auditLog,
-                               com.okututor.backend.observability.ObservabilityMetrics metrics) {
+                               com.okututor.backend.observability.ObservabilityMetrics metrics,
+                               org.springframework.beans.factory.ObjectProvider<TutorProfileService> self) {
         this.profileRepository = profileRepository;
         this.subjectRepository = subjectRepository;
         this.levelRepository = levelRepository;
@@ -69,6 +72,7 @@ public class TutorProfileService {
         this.userRepository = userRepository;
         this.auditLog = auditLog;
         this.metrics = metrics;
+        this.self = self;
     }
 
     @Transactional
@@ -426,7 +430,7 @@ public class TutorProfileService {
             throw ApiException.conflict("Can renew only PUBLISHED, EXPIRED or HIDDEN, current: " + p.getStatus());
         }
         Instant now = Instant.now();
-        Instant graceWindow = now.plusSeconds(3L * 24 * 3600);
+        Instant graceWindow = now.plusSeconds(7L * 24 * 3600);
         if (p.getExpiresAt() != null && p.getExpiresAt().isAfter(graceWindow)) {
             throw ApiException.conflict("Renewal is available only after the current 30-day period has ended");
         }
@@ -502,7 +506,8 @@ public class TutorProfileService {
 
     @Transactional(readOnly = true)
     public Page<TutorProfileResponse> publicListing(int page, int size, String tutorType, UUID cityId, UUID districtId, Boolean online, Boolean offline, BigDecimal priceFrom, BigDecimal priceTo) {
-        return publicListingCached(page, size, tutorType, cityId, districtId, online, offline, priceFrom, priceTo).toPage();
+        // через прокси, иначе @Cacheable на publicListingCached не срабатывает
+        return self.getObject().publicListingCached(page, size, tutorType, cityId, districtId, online, offline, priceFrom, priceTo).toPage();
     }
 
     @Cacheable(value = "tutorPublicList:v2", key = "T(com.okututor.backend.tutor.TutorCacheKey).of(#page,#size,#tutorType,#cityId,#districtId,#online,#offline,#priceFrom,#priceTo)", unless = "#result == null")

@@ -1,4 +1,5 @@
 import type { ChatConversation } from "../../api/chat.api";
+import { useTranslation } from "react-i18next";
 import UnreadBadge from "./UnreadBadge";
 
 type Props = {
@@ -7,7 +8,7 @@ type Props = {
   onSelect: (c: ChatConversation) => void;
 };
 
-function formatTime(iso?: string | null): string {
+function formatTime(iso: string | null | undefined, yesterdayLabel: string): string {
   if (!iso) return "";
   try {
     const d = new Date(iso as string);
@@ -15,7 +16,7 @@ function formatTime(iso?: string | null): string {
     const diffMs = now.getTime() - d.getTime();
     const diffDays = Math.floor(diffMs / 86_400_000);
     if (diffDays === 0) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    if (diffDays === 1) return "Вчера";
+    if (diffDays === 1) return yesterdayLabel;
     if (diffDays < 7) return d.toLocaleDateString([], { weekday: "short" });
     return d.toLocaleDateString();
   } catch {
@@ -44,14 +45,16 @@ function normalizeAvatar(url?: string | null): string | null {
 }
 
 export default function ConversationItem({ conversation, active, onSelect }: Props): JSX.Element {
-  const rawName = (conversation.counterpart_name as string | null) || (conversation.counterpart_slug as string | null) || "Собеседник";
-  const name = rawName.trim() || "Собеседник";
+  const { t } = useTranslation();
+  const fallbackName = t("messages.counterpart", "Собеседник") as string;
+  const rawName = (conversation.counterpart_name as string | null) || (conversation.counterpart_slug as string | null) || fallbackName;
+  const name = rawName.trim() || fallbackName;
   const last = (conversation.last_message as string | null) || "";
-  const time = formatTime((conversation.last_message_at as string | null) || (conversation.updated_at as string | null) || (conversation.created_at as string | null));
+  const time = formatTime((conversation.last_message_at as string | null) || (conversation.updated_at as string | null) || (conversation.created_at as string | null), t("messages.yesterday", "Вчера") as string);
   const unread = conversation.unread_count ?? 0;
   const avatarUrl = normalizeAvatar((conversation.counterpart_avatar as string | null) || (conversation.other_participant_avatar_url as string | null) || null);
 
-  const preview = last ? (last.length > 40 ? `${last.slice(0, 40)}…` : last) : "Нет сообщений";
+  const preview = last ? (last.length > 40 ? `${last.slice(0, 40)}…` : last) : (t("messages.no_messages", "Нет сообщений") as string);
 
   return (
     <button

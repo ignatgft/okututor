@@ -15,4 +15,8 @@ public class FieldValidationException extends RuntimeException {
     public Map<String, String> getFieldErrors() {
         return fieldErrors;
     }
+
+    public Map<String, String> getErrors() {
+        return fieldErrors;
+    }
 }

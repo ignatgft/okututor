@@ -65,4 +65,33 @@ class TutorProfileStatusTest {
         p.setExpiresAt(java.time.Instant.now().minusSeconds(3600));
         assertThat(p.isExpired()).isTrue();
     }
+
+    @Test
+    void mapper_expiringSoonThreshold_7days() {
+        TutorProfileMapper mapper = new TutorProfileMapper();
+        com.okututor.backend.user.User u = new com.okututor.backend.user.User();
+        u.setId(java.util.UUID.randomUUID());
+        u.setEmail("tutor@test.kg");
+
+        TutorProfile p7 = new TutorProfile();
+        p7.setUser(u);
+        p7.setStatus(TutorProfileStatus.PUBLISHED);
+        p7.setExpiresAt(java.time.Instant.now().plusSeconds(5L * 24 * 3600)); // 5 days -> true
+        com.okututor.backend.tutor.dto.TutorProfileResponse resp7 = mapper.toResponse(p7, java.util.List.of(), java.util.List.of(), java.util.List.of(), false);
+        assertThat(resp7.expiringSoon()).isTrue();
+
+        TutorProfile p10 = new TutorProfile();
+        p10.setUser(u);
+        p10.setStatus(TutorProfileStatus.PUBLISHED);
+        p10.setExpiresAt(java.time.Instant.now().plusSeconds(10L * 24 * 3600)); // 10 days -> false
+        com.okututor.backend.tutor.dto.TutorProfileResponse resp10 = mapper.toResponse(p10, java.util.List.of(), java.util.List.of(), java.util.List.of(), false);
+        assertThat(resp10.expiringSoon()).isFalse();
+
+        TutorProfile pNull = new TutorProfile();
+        pNull.setUser(u);
+        pNull.setStatus(TutorProfileStatus.PUBLISHED);
+        pNull.setExpiresAt(null);
+        com.okututor.backend.tutor.dto.TutorProfileResponse respNull = mapper.toResponse(pNull, java.util.List.of(), java.util.List.of(), java.util.List.of(), false);
+        assertThat(respNull.noindex()).isTrue();
+    }
 }

@@ -1,4 +1,5 @@
 import type { ChatMessage } from "../../api/chat.api";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   message: ChatMessage;
@@ -16,11 +17,19 @@ function formatTime(iso?: string | null): string {
 }
 
 export default function MessageBubble({ message, isOwn }: Props): JSX.Element {
+  const { t } = useTranslation();
   const body = (message.body || (message.text as string) || "").trim();
   const time = formatTime((message.created_at as string) || (message.createdAt as string));
   const failed = (message as unknown as Record<string, unknown>)["failed"] as boolean | undefined;
   const sending = (message as unknown as Record<string, unknown>)["sending"] as boolean | undefined;
   const readAt = (message.read_at as string | undefined) || (message.readAt as string | undefined);
+  const stateLabel = readAt
+    ? (t("messages.read", "Прочитано") as string)
+    : sending
+      ? (t("messages.sending", "Отправка…") as string)
+      : failed
+        ? (t("messages.failed", "Не доставлено") as string)
+        : (t("messages.sent", "Отправлено") as string);
 
   return (
     <div
@@ -49,7 +58,7 @@ export default function MessageBubble({ message, isOwn }: Props): JSX.Element {
         <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end", marginTop: 4, opacity: 0.85, fontSize: "var(--font-size-xs, 0.75rem)", color: isOwn ? "rgba(255,255,255,0.85)" : "var(--color-text-muted)" }}>
           <span>{time}</span>
           {isOwn && (
-            <span aria-label={readAt ? "прочитано" : sending ? "отправка" : failed ? "не доставлено" : "доставлено"} title={readAt ? "Прочитано" : sending ? "Отправка…" : failed ? "Не доставлено" : "Отправлено"}>
+            <span aria-label={stateLabel} title={stateLabel}>
               {failed ? "⚠" : sending ? "◷" : readAt ? "✓✓" : "✓"}
             </span>
           )}

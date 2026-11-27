@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 // migrated to TSX — minimal strict types (controlled)
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { usersApi } from "../../api/users.api";
 import { useToast } from "../ui/Toast";
@@ -31,6 +31,18 @@ export default function AvatarUploader({ src, name, onSaved, onRemoved }: Record
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(null);
   const avatarInputRef = useRef(null);
+  const cropSrcRef = useRef(null);
+
+  const setCropSrcSafe = (url) => {
+    if (cropSrcRef.current) URL.revokeObjectURL(cropSrcRef.current);
+    cropSrcRef.current = url;
+    setCropSrc(url);
+  };
+
+  // Revoke any pending object URL on unmount to avoid memory leaks.
+  useEffect(() => () => {
+    if (cropSrcRef.current) URL.revokeObjectURL(cropSrcRef.current);
+  }, []);
 
   const handlePick = (file) => {
     if (!file) return;
@@ -42,12 +54,11 @@ export default function AvatarUploader({ src, name, onSaved, onRemoved }: Record
       toast.error(t("profile.avatar_type_error", "Please choose an image file"));
       return;
     }
-    setCropSrc(URL.createObjectURL(file));
+    setCropSrcSafe(URL.createObjectURL(file));
   };
 
   const applyBlob = async (blob) => {
-    if (cropSrc) URL.revokeObjectURL(cropSrc);
-    setCropSrc(null);
+    setCropSrcSafe(null);
     setUploading(true);
     setProgress(0);
     const file = new File([blob], "avatar.png", { type: "image/png" });
@@ -95,7 +106,7 @@ export default function AvatarUploader({ src, name, onSaved, onRemoved }: Record
     <div className="avatar-uploader">
       <div className="avatar-uploader-preview">
         {src ? (
-          <img loading="lazy" decoding="async" className="avatar-uploader-img" src={src} alt={t("profile.avatar_alt", "User avatar")} />
+          <img loading="eager" fetchPriority="high" decoding="async" className="avatar-uploader-img" src={src} alt={t("profile.avatar_alt", "User avatar")} />
         ) : (
           <span className="avatar-uploader-fallback" aria-hidden="true">{getInitials(name) || "?"}</span>
         )}
@@ -142,10 +153,7 @@ export default function AvatarUploader({ src, name, onSaved, onRemoved }: Record
       {cropSrc && (
         <AvatarCropModal
           imageSrc={cropSrc}
-          onCancel={() => {
-            URL.revokeObjectURL(cropSrc);
-            setCropSrc(null);
-          }}
+          onCancel={() => setCropSrcSafe(null)}
           onConfirm={applyBlob}
         />
       )}

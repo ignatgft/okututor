@@ -28,11 +28,18 @@ import jakarta.validation.Valid;
 @RestController
 public class SupportController {
 
-    private final SupportService supportService;
+    private final SupportTicketUserService ticketUserService;
+    private final SupportTicketAdminService ticketAdminService;
+    private final SupportTicketCore ticketCore;
     private final UserService userService;
 
-    public SupportController(SupportService supportService, UserService userService) {
-        this.supportService = supportService;
+    public SupportController(SupportTicketUserService ticketUserService,
+                             SupportTicketAdminService ticketAdminService,
+                             SupportTicketCore ticketCore,
+                             UserService userService) {
+        this.ticketUserService = ticketUserService;
+        this.ticketAdminService = ticketAdminService;
+        this.ticketCore = ticketCore;
         this.userService = userService;
     }
 
@@ -41,7 +48,7 @@ public class SupportController {
     @PostMapping("/api/v1/support/tickets")
     public SupportService.TicketResponse create(@AuthenticationPrincipal UserPrincipal principal,
                                                 @RequestBody(required = false) @Valid SupportTicketCreateRequest request) {
-        return supportService.create(currentUser(principal), request);
+        return ticketUserService.create(currentUser(principal), request);
     }
 
     @GetMapping("/api/v1/support/tickets")
@@ -49,17 +56,17 @@ public class SupportController {
                                                          @RequestParam(required = false) String status,
                                                          @RequestParam(defaultValue = "0") int page,
                                                          @RequestParam(defaultValue = "20") int size) {
-        return supportService.mine(currentUser(principal), page, size);
+        return ticketUserService.mine(currentUser(principal), page, size);
     }
 
     @GetMapping("/api/v1/support/tickets/{id}")
     public SupportService.TicketResponse ticket(@AuthenticationPrincipal UserPrincipal principal,
                                                 @PathVariable String id) {
-        Long number = SupportService.parseDisplayId(id);
+        Long number = SupportTicketCore.parseDisplayId(id);
         if (isAdmin(principal)) {
-            return supportService.getForAdmin(number);
+            return ticketAdminService.getForAdmin(number);
         }
-        return supportService.getForUser(currentUser(principal), number);
+        return ticketUserService.getForUser(currentUser(principal), number);
     }
 
     @GetMapping("/api/v1/support/tickets/{id}/messages")
@@ -67,7 +74,7 @@ public class SupportController {
                                                                @PathVariable String id,
                                                                @RequestParam(defaultValue = "0") int page,
                                                                @RequestParam(defaultValue = "50") int size) {
-        return supportService.messages(currentUser(principal), SupportService.parseDisplayId(id), page, size);
+        return ticketUserService.messages(currentUser(principal), SupportTicketCore.parseDisplayId(id), page, size);
     }
 
     @PostMapping("/api/v1/support/tickets/{id}/messages")
@@ -75,12 +82,12 @@ public class SupportController {
                                                             @PathVariable String id,
                                                             @RequestBody(required = false) Map<String, Object> body) {
         User sender = currentUser(principal);
-        Long number = SupportService.parseDisplayId(id);
+        Long number = SupportTicketCore.parseDisplayId(id);
         String text = body == null ? null : (String) body.get("body");
-        if (isAdmin(principal) && !supportService.byNumber(number).isAuthor(sender.getId())) {
-            return supportService.sendAdminMessage(sender, number, text);
+        if (isAdmin(principal) && !ticketCore.byNumber(number).isAuthor(sender.getId())) {
+            return ticketAdminService.sendAdminMessage(sender, number, text);
         }
-        return supportService.sendUserMessage(sender, number, text);
+        return ticketUserService.sendUserMessage(sender, number, text);
     }
 
     /**
@@ -94,32 +101,33 @@ public class SupportController {
             @RequestParam(required = false) String body,
             @RequestPart(required = false) MultipartFile file) {
         User sender = currentUser(principal);
-        Long number = SupportService.parseDisplayId(id);
-        if (isAdmin(principal) && !supportService.byNumber(number).isAuthor(sender.getId())) {
-            return supportService.sendAdminMessage(sender, number, body, file);
+        Long number = SupportTicketCore.parseDisplayId(id);
+        if (isAdmin(principal) && !ticketCore.byNumber(number).isAuthor(sender.getId())) {
+            return ticketAdminService.sendAdminMessage(sender, number, body, file);
         }
-        return supportService.sendUserMessage(sender, number, body, file);
+        return ticketUserService.sendUserMessage(sender, number, body, file);
     }
 
     @PostMapping("/api/v1/support/tickets/{id}/read")
     public ResponseEntity<Void> markRead(@AuthenticationPrincipal UserPrincipal principal, @PathVariable String id) {
-        supportService.markReadByUser(currentUser(principal), SupportService.parseDisplayId(id));
+        ticketUserService.markReadByUser(currentUser(principal), SupportTicketCore.parseDisplayId(id));
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/api/v1/support/tickets/{id}/close")
     public SupportService.TicketResponse close(@AuthenticationPrincipal UserPrincipal principal,
                                                @PathVariable String id) {
-        return supportService.closeByUser(currentUser(principal), SupportService.parseDisplayId(id));
+        return ticketUserService.closeByUser(currentUser(principal), SupportTicketCore.parseDisplayId(id));
     }
 
     @PostMapping("/api/v1/support/tickets/{id}/reopen")
     public SupportService.TicketResponse reopen(@AuthenticationPrincipal UserPrincipal principal,
                                                 @PathVariable String id) {
         User user = currentUser(principal);
+        Long number = SupportTicketCore.parseDisplayId(id);
         boolean adminSide = isAdmin(principal)
-                && !supportService.byNumber(SupportService.parseDisplayId(id)).isAuthor(user.getId());
-        return supportService.reopen(user, SupportService.parseDisplayId(id), adminSide);
+                && !ticketCore.byNumber(number).isAuthor(user.getId());
+        return adminSide ? ticketAdminService.reopenAsAdmin(number) : ticketUserService.reopenAsUser(user, number);
     }
 
     // ---------- админ ----------
@@ -129,11 +137,11 @@ public class SupportController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     static class AdminSupportController {
 
-        private final SupportService supportService;
+        private final SupportTicketAdminService ticketAdminService;
         private final UserService userService;
 
-        AdminSupportController(SupportService supportService, UserService userService) {
-            this.supportService = supportService;
+        AdminSupportController(SupportTicketAdminService ticketAdminService, UserService userService) {
+            this.ticketAdminService = ticketAdminService;
             this.userService = userService;
         }
 
@@ -144,12 +152,12 @@ public class SupportController {
                 @RequestParam(required = false) String q,
                 @RequestParam(defaultValue = "0") int page,
                 @RequestParam(defaultValue = "20") int size) {
-            return supportService.allForAdmin(page, size, status, priority, q);
+            return ticketAdminService.allForAdmin(page, size, status, priority, q);
         }
 
         @GetMapping("/tickets/{id}")
         public SupportService.TicketResponse ticket(@PathVariable String id) {
-            return supportService.getForAdmin(SupportService.parseDisplayId(id));
+            return ticketAdminService.getForAdmin(SupportTicketCore.parseDisplayId(id));
         }
 
         /** payload: { admin_id? } — нет/пусто значит назначить себя. */
@@ -158,33 +166,33 @@ public class SupportController {
                                                     @PathVariable String id,
                                                     @RequestBody(required = false) Map<String, Object> payload) {
             UUID targetId = parseUuid(payload == null ? null : payload.get("admin_id"));
-            return supportService.assign(SupportService.parseDisplayId(id),
+            return ticketAdminService.assign(SupportTicketCore.parseDisplayId(id),
                     currentUser(principal), targetId);
         }
 
         @PostMapping("/tickets/{id}/take")
         public SupportService.TicketResponse take(@AuthenticationPrincipal UserPrincipal principal,
                                                   @PathVariable String id) {
-            return supportService.assign(SupportService.parseDisplayId(id), currentUser(principal), null);
+            return ticketAdminService.assign(SupportTicketCore.parseDisplayId(id), currentUser(principal), null);
         }
 
         @PutMapping("/tickets/{id}/status")
         public SupportService.TicketResponse setStatus(@PathVariable String id,
                                                        @RequestBody Map<String, String> body) {
-            return supportService.setStatus(SupportService.parseDisplayId(id),
+            return ticketAdminService.setStatus(SupportTicketCore.parseDisplayId(id),
                     body == null ? null : body.get("status"));
         }
 
         @PutMapping("/tickets/{id}/priority")
         public SupportService.TicketResponse setPriority(@PathVariable String id,
                                                          @RequestBody Map<String, String> body) {
-            return supportService.setPriority(SupportService.parseDisplayId(id),
+            return ticketAdminService.setPriority(SupportTicketCore.parseDisplayId(id),
                     body == null ? null : body.get("priority"));
         }
 
         @GetMapping("/agents")
         public List<SupportService.TicketResponse.AgentRef> agents() {
-            return supportService.agents();
+            return ticketAdminService.agents();
         }
 
         private static UUID parseUuid(Object value) {

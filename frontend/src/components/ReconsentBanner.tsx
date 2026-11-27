@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { consentApi } from "../api/legal.api";
 import useAuthStore from "../store/authStore";
 
 export default function ReconsentBanner(): JSX.Element | null {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuthStore();
   const [required, setRequired] = useState<Record<string, unknown>[]>([]);
   const [visible, setVisible] = useState(false);
@@ -24,11 +26,11 @@ export default function ReconsentBanner(): JSX.Element | null {
 
   return (
     <div style={{ position: "fixed", top: 64, left: 16, right: 16, maxWidth: 640, margin: "0 auto", background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 12, padding: 16, zIndex: 55, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-      <div style={{ fontWeight: 700, marginBottom: 6 }}>Мы обновили {docType === "PRIVACY" ? "Политику конфиденциальности" : docType}</div>
-      <div style={{ fontSize: 13, color: "#92400e", marginBottom: 12 }}>Пожалуйста, ознакомьтесь с новой версией, чтобы продолжить использование сервиса.</div>
+      <div style={{ fontWeight: 700, marginBottom: 6 }}>{t("reconsent.title", "Мы обновили документ")}</div>
+      <div style={{ fontSize: 13, color: "#92400e", marginBottom: 12 }}>{t("reconsent.text", "Пожалуйста, ознакомьтесь с новой версией, чтобы продолжить использование сервиса.")}</div>
       <div style={{ display: "flex", gap: 8 }}>
-        <a href={`/legal/${docType.toLowerCase().replace("_", "-")}`} target="_blank" rel="noreferrer" className="btn-primary" style={{ textDecoration: "none", padding: "8px 16px", borderRadius: 8, background: "#f59e0b", color: "#fff", fontWeight: 600 }}>Ознакомиться и продолжить</a>
-        <button type="button" className="btn-secondary" onClick={() => setVisible(false)}>Позже</button>
+        <a href={`/legal/${docType.toLowerCase().replace("_", "-")}`} target="_blank" rel="noreferrer" className="btn-primary" style={{ textDecoration: "none", padding: "8px 16px", borderRadius: 8, background: "#f59e0b", color: "#fff", fontWeight: 600 }}>{t("reconsent.review", "Ознакомиться и продолжить")}</a>
+        <button type="button" className="btn-secondary" onClick={() => setVisible(false)}>{t("reconsent.later", "Позже")}</button>
       </div>
     </div>
   );

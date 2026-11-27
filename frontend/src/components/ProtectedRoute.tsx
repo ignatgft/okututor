@@ -7,7 +7,12 @@ import { AUTH_STATUS } from "../store/authStore";
 
 const INIT_TIMEOUT_MS = 10000;
 
-function ProtectedRoute({ children, roles }) {
+interface ProtectedRouteProps {
+  children?: React.ReactNode;
+  roles?: string[];
+}
+
+function ProtectedRoute({ children, roles }: ProtectedRouteProps): JSX.Element {
   const { t } = useTranslation();
   const { isAuthenticated, status, user, initError, retryInit } = useAuthStore();
   const location = useLocation();

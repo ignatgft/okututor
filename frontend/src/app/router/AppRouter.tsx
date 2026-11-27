@@ -13,10 +13,8 @@ import useAuthStore from "../../store/authStore";
 
 const withBoundary = (node: React.ReactNode): React.ReactNode => <ErrorBoundary>{node}</ErrorBoundary>;
 
-const PgLesson = lazy(() => import("../../pages/PgLesson"));
 const PgBecomeTutor = lazy(() => import("../../pages/PgBecomeTutor"));
 const PgMain = lazy(() => import("../../pages/PgMain"));
-const PgSearch = lazy(() => import("../../pages/PgSearch"));
 const PgTutors = lazy(() => import("../../pages/PgTutors"));
 const PgTutorMarketplace = lazy(() => import("../../features/tutors/components/TutorProfileMarketplace"));
 const PgUserDashboard = lazy(() => import("../../pages/PgUserDashboard"));
@@ -102,7 +100,7 @@ export function AppRouter(): JSX.Element {
               <Route path="/app/tutor/:tutorId" element={withBoundary(<PgTutorMarketplace />)} />
               <Route path="/app/repetitor/:subject/:slug" element={withBoundary(<PgTutorMarketplace />)} />
               <Route path="/app/repetitor/:slug" element={withBoundary(<PgTutorMarketplace />)} />
-              <Route path="/app/search" element={withBoundary(<PgSearch />)} />
+              <Route path="/app/search" element={<SearchRedirect />} />
               <Route path="/app/resumes" element={withBoundary(<PgDashboardResume />)} />
               <Route path="/app/resumes/new" element={withBoundary(<PgBecomeTutor />)} />
               <Route path="/app/resumes/edit" element={withBoundary(<PgResumeEditor />)} />
@@ -157,14 +155,12 @@ export function AppRouter(): JSX.Element {
             <Route path="/conversations/:conversationId" element={<ConversationsLegacyRedirect />} />
           </Route>
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/lesson/:bookingId" element={withBoundary(<PgLesson />)} />
-          </Route>
+          <Route path="/lesson/:bookingId" element={<Navigate to="/app/dashboard" replace />} />
 
           <Route element={<ProtectedRoute roles={["USER", "ADMIN", "SUPER_ADMIN", "STUDENT", "TUTOR"]} />}>
-            <Route path="/support" element={withBoundary(<PgSupport />)} />
-            <Route path="/support/new" element={withBoundary(<PgSupportNew />)} />
-            <Route path="/support/tickets/:ticketId" element={withBoundary(<PgSupportTicket />)} />
+            <Route path="/support" element={<Navigate to="/app/support" replace />} />
+            <Route path="/support/new" element={<Navigate to="/app/support/new" replace />} />
+            <Route path="/support/tickets/:ticketId" element={<SupportLegacyRedirect />} />
           </Route>
 
           {AdminRoutes()}
@@ -180,6 +176,12 @@ function ConversationsLegacyRedirect(): JSX.Element {
   const { conversationId } = useParams() as { conversationId?: string };
   if (conversationId) return <Navigate to={`/app/messages/${conversationId}`} replace />;
   return <Navigate to="/app/messages" replace />;
+}
+
+function SupportLegacyRedirect(): JSX.Element {
+  const { ticketId } = useParams() as { ticketId?: string };
+  if (ticketId) return <Navigate to={`/app/support/tickets/${ticketId}`} replace />;
+  return <Navigate to="/app/support" replace />;
 }
 
 function PublicTutorsGuard(): JSX.Element {
@@ -201,9 +203,14 @@ function PublicTutorGuard(): JSX.Element {
     // for /tutor fallback keep id
     if (path.startsWith("/tutor/") && id) return <Navigate to={`/app/tutor/${id}`} replace />;
     if (path.startsWith("/repetitor/")) return <Navigate to={appPath} replace />;
-    if (path === "/search") return <Navigate to="/app/search" replace />;
+    if (path === "/search") return <Navigate to={`/app/tutors${window.location.search}`} replace />;
     if (path.startsWith("/subjects/") || path.startsWith("/cities/")) return <Navigate to={appPath} replace />;
     return <Navigate to={`/app/tutor/${id || ""}`.replace(/\/$/, "")} replace />;
   }
   return withBoundary(<PgTutorMarketplace />) as JSX.Element;
+}
+
+function SearchRedirect(): JSX.Element {
+  const location = useLocation();
+  return <Navigate to={`/app/tutors${location.search}`} replace />;
 }

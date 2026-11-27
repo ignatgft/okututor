@@ -15,8 +15,8 @@ import translationEN from "./locales/en/translation.json";
 import translationRU from "./locales/ru/translation.json";
 
 const localeLoaders: Record<string, () => Promise<{ default: object }>> = {
-  en: () => import("./locales/en/translation.json"),
-  ru: () => import("./locales/ru/index.ts"),
+  en: () => Promise.resolve({ default: translationEN }),
+  ru: () => Promise.resolve({ default: translationRU }),
   ky: () => import("./locales/kg/index.ts"),
   // kg alias → ky loader
   kg: () => import("./locales/kg/index.ts"),

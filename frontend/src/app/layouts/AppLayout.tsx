@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useAuthStore from "../../store/authStore";
 import AppSidebar from "./AppSidebar";
+import ThemeSwitch from "../../components/ui/ThemeSwitch";
 import "./AppLayout.css";
 
 export default function AppLayout(): JSX.Element {
@@ -71,7 +72,8 @@ export default function AppLayout(): JSX.Element {
             okututor
           </Link>
           <div className="app-header-title">{pageTitle}</div>
-          <div className="app-header-actions">
+          <div className="app-header-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <ThemeSwitch />
             <Link to="/app/profile" className="app-header-actions" style={{ textDecoration: "none", color: "var(--color-text)" }}>
               {user?.avatar ? <img loading="lazy" decoding="async" src={user.avatar} alt="" className="app-header-avatar" /> : <span className="app-header-avatar-fallback">{user?.full_name?.[0] ?? "U"}</span>}
               <span className="app-header-user">{user?.full_name ?? ""}</span>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getAccessToken } from "../../../api/token";
+import { getWsTicket } from "../../../api/chat.api";
 import { API_BASE_URL } from "../../../api/config";
 import type { ChatMessage } from "../../../api/chat.api";
 
@@ -9,23 +10,33 @@ type TypingPayload = { type: "typing"; conversationId: string; userId: string; i
 type MessagePayload = { type: "message"; conversationId: string; message?: ChatMessage; body?: string; senderId?: string; [k: string]: unknown };
 type RawPayload = PresencePayload | TypingPayload | MessagePayload | { type: string; [k: string]: unknown };
 
-function wsUrl(): string | null {
+function wsUrlWithCredential(kind: "ticket" | "token", credential: string): string | null {
   const base = API_BASE_URL || window.location.origin;
   try {
     const u = new URL(base, window.location.origin);
     u.protocol = u.protocol === "https:" ? "wss:" : "ws:";
     // backend endpoint is /ws or /ws/chat
-    const token = getAccessToken();
-    if (!token) return null;
     u.pathname = "/ws";
-    u.search = `token=${encodeURIComponent(token)}`;
+    u.search = `${kind}=${encodeURIComponent(credential)}`;
     return u.toString();
   } catch {
-    const token = getAccessToken();
-    if (!token) return null;
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${proto}//${window.location.host}/ws?token=${encodeURIComponent(token)}`;
+    return `${proto}//${window.location.host}/ws?${kind}=${encodeURIComponent(credential)}`;
   }
+}
+
+async function wsUrl(): Promise<string | null> {
+  // Приоритет — одноразовый тикет (не светит JWT в логах); fallback — legacy ?token= для старых бэкендов.
+  try {
+    const ticket = await getWsTicket();
+    if (ticket) {
+      const url = wsUrlWithCredential("ticket", ticket);
+      if (url) return url;
+    }
+  } catch { /* fallback ниже */ }
+  const token = getAccessToken();
+  if (!token) return null;
+  return wsUrlWithCredential("token", token);
 }
 
 export function useChatWebSocket(enabled = true) {
@@ -71,8 +82,10 @@ export function useChatWebSocket(enabled = true) {
     let attempts = 0;
 
     const connect = () => {
-      const url = wsUrl();
-      if (!url) return;
+      void (async () => {
+        if (closedByUs) return;
+        const url = await wsUrl();
+        if (!url || closedByUs) return;
       try { ws = new WebSocket(url); wsRef.current = ws; } catch { return; }
 
       ws.onmessage = (ev) => {
@@ -139,6 +152,7 @@ export function useChatWebSocket(enabled = true) {
           try { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "ping" })); } catch {}
         }, 30000);
       };
+      })();
     };
 
     connect();

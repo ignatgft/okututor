@@ -5,9 +5,12 @@ import SupportTicketStatus from "./SupportTicketStatus";
 import SupportTicketPriority from "./SupportTicketPriority";
 import SupportTicketCategory from "./SupportTicketCategory";
 
-export default function SupportTicketCard({ ticket, basePath = "/support/tickets" }: Record<string, unknown>) {
+export default function SupportTicketCard({ ticket, basePath = "/app/support/tickets" }: Record<string, unknown>) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const updatedAt = ticket.updated_at || ticket.created_at;
+  const parsedAt = typeof updatedAt === "string" || typeof updatedAt === "number" ? Date.parse(updatedAt) : NaN;
+  const dateLabel = Number.isNaN(parsedAt) ? "—" : new Date(parsedAt).toLocaleDateString();
 
   return (
     <button
@@ -30,7 +33,7 @@ export default function SupportTicketCard({ ticket, basePath = "/support/tickets
         <SupportTicketCategory category={ticket.category} />
         <SupportTicketPriority priority={ticket.priority} />
         <span className="support-ticket-date">
-          {new Date(ticket.updated_at || ticket.created_at).toLocaleDateString()}
+          {dateLabel}
         </span>
       </div>
       {ticket.last_message_preview && (

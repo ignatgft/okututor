@@ -20,7 +20,9 @@ public class ChatWebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         String[] allowed = appProperties.getCors().getAllowedOrigins().toArray(new String[0]);
+        // Fail-closed: без явно заданных origins handshake отклоняется (никакого "*" по умолчанию).
+        // Прод обязан задать APP_CORS_ORIGINS, иначе WS недоступен — это безопаснее открытого сокета.
         registry.addHandler(handler, "/ws", "/ws/chat")
-                .setAllowedOriginPatterns(allowed.length == 0 ? new String[]{"*"} : allowed);
+                .setAllowedOriginPatterns(allowed);
     }
 }

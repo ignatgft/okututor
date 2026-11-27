@@ -7,27 +7,30 @@ import { adminApi } from "../api/admin.api";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { Badge, Spinner, EmptyState, ErrorState } from "../components/ui/Primitives";
 import { useToast } from "../components/ui/Toast";
+import { extractError, errorText } from "../utils/apiHelpers";
+import { toList } from "../types/api";
+import type { ReviewDTO } from "../types/api";
 import "../styles/Admin.css";
 
 export default function PgAdminReviews() {
   const { t } = useTranslation();
   const setPageTitle = usePageTitle();
   const toast = useToast();
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState<ReviewDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [actionLoading, setActionLoading] = useState(null);
-  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [actionLoading, setActionLoading] = useState<string | number | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<ReviewDTO | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const { response, data } = await adminApi.reviews();
-      if (response.ok) setReviews(Array.isArray(data) ? data : data.content || []);
-      else setError(data.message || data.error || t("common.error"));
+      if (response.ok) setReviews(toList(data));
+      else setError(extractError(data) || t("common.error"));
     } catch (e) {
-      setError(e.message);
+      setError(errorText(e));
     } finally {
       setLoading(false);
     }
@@ -50,7 +53,7 @@ export default function PgAdminReviews() {
       setConfirmTarget(null);
       await load();
     } catch (e) {
-      toast.error(e.message || t("errors.default", "Something went wrong."));
+      toast.error(errorText(e) || t("errors.default", "Something went wrong."));
     } finally {
       setActionLoading(null);
     }

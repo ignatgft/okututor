@@ -32,7 +32,7 @@ public class TutorRequestService {
     @Transactional
     public TutorRequestResponse create(TutorRequestCreateRequest req, UUID studentUserId) {
         TutorProfile profile = profileRepository.findById(req.tutorProfileId()).orElseThrow(() -> ApiException.notFound("Tutor profile not found"));
-        if (profile.getStatus() != TutorProfileStatus.PUBLISHED) {
+        if (profile.getStatus() != TutorProfileStatus.PUBLISHED || profile.isExpired()) {
             throw ApiException.notFound("Tutor profile not found");
         }
         if (profile.getUser() != null && profile.getUser().isBlocked()) {
@@ -68,9 +68,12 @@ public class TutorRequestService {
             User student = userRepository.findById(studentUserId).orElse(null);
             r.setStudentUser(student);
         }
-        r.setStudentName(req.studentName().trim());
-        r.setStudentContact(req.studentContact().trim());
-        r.setMessage(req.message());
+        String cleanName = org.jsoup.Jsoup.clean(req.studentName(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
+        String cleanContact = org.jsoup.Jsoup.clean(req.studentContact(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
+        String cleanMessage = req.message() == null ? null : org.jsoup.Jsoup.clean(req.message(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
+        r.setStudentName(cleanName);
+        r.setStudentContact(cleanContact);
+        r.setMessage(cleanMessage);
         r.setStatus(TutorRequest.Status.NEW);
         requestRepository.save(r);
         try { metrics.tutorRequestCreated(); metrics.contactClick(); } catch (Exception ignored) {}

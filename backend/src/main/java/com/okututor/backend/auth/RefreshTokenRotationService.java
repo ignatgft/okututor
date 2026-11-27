@@ -39,7 +39,12 @@ public class RefreshTokenRotationService {
                 throw com.okututor.backend.common.error.ApiException.forbidden("Account is blocked. Contact support.");
             }
             metrics.authRefreshSuccess();
-            return buildTokenPair(rotation.user(), session);
+            // Возвращаем токен из той же семьи (rotate уже создал next),
+            // а не новую семью через issueFor — иначе каждый refresh плодил
+            // осиротевшую запись и ломал смысл reuse detection.
+            User user = rotation.user();
+            String access = jwtService.generateAccessToken(user.getId(), user.getEmail(), user.getRole());
+            return new AuthTokensResponse(access, rotation.refreshToken(), userMapper.toResponse(user));
         } catch (RuntimeException e) {
             metrics.authRefreshFailed();
             throw e;

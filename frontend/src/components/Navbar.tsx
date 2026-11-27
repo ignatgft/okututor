@@ -188,7 +188,7 @@ const Navbar = () => {
                         <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.9 5.5z" />
                       </svg>
                     </span>
-                    <span>Английский</span>
+                    <span>{t("subject.angliyskiy", "Английский")}</span>
                   </Link>
                   <Link to="/tutors?subject=russian" className="drawer-subitem" onClick={() => setIsOpen(false)}>
                     <span className="drawer-subitem-icon drawer-subitem-icon--blue" aria-hidden="true">
@@ -197,7 +197,7 @@ const Navbar = () => {
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                       </svg>
                     </span>
-                    <span>Русский</span>
+                    <span>{t("subject.russkiy", "Русский")}</span>
                   </Link>
                   <Link to="/tutors?subject=math" className="drawer-subitem" onClick={() => setIsOpen(false)}>
                     <span className="drawer-subitem-icon drawer-subitem-icon--blue" aria-hidden="true">
@@ -208,7 +208,7 @@ const Navbar = () => {
                       </svg>
                       <span style={{ position: "absolute", fontSize: 8, fontWeight: 700, color: "#0a7cff", right: 2, bottom: 0 }}>T</span>
                     </span>
-                    <span>Математика</span>
+                    <span>{t("subject.matematika", "Математика")}</span>
                   </Link>
                   <Link to="/tutors?subject=physics" className="drawer-subitem" onClick={() => setIsOpen(false)}>
                     <span className="drawer-subitem-icon drawer-subitem-icon--blue" aria-hidden="true">
@@ -218,7 +218,7 @@ const Navbar = () => {
                         <ellipse cx="12" cy="12" rx="5" ry="9" />
                       </svg>
                     </span>
-                    <span>Физика</span>
+                    <span>{t("subject.fizika", "Физика")}</span>
                   </Link>
                 </div>
               )}

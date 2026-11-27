@@ -18,6 +18,10 @@ interface XhrResponse {
   headers: { get: (name: string) => string | null };
 }
 
+// Uploads can legitimately take longer than the default API timeout
+// (large files on slow mobile networks) — but must not hang forever.
+const UPLOAD_TIMEOUT_MS = 120_000;
+
 /**
  * Multipart upload via XMLHttpRequest with progress reporting.
  * Resolves with the same `{ response, data }` shape used across the API
@@ -36,6 +40,7 @@ export function uploadFile<T = unknown>({
     form.append(fieldName, file, file.name);
 
     xhr.open(method, buildApiUrl(endpoint));
+    xhr.timeout = UPLOAD_TIMEOUT_MS;
 
     const token = getAccessToken();
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
@@ -85,6 +90,7 @@ export function uploadFile<T = unknown>({
             const retryToken = getAccessToken();
             const retryXhr = new XMLHttpRequest();
             retryXhr.open(method, buildApiUrl(endpoint));
+            retryXhr.timeout = UPLOAD_TIMEOUT_MS;
             if (retryToken) retryXhr.setRequestHeader("Authorization", `Bearer ${retryToken}`);
             retryXhr.setRequestHeader("Accept", "application/json");
             retryXhr.onload = (): void => {

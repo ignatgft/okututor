@@ -20,7 +20,11 @@ RUN useradd --system --uid 1001 okututor && mkdir -p /app/data && chown okututor
 USER okututor
 COPY --from=otel /tmp/opentelemetry-javaagent.jar /app/opentelemetry-javaagent.jar
 COPY --from=build /app/target/okututor-backend-*.jar app.jar
+COPY entrypoint.sh /app/entrypoint.sh
+USER root
+RUN chmod +x /app/entrypoint.sh && chown okututor /app/entrypoint.sh
+USER okututor
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --retries=10 CMD wget -qO- http://localhost:8080/actuator/health | grep -q UP
-# OTEL включается только если OTEL_EXPORTER_OTLP_ENDPOINT задан (в prod). Без него агент спит.
-ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+# OTEL: агент стартует условно — если OTEL_EXPORTER_OTLP_ENDPOINT пустой, отключаем SDK чтобы не было MalformedURLException: no protocol
+ENTRYPOINT ["/app/entrypoint.sh"]

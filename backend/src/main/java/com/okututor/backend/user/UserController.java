@@ -77,6 +77,17 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Право на удаление данных (GDPR / Закон КР «Об информации персонального характера»).
+     * Анонимизирует аккаунт, архивирует резюме и отзывает все сессии.
+     */
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal UserPrincipal principal) {
+        requireAuth(principal);
+        userService.deleteAccount(userService.requireById(principal.id()));
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     public PublicUserResponse byId(@PathVariable UUID id) {
         return userService.toPublic(userService.requireById(id));

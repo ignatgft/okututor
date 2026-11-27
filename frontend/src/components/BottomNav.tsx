@@ -17,11 +17,6 @@ const BottomNav = () => {
   const openAuth = useUIStore((s) => s.openAuth);
   const { data: unreadCount = 0 } = useUnreadCount(isAuthenticated);
 
-  const p = location.pathname;
-  const isDetailPage = /^\/(course|lesson)\/[^/]+/.test(p) || /^\/(app\/)?tutor\/[^/]+/.test(p) || /^\/repetitor\/[^/]+\/[^/]+/.test(p) || /^\/app\/repetitor\/[^/]+\/[^/]+/.test(p);
-  // Показывать бар и на главной, прятать только на детальных страницах курса/урока
-  if (isDetailPage) return null;
-
   const isAdminRole = isAdmin(user?.role);
   const isTutorRole = isTutor(user?.role);
   const isUserRole = isUser(user?.role);
@@ -37,7 +32,26 @@ const BottomNav = () => {
     roleKey = "user";
   }
   const tabs = BOTTOMNAV_ITEMS[roleKey];
-  if (!tabs || tabs.length === 0) return null;
+
+  const p = location.pathname;
+  const isDetailPage =
+    /^\/(course|lesson)\/[^/]+/.test(p) ||
+    /^\/(app\/)?tutor\/[^/]+/.test(p) ||
+    /^\/(app\/)?repetitor\/[^/]+\/[^/]+/i.test(p) ||
+    /^\/app\/messages\/[^/]+/.test(p);
+
+  const shouldRender = !isDetailPage && Boolean(tabs && tabs.length > 0);
+
+  React.useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.body.classList.toggle("has-bottom-nav", shouldRender);
+      return () => {
+        document.body.classList.remove("has-bottom-nav");
+      };
+    }
+  }, [shouldRender]);
+
+  if (!shouldRender || !tabs) return null;
   const guestProtectedIds = new Set(["resume", "favorites", "requests", "profile"]);
 
   const isActive = (path: string): boolean => {

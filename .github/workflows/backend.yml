@@ -50,7 +50,6 @@ jobs:
           DATABASE_URL: jdbc:postgresql://localhost:5432/okututor_test
           DATABASE_USERNAME: okututor
           DATABASE_PASSWORD: testpassword
-          JWT_SECRET: test-secret-key-for-ci-at-least-32-chars
       - name: Verify single monitoring compose
         run: docker compose -f monitoring/docker-compose.yml config -q
 

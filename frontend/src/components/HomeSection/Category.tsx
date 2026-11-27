@@ -174,16 +174,16 @@ const Category = () => {
 
   // порядок как в референсе: 5 сверху + 5 снизу
   const categories = [
-    { key: "math", title: "Математика", slug: "matematika", icon: <IconMath /> },
-    { key: "english", title: "Английский", slug: "angliyskiy", icon: <IconAa label="en" /> },
-    { key: "russian", title: "Русский", slug: "russkiy", icon: <IconAa label="ru" /> },
-    { key: "kyrgyz", title: "Кыргызский", slug: "kyrgyzskiy", icon: <IconKk /> },
-    { key: "physics", title: "Физика", slug: "fizika", icon: <IconAtom /> },
-    { key: "chemistry", title: "Химия", slug: "himiya", icon: <IconChem /> },
-    { key: "biology", title: "Биология", slug: "biologiya", icon: <IconDNA /> },
-    { key: "informatics", title: "Информатика", slug: "informatika", icon: <IconCode /> },
-    { key: "python", title: "Python", slug: "python", icon: <IconPython /> },
-    { key: "ort", title: "ОРТ", slug: "ort", icon: <IconORT /> },
+    { key: "math", titleKey: "subject.matematika", title: "Математика", slug: "matematika", icon: <IconMath /> },
+    { key: "english", titleKey: "subject.angliyskiy", title: "Английский", slug: "angliyskiy", icon: <IconAa label="en" /> },
+    { key: "russian", titleKey: "subject.russkiy", title: "Русский", slug: "russkiy", icon: <IconAa label="ru" /> },
+    { key: "kyrgyz", titleKey: "subject.kyrgyzskiy", title: "Кыргызский", slug: "kyrgyzskiy", icon: <IconKk /> },
+    { key: "physics", titleKey: "subject.fizika", title: "Физика", slug: "fizika", icon: <IconAtom /> },
+    { key: "chemistry", titleKey: "subject.himiya", title: "Химия", slug: "himiya", icon: <IconChem /> },
+    { key: "biology", titleKey: "subject.biologiya", title: "Биология", slug: "biologiya", icon: <IconDNA /> },
+    { key: "informatics", titleKey: "subject.informatika", title: "Информатика", slug: "informatika", icon: <IconCode /> },
+    { key: "python", titleKey: "subject.python", title: "Python", slug: "python", icon: <IconPython /> },
+    { key: "ort", titleKey: "subject.ort", title: "ОРТ", slug: "ort", icon: <IconORT /> },
   ];
 
   return (
@@ -202,7 +202,7 @@ const Category = () => {
             <div className="category-icon category-icon--new">
               {cat.icon}
             </div>
-            <h3 className="category-card-title">{cat.title}</h3>
+            <h3 className="category-card-title">{t(cat.titleKey, cat.title)}</h3>
           </Link>
         ))}
       </div>

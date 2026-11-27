@@ -3,6 +3,7 @@ export const auth = {
   register: "/api/v1/auth/register",
   refresh: "/api/v1/auth/refresh",
   logout: "/api/v1/auth/logout",
+  oauthExchange: "/api/v1/auth/oauth/exchange",
   me: "/api/v1/auth/me",
   forgotPassword: "/api/v1/auth/forgot-password",
   resetPassword: "/api/v1/auth/reset-password",

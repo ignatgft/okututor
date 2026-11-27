@@ -68,7 +68,8 @@ export const SIDEBAR_ITEMS: Record<RoleKey, NavItem[]> = {
       icon: ClipboardList,
       path: "/admin/tutors",
       children: [
-        { id: "admin_requests_list", labelKey: "navigation.requests", icon: ClipboardList, path: "/admin/tutors" },
+        { id: "admin_tutors_list", labelKey: "admin.tutor_applications", icon: ClipboardList, path: "/admin/tutors" },
+        { id: "admin_requests_list", labelKey: "navigation.requests", icon: Inbox, path: "/admin/requests" },
         { id: "admin_metrics", labelKey: "admin.metrics", icon: BarChart3, path: "/admin/metrics" },
       ],
     },
@@ -131,9 +132,8 @@ export const BOTTOMNAV_ITEMS: Record<RoleKey, NavItem[]> = {
   admin: [
     { id: "dashboard", path: "/admin", labelKey: "navbar.home", icon: Home },
     { id: "users", path: "/admin/users", labelKey: "admin.users", icon: Users },
-    { id: "tutors", path: "/admin/tutors", labelKey: "admin.tutor_applications", icon: Users },
+    { id: "tutors", path: "/admin/tutors", labelKey: "admin.tutor_applications", icon: ClipboardList },
     { id: "requests", path: "/admin/requests", labelKey: "navigation.requests", icon: Inbox },
-    { id: "messages", path: "/app/messages", labelKey: "navbar.messages", icon: Inbox },
     { id: "support", path: "/admin/support", labelKey: "admin.support", icon: LifeBuoy },
   ],
 };

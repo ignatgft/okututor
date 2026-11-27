@@ -1,6 +1,9 @@
+import { useTranslation } from "react-i18next";
+
 type Props = { count: number; className?: string };
 
 export default function UnreadBadge({ count, className }: Props): JSX.Element | null {
+  const { t } = useTranslation();
   if (!count || count <= 0) return null;
   const display = count > 99 ? "99+" : String(count);
   return (
@@ -20,7 +23,7 @@ export default function UnreadBadge({ count, className }: Props): JSX.Element | 
         fontWeight: 600,
         lineHeight: 1,
       }}
-      aria-label={`${count} непрочитано`}
+      aria-label={t("messages.unread", "{{count}} непрочитано", { count }) as string}
     >
       {display}
     </span>

@@ -1,12 +1,10 @@
 package com.okututor.backend.common.ratelimit;
 
 import java.time.Duration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnBean(StringRedisTemplate.class)
 public class RedisRateLimiter implements RateLimiter {
 
     private final StringRedisTemplate redis;

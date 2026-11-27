@@ -83,12 +83,22 @@ public class ReviewService {
             throw ApiException.conflict("You have already reviewed this course");
         }
 
+        String sanitizedComment = null;
+        if (comment != null) {
+            if (comment.length() > 2000) {
+                throw new com.okututor.backend.common.error.FieldValidationException(
+                        Map.of("comment", "Comment must not exceed 2000 characters"));
+            }
+            sanitizedComment = org.jsoup.Jsoup.clean(comment, "", org.jsoup.safety.Safelist.none(),
+                    new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
+        }
+
         Review review = new Review();
         review.setCourseId(courseId);
         review.setStudent(student);
         review.setBookingId(bookingId);
         review.setRating(rating);
-        review.setComment(comment);
+        review.setComment(sanitizedComment);
 
         try {
             review = repository.saveAndFlush(review);

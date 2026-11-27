@@ -13,12 +13,12 @@ interface Props {
 }
 
 const SECTIONS = [
-  { id: "main", labelKey: "resume_edit.main", fallback: "Основное", Icon: FileText, desc: "Имя, заголовок, описание" },
-  { id: "education", labelKey: "resume_edit.education", fallback: "Образование", Icon: GraduationCap, desc: "ВУЗ, специальность, опыт" },
-  { id: "price", labelKey: "resume_edit.price", fallback: "Цена и формат", Icon: Banknote, desc: "Стоимость, онлайн/офлайн" },
-  { id: "subjects", labelKey: "resume_edit.subjects", fallback: "Предметы и уровни", Icon: BookOpen, desc: "Предметы, уровни, языки" },
-  { id: "location", labelKey: "resume_edit.location", fallback: "Локация", Icon: MapPin, desc: "Город, район, телефон" },
-  { id: "media", labelKey: "resume_edit.media", fallback: "Фото и достижения", Icon: ImageIcon, desc: "Аватар, достижения" },
+  { id: "main", labelKey: "resume_edit.main", fallback: "Основное", Icon: FileText, descKey: "resume_edit.desc_main", desc: "Имя, заголовок, описание" },
+  { id: "education", labelKey: "resume_edit.education", fallback: "Образование", Icon: GraduationCap, descKey: "resume_edit.desc_education", desc: "ВУЗ, специальность, опыт" },
+  { id: "price", labelKey: "resume_edit.price", fallback: "Цена и формат", Icon: Banknote, descKey: "resume_edit.desc_price", desc: "Стоимость, онлайн/офлайн" },
+  { id: "subjects", labelKey: "resume_edit.subjects", fallback: "Предметы и уровни", Icon: BookOpen, descKey: "resume_edit.desc_subjects", desc: "Предметы, уровни, языки" },
+  { id: "location", labelKey: "resume_edit.location", fallback: "Локация", Icon: MapPin, descKey: "resume_edit.desc_location", desc: "Город, район, телефон" },
+  { id: "media", labelKey: "resume_edit.media", fallback: "Фото и достижения", Icon: ImageIcon, descKey: "resume_edit.desc_media", desc: "Аватар, достижения" },
 ] as const;
 
 export default function ResumeEditMenu({ onClose, resumeId }: Props) {
@@ -189,7 +189,7 @@ export default function ResumeEditMenu({ onClose, resumeId }: Props) {
               <span style={{ width: 36, height: 36, borderRadius: "var(--radius-md)", background: "var(--color-primary-light)", color: "var(--color-primary)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><s.Icon size={18} /></span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontWeight: "var(--font-weight-medium)", fontSize: "var(--font-size-sm)", color: "var(--color-text)" }}>{t(s.labelKey, s.fallback)}</span>
-                <span style={{ display: "block", fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", lineHeight: 1.3 }}>{s.desc}</span>
+                <span style={{ display: "block", fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", lineHeight: 1.3 }}>{t(s.descKey, s.desc)}</span>
               </span>
               <span style={{ color: "var(--color-text-muted)", fontSize: 14 }} aria-hidden>›</span>
             </button>

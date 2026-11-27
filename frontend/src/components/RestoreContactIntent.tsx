@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import { getContactIntent, clearContactIntent } from "../store/authIntentStore";
-import { conversationApi } from "../api/conversation.api";
+import { conversationApi } from "../api/chat.api";
 
 export default function RestoreContactIntent(): null {
   const navigate = useNavigate();

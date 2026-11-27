@@ -1,0 +1,463 @@
+path,purpose,callers,covered_by_tests,risk,status
+backend/src/main/java/com/okututor/backend/admin/AdminController.java,поверхность админ-модерации. Каждое изменяющее действие пишется в аудит; RBAC enforced,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/admin/AdminReportController.java,очередь жалоб (наполняется seed-ом; пока нет пользовательского эндпоинта).,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/admin/AsyncAuditLogWriter.java,Отдельный бин нужен; чтобы {@code @Async} реально срабатывал: вызов {@code write} из,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/admin/AuditEntry.java,параметры аудита одним объектом вместо пяти позиционных аргументов.,31 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/admin/AuditLog.java,прежнее состояние (напр.; status) до перехода.,7 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/admin/AuditLogRepository.java,таймлайн заявки: левый join на actor (может быть null у системных событий).,4 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/admin/AuditLogService.java,неизменяемый след привилегированных действий (блокировки; смена роли; модерация).,10 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/admin/Report.java,JPA Entity Report,9 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/admin/ReportRepository.java,Spring Data JPA repository for Report,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/auth/AppMailSender.java,абстракция отправки писем. Когда app.mail.enabled=false (локальная разработка);,6 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/AuthController.java,Выход со всех устройств (текущая сессия тоже ревокается).,0 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/auth/AuthService.java,регистрация и вход по паролю. Верификация email; восстановление пароля,13 references,YES,HIGH,used
+backend/src/main/java/com/okututor/backend/auth/dto/AuthTokensResponse.java,ответ успешного логина/верификации email: { access_token; refresh_token; user }.,22 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/auth/dto/CodeSentResponse.java,ответ resend-verification; каноничный контракт — только snake_case.,7 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/dto/EmailNotVerifiedResponse.java,ответ HTTP 200 (не 401!); когда аккаунт есть; но адрес ещё не,2 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/dto/LoginRequest.java,DTO / Record LoginRequest,5 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/dto/RegisterRequest.java,DTO / Record RegisterRequest,4 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/dto/StatusResponse.java,ответ регистрации: { status: EMAIL_VERIFICATION_REQUIRED; email }.,21 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/dto/VerifiedEmailResponse.java,успешная верификация email: { status: EMAIL_VERIFIED; access_token; refresh_token; user }.,8 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/EmailCode.java,для EMAIL_CHANGE: адрес; владение которым подтверждает код.,13 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/EmailCodeAttemptPersister.java,Отдельный бин для фиксации неудачной попытки ввода кода.,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/EmailCodePurpose.java,Component / utility EmailCodePurpose,19 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/EmailCodeRepository.java,Spring Data JPA repository for EmailCode,6 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/auth/EmailCodeService.java,шестизначные одноразовые коды для подтверждения email / сброса пароля / смены email.,6 references,YES,MEDIUM,used
+backend/src/main/java/com/okututor/backend/auth/EmailVerificationService.java,подтверждение владения email и смена email. Выделено из AuthService.,5 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/auth/MailSenderConfig.java,Spring Configuration MailSenderConfig,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/PasswordResetService.java,восстановление пароля: forgot → verify кода → reset. Выделено из AuthService.,6 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/auth/RefreshToken.java,SHA-256 hex непрозрачного токена; выданного клиенту.,14 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/auth/RefreshTokenRepository.java,Spring Data JPA repository for RefreshToken,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/auth/RefreshTokenRotationService.java,выпуск и ротация токенов: обмен refresh на новую пару; logout;,12 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/auth/RefreshTokenService.java,непрозрачные refresh-токены: ротация при использовании + детект переиспользования family.,5 references,YES,MEDIUM,used
+backend/src/main/java/com/okututor/backend/auth/SessionInfo.java,Метаданные сессии: устройство; User-Agent и IP; с которого выдали токен.,15 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/ChatController.java,REST Controller for Chat,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/chat/ChatConversation.java,JPA Entity ChatConversation,22 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/ChatConversationRepository.java,Spring Data JPA repository for ChatConversation,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/chat/ChatMessage.java,JPA Entity ChatMessage,13 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/ChatMessageRepository.java,Spring Data JPA repository for ChatMessage,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/chat/ChatParticipant.java,JPA Entity ChatParticipant,25 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/ChatParticipantRepository.java,Spring Data JPA repository for ChatParticipant,4 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/chat/ChatPresenceService.java,Business logic service for ChatPresence,2 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/chat/ChatService.java,Business logic service for Chat,4 references,YES,MEDIUM,used
+backend/src/main/java/com/okututor/backend/chat/ChatWebSocketConfig.java,Spring Configuration ChatWebSocketConfig,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/ChatWebSocketHandler.java,Component / utility ChatWebSocketHandler,2 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/dto/ChatConversationResponse.java,DTO / Record ChatConversationResponse,13 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/dto/ChatMessageResponse.java,DTO / Record ChatMessageResponse,9 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/dto/CreateMessageRequest.java,DTO / Record CreateMessageRequest,2 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/chat/WsTicketController.java,Выдача одноразовых WS-тикетов (см. {@link WsTicketService}).,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/chat/WsTicketService.java,Одноразовые тикеты для WebSocket-handshake.,5 references,YES,MEDIUM,used
+backend/src/main/java/com/okututor/backend/common/api/PageJacksonSerializer.java,Плоский конверт пагинации:,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/api/PageResponse.java,конверт пагинации:,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/AppProperties.java,false = скрыть Swagger UI и OpenAPI docs даже в dev/локальных окружениях (prod: обязательно false).,42 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/AsyncConfig.java,Пул для @Async-задач (уведомления; аудит). Дефолтный SimpleAsyncTaskExecutor,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/CacheConfig.java,DTO / Record CacheConfig,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/JacksonConfig.java,глобальные JSON-конвенции; которых требует front_okututor:,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/OpenApiConfig.java,Конфигурация OpenAPI/Swagger. Отключается в production-профиле,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/PagingConfig.java,"Убирает warning ""Serializing PageImpl instances as-is is not supported"".",0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/ProdEnvValidator.java,Стартовая проверка production-окружения (#20 спеки секретов):,1 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/RedisConfig.java,Конфигурация Redis: Jackson-сериализация вместо JDK по умолчанию.,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/ReplicaDataSourceConfig.java,Read replica routing: readOnly transactions → replica; write → primary.,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/config/WebConfig.java,CORS единая конфигурация в SecurityConfig (corsConfigurationSource).,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/error/ApiError.java,контракт тела ошибки; который парсит front_okututor errorMapper.js:,28 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/error/ApiException.java,базовый runtime-эксепшен с HTTP-статусом и кодом ошибки для фронта.,330 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/error/ErrorCodes.java,коды ошибок; распознаваемые фронтом (errorMapper.js + auth.api.js).,23 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/error/FieldValidationException.java,422 VALIDATION_ERROR с ошибками по полям (карта `errors` для фронта).,26 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/error/GlobalExceptionHandler.java,маппит любую ошибку в контракт тела ошибки front_okututor:,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/ratelimit/RateLimiter.java,абстракция rate-limiter с фиксированным окном. Реализацию на Redis можно,6 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/ratelimit/RateLimitService.java,Инжектируем {@link RedisRateLimiter} как опциональный бин: если Redis,26 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/common/ratelimit/RedisRateLimiter.java,Component / utility RedisRateLimiter,1 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/util/PhotoUrlUtils.java,Утилита для проверки Google-аватаров.,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/web/ClientIpResolver.java,Component / utility ClientIpResolver,4 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/common/web/LegacyApiGuard.java,Заглушка легаси EDTECH: при app.legacy.enabled=false — 410 GONE;,0 references,NO,LOW,legacy
+backend/src/main/java/com/okututor/backend/common/web/RequestCorrelationFilter.java,Прокидывает идентификатор запроса (correlation ID) для трассировки логов и,3 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/common/web/SecurityHeadersFilter.java,Добавляет security заголовки ко всем ответам. Низкая стоимость; высокая защита.,0 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/config/ExpiryDataRepair.java,Разовый ремонт legacy-данных: старый renew-баг накапливал дополнительные,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/config/SeedData.java,Минимальный bootstrap сид — создаёт только обязательных администраторов из ENV.,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/favorite/Favorite.java,JPA Entity Favorite,7 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/favorite/FavoriteController.java,REST Controller for Favorite,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/favorite/FavoriteRepository.java,Spring Data JPA repository for Favorite,5 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/legal/AdminLegalController.java,REST Controller for AdminLegal,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/AdminTgController.java,REST Controller for AdminTg,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/ConsentController.java,REST Controller for Consent,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/ConsentRecord.java,JPA Entity ConsentRecord,56 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/legal/ConsentRecordRepository.java,Spring Data JPA repository for ConsentRecord,6 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/legal/ConsentService.java,Business logic service for Consent,3 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/CookieCategory.java,JPA Entity CookieCategory,6 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/legal/CookieCategoryRepository.java,Spring Data JPA repository for CookieCategory,4 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/legal/CookieProvider.java,JPA Entity CookieProvider,12 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/legal/CookieProviderRepository.java,Spring Data JPA repository for CookieProvider,4 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/legal/LegalDocument.java,JPA Entity LegalDocument,20 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/legal/LegalDocumentRepository.java,Spring Data JPA repository for LegalDocument,8 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/legal/LegalDocumentVersion.java,JPA Entity LegalDocumentVersion,51 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/legal/LegalDocumentVersionRepository.java,Spring Data JPA repository for LegalDocumentVersion,6 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/legal/LegalService.java,Business logic service for Legal,5 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/PublicConsentController.java,REST Controller for PublicConsent,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/PublicLegalController.java,REST Controller for PublicLegal,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/TgAlertWebhookController.java,REST Controller for TgAlertWebhook,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/TgHealthBotService.java,Business logic service for TgHealthBot,5 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/legal/TgRecipient.java,JPA Entity TgRecipient,18 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/legal/TgRecipientRepository.java,Spring Data JPA repository for TgRecipient,6 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/legal/TgRecipientService.java,Business logic service for TgRecipient,2 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/level/Level.java,JPA Entity Level,23 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/level/LevelRepository.java,Spring Data JPA repository for Level,12 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/location/City.java,JPA Entity City,25 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/location/CityRepository.java,Spring Data JPA repository for City,12 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/location/District.java,JPA Entity District,20 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/location/DistrictRepository.java,Spring Data JPA repository for District,9 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/media/AttachmentKind.java,классификация вложения сообщения: изображение или произвольный файл.,7 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/CropMode.java,стратегия кадрирования при приведении к целевым размерам.,6 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/DefaultImageProcessor.java,единый pipeline обработки пользовательских изображений:,0 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/media/ImageProcessingOptions.java,параметры обработки одного изображения; собираются из app.media.*,5 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/ImageProcessor.java,контракт оптимизации: бизнес-код не знает деталей сжатия.,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/LocalObjectStorage.java,dev/local реализация: файлы в {app.storage.local-dir}/media/{key}.,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/MediaController.java,обложка курса (#36): POST /api/v1/courses/{courseId}/cover.,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/media/MediaFileController.java,раздача media-объектов: для local — с диска; для r2 — проксирует из Cloudflare R2,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/media/MediaKind.java,тип медиа-объекта: определяет pipeline оптимизации и ключ в storage.,45 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/MediaMetrics.java,метрики медиа-pipeline (#53): success/failure; длительность обработки;,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/MediaObject.java,метаданные загруженного медиа-объекта; бинарные данные — только в storage.,40 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/MediaObjectRepository.java,Spring Data JPA repository for MediaObject,4 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/media/MediaService.java,приём -> оптимизация -> storage -> metadata. Оригинал не сохраняется.,17 references,YES,MEDIUM,used
+backend/src/main/java/com/okututor/backend/media/MessageAttachment.java,вложение сообщения (messenger + support-чат). Сам файл — в object storage,24 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/MessageAttachmentRef.java,публичное представление вложения сообщения (используется в messenger,2 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/MessageAttachmentRepository.java,Spring Data JPA repository for MessageAttachment,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/media/ObjectStorage.java,абстракция object storage; реализации: локальный диск и Cloudflare R2.,13 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/OrphanMediaCleaner.java,периодическая сверка: удаляет media-объекты без владельца и курса,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/ProcessedImage.java,результат обработки: готовые к upload байты + метрики.,14 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/R2ObjectStorage.java,Cloudflare R2 через S3-совместимый API.,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/media/StorageController.java,Presigned upload flow for R2 (S3-compatible).,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/monitoring/AdminSystemController.java,REST Controller for AdminSystem,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/monitoring/MonitoringProperties.java,Spring Configuration MonitoringProperties,2 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/monitoring/MonitoringTelegramController.java,Admin-only endpoint to expose Telegram recipient status without leaking token.,0 references,YES,MEDIUM,used
+backend/src/main/java/com/okututor/backend/notification/Notification.java,структурированный контекст события (enrollment_id; booking_id; ...); null у старых записей.,11 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/notification/NotificationController.java,REST Controller for Notification,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/notification/NotificationRepository.java,существует ли почтовое событие (напр. напоминание) с конкретным окном в payload.,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/notification/NotificationService.java,Асинхронная отправка уведомления через фиксированный пул,12 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/notification/NotificationType.java,Предсказуемые типы уведомлений (строка в БД остаётся varchar — это контракт для фронта).,7 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/observability/ObservabilityMetrics.java,Бизнес-метрики OkuTutor (низкая cardinality: только фиксированные enum-значения;,25 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/OkututorBackendApplication.java,Исключаем RedisRepositoriesAutoConfiguration; т.к. проект не использует,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/request/dto/TutorRequestCreateRequest.java,DTO / Record TutorRequestCreateRequest,4 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/request/dto/TutorRequestResponse.java,DTO / Record TutorRequestResponse,20 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/request/TutorRequest.java,JPA Entity TutorRequest,49 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/request/TutorRequestController.java,REST Controller for TutorRequest,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/request/TutorRequestRepository.java,Spring Data JPA repository for TutorRequest,10 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/request/TutorRequestService.java,Business logic service for TutorRequest,4 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/review/Review.java,JPA Entity Review,20 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/review/ReviewController.java,REST Controller for Review,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/review/ReviewRepository.java,средняя оценка; поставленная студентом.,5 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/review/ReviewService.java,публичный список — скрытые отзывы исключены.,12 references,YES,MEDIUM,used
+backend/src/main/java/com/okututor/backend/search/normalizer/KeyboardLayoutNormalizer.java,Component / utility KeyboardLayoutNormalizer,6 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/search/normalizer/SearchQueryNormalizer.java,Склеивает части; не превышая MAX_QUERY_LENGTH; одиночная длинная часть обрезается.,9 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/search/normalizer/SynonymExpander.java,Расширение токенов запроса синонимами (RU/KG/EN).,6 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/search/SearchConfig.java,Spring Configuration SearchConfig,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/search/SearchController.java,REST Controller for Search,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/search/SearchProperties.java,Конфигурация поиска (prefix {@code search}). Все значения переопределяются,10 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/search/TutorSearchService.java,Business logic service for TutorSearch,7 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/search/understanding/AiQueryParser.java,AI-разбор запроса (спека #7; #8). Вызывается только для сложных запросов при,4 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/search/understanding/DisabledAiQueryParser.java,AI-парсер выключен (по умолчанию): поиск полностью работает на rules.,0 references,NO,LOW,dead
+backend/src/main/java/com/okututor/backend/search/understanding/HttpAiQueryParser.java,Опциональный AI-парсер (OpenAI-совместимый chat-completions); спека #7.,0 references,NO,LOW,dead
+backend/src/main/java/com/okututor/backend/search/understanding/QueryUnderstandingService.java,Понимание запроса (спека #3; #6; #7): сначала rules+словари (без внешних вызовов);,0 references,YES,MEDIUM,dead
+backend/src/main/java/com/okututor/backend/search/understanding/RuleBasedQueryParser.java,Rule-based разбор запросов без LLM (спека #4; #6): словари предметов/технологий/,2 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/search/understanding/StructuredQuery.java,Результат понимания запроса (спека #3; #6). Только структурированные намерения —,22 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/search/understanding/StructuredQuerySanitizer.java,Разбор и ЖЁСТКАЯ валидация JSON; пришедшего от LLM (спека #8; #36):,1 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/security/AuthErrorWriter.java,Component / utility AuthErrorWriter,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/security/GoogleProvisioner.java,Привязывает существующий LOCAL-аккаунт по email или создаёт новый,2 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/security/JwtAuthenticationFilter.java,Аутентификация по Bearer-токену. Загружает пользователя на каждый запрос; чтобы,1 references,YES,HIGH,used
+backend/src/main/java/com/okututor/backend/security/JwtService.java,@return claims of a valid; non-expired token signed by us,8 references,YES,HIGH,used
+backend/src/main/java/com/okututor/backend/security/OAuthCodeStore.java,One-time code store for OAuth flow.,4 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/security/OAuthExchangeController.java,REST Controller for OAuthExchange,0 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/security/OAuthLoginSuccessHandler.java,после успешного входа через Google редиректит на,1 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/security/RoleParamAuthorizationRequestResolver.java,прокидывает query-параметр `role` (?role=STUDENT|TUTOR) из начального,1 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/security/SecurityConfig.java,Spring Configuration SecurityConfig,3 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/security/SecurityUtils.java,Централизованные проверки аутентификации/авторизации.,0 references,NO,HIGH,dead
+backend/src/main/java/com/okututor/backend/security/UserPrincipal.java,DTO / Record UserPrincipal,132 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/seo/AdminSeoController.java,REST Controller for AdminSeo,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/seo/SeoController.java,REST Controller for Seo,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/seo/SeoService.java,Business logic service for Seo,4 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/seo/SeoSettings.java,JPA Entity SeoSettings,12 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/seo/SeoSettingsRepository.java,Spring Data JPA repository for SeoSettings,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/share/ResumeShare.java,JPA Entity ResumeShare,11 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/share/ResumeShareController.java,Owner only: create (or fetch existing) share link for a resume.,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/share/ResumeShareRepository.java,Spring Data JPA repository for ResumeShare,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/share/ResumeShareService.java,Creates a shareable link for the resume owner. Reuses an existing active link (idempotent).,2 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/share/ShareResponse.java,DTO / Record ShareResponse,7 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/share/ShareViewResponse.java,DTO / Record ShareViewResponse,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/subject/Subject.java,JPA Entity Subject,26 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/subject/SubjectRepository.java,Spring Data JPA repository for Subject,12 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/support/dto/SupportTicketCreateRequest.java,тело POST /support/tickets (TicketCreateRequest из docs/mapping.md #52).,6 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/support/SupportController.java,multipart-вариант отправки сообщения с файлом: form-поля body (опционально),0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/support/SupportService.java,устаревший фасад: логика разделена между {@link SupportTicketUserService},47 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/support/SupportTicket.java,optimistic locking: защита счётчиков непрочитанного от lost updates,54 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/support/SupportTicketAdminService.java,админская сторона саппорта: очередь тикетов; ответы; assign/status/priority.,15 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/support/SupportTicketCore.java,общие операции работы с тикетами для user- и admin-сервисов.,34 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/support/SupportTicketMessage.java,денормализовано для быстрого рендера (STUDENT/TUTOR/ADMIN/SUPER_ADMIN),11 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/support/SupportTicketMessageRepository.java,Spring Data JPA repository for SupportTicketMessage,4 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/support/SupportTicketRepository.java,атомарные инкременты вместо read-modify-write в памяти (lost updates).,6 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/support/SupportTicketUserService.java,пользовательская сторона саппорта: создание; свои тикеты; переписка автора.,14 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/dto/TutorPageCacheDto.java,DTO / Record TutorPageCacheDto,7 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/dto/TutorProfileCreateRequest.java,DTO / Record TutorProfileCreateRequest,8 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/dto/TutorProfilePublicCard.java,DTO / Record TutorProfilePublicCard,0 references,NO,LOW,dead
+backend/src/main/java/com/okututor/backend/tutor/dto/TutorProfileResponse.java,DTO / Record TutorProfileResponse,76 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/dto/TutorProfileUpdateRequest.java,DTO / Record TutorProfileUpdateRequest,5 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/dto/TutorSliceResponse.java,DTO / Record TutorSliceResponse,3 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/ModerationAction.java,JPA Entity ModerationAction,14 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/ModerationActionRepository.java,Spring Data JPA repository for ModerationAction,2 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/ReferenceDataController.java,REST Controller for ReferenceData,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/ReferenceDataService.java,Business logic service for ReferenceData,2 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/ResumeExpiryScheduler.java,DTO / Record ResumeExpiryScheduler,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/ResumeOrphanDetector.java,100% гарантия: сверяет заявки и профили; алертит если заявка есть а профиля нет более 5 минут,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorCacheConstants.java,Константы кешей для TutorProfile. Устраняет дублирование @CacheEvict в 11 местах.,0 references,NO,LOW,dead
+backend/src/main/java/com/okututor/backend/tutor/TutorCacheKey.java,Component / utility TutorCacheKey,2 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorModerationController.java,REST Controller for TutorModeration,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfile.java,JPA Entity TutorProfile,124 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileController.java,REST Controller for TutorProfile,0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileEnricher.java,Вынесенная логика батч-загрузки связей профиля (subjects/levels/languages),0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileLanguage.java,JPA Entity TutorProfileLanguage,16 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileLanguageRepository.java,Spring Data JPA repository for TutorProfileLanguage,15 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileLevel.java,JPA Entity TutorProfileLevel,17 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileLevelRepository.java,Spring Data JPA repository for TutorProfileLevel,15 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileMapper.java,Component / utility TutorProfileMapper,16 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileMedia.java,JPA Entity TutorProfileMedia,0 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileRepository.java,Spring Data JPA repository for TutorProfile,36 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileService.java,Прокси самого себя: прямой вызов publicListingCached() обошёл бы @Cacheable.,9 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileStatus.java,Component / utility TutorProfileStatus,107 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileSubject.java,JPA Entity TutorProfileSubject,17 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorProfileSubjectRepository.java,Spring Data JPA repository for TutorProfileSubject,15 references,NO,HIGH,used
+backend/src/main/java/com/okututor/backend/tutor/TutorSearchProjection.java,Component / utility TutorSearchProjection,5 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorType.java,Component / utility TutorType,13 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/tutor/TutorWizardController.java,"Controller for the 10-step ""Become a Tutor"" registration wizard.",0 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/user/dto/PublicUserResponse.java,публичные данные пользователя для карточек/профилей репетиторов (без phone/email/статусов).,9 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/user/dto/UpdateProfileRequest.java,тело PUT /users/me — зеркалит ключи formData из Profile.jsx.,4 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/user/dto/UserResponse.java,канонический payload пользователя:,14 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/user/Role.java,Marketplace unified model: USER + ADMIN.,55 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/user/User.java,вычисляемое full_name для фронта; если имён нет — локальная часть email.,274 references,YES,LOW,used
+backend/src/main/java/com/okututor/backend/user/UserController.java,multipart/form-data; бинарное поле ожидается под именем ``file``.,1 references,NO,MEDIUM,used
+backend/src/main/java/com/okututor/backend/user/UserMapper.java,Component / utility UserMapper,11 references,NO,LOW,used
+backend/src/main/java/com/okututor/backend/user/UserRepository.java,Spring Data JPA repository for User,49 references,NO,HIGH,legacy
+backend/src/main/java/com/okututor/backend/user/UserService.java,Business logic service for User,19 references,YES,MEDIUM,legacy
+frontend/src/api/admin.api.ts,API client service admin.api,6 references,NO,LOW,used
+frontend/src/api/auth.api.ts,API client service auth.api,0 references,NO,LOW,dead
+frontend/src/api/auth.ts,API client service auth,145 references,NO,LOW,used
+frontend/src/api/chat.api.ts,API client service chat.api,17 references,NO,LOW,used
+frontend/src/api/client/authInterceptor.ts,API client service authInterceptor,1 references,NO,LOW,used
+frontend/src/api/client/errorMapper.ts,API client service errorMapper,6 references,NO,LOW,used
+frontend/src/api/client/httpClient.ts,API client service httpClient,4 references,NO,LOW,used
+frontend/src/api/client/refreshManager.ts,API client service refreshManager,2 references,NO,LOW,used
+frontend/src/api/client/responseParser.ts,API client service responseParser,18 references,NO,LOW,used
+frontend/src/api/client/upload.ts,API client service upload,7 references,NO,LOW,used
+frontend/src/api/config.ts,API client service config,13 references,NO,LOW,used
+frontend/src/api/conversation.api.ts,API client service conversation.api,0 references,NO,LOW,dead
+frontend/src/api/endpoints/auth.ts,API client service auth,148 references,NO,LOW,used
+frontend/src/api/endpoints/courses.ts,API client service courses,50 references,NO,LOW,used
+frontend/src/api/endpoints/messaging.ts,API client service messaging,2 references,NO,LOW,used
+frontend/src/api/endpoints/users.ts,API client service users,60 references,NO,LOW,used
+frontend/src/api/endpoints.ts,API client service endpoints,154 references,NO,LOW,used
+frontend/src/api/favorites.api.ts,API client service favorites.api,1 references,NO,LOW,used
+frontend/src/api/http.ts,API client service http,59 references,NO,LOW,used
+frontend/src/api/index.ts,API client service index,25 references,NO,LOW,used
+frontend/src/api/legal.api.ts,API client service legal.api,5 references,NO,LOW,used
+frontend/src/api/marketplace/tutorProfileMarketplace.api.ts,API client service tutorProfileMarketplace.api,4 references,NO,LOW,used
+frontend/src/api/marketplace/tutorRequestsMarketplace.api.ts,API client service tutorRequestsMarketplace.api,2 references,NO,LOW,used
+frontend/src/api/messages.api.ts,API client service messages.api,2 references,NO,LOW,dead
+frontend/src/api/reviews.api.ts,API client service reviews.api,2 references,NO,LOW,used
+frontend/src/api/search.api.ts,API client service search.api,0 references,NO,LOW,dead
+frontend/src/api/seo.api.ts,API client service seo.api,2 references,NO,LOW,used
+frontend/src/api/share.api.ts,API client service share.api,2 references,NO,LOW,used
+frontend/src/api/support.api.ts,API client service support.api,12 references,NO,LOW,used
+frontend/src/api/token.ts,API client service token,40 references,NO,LOW,used
+frontend/src/api/tutors.api.ts,API client service tutors.api,5 references,NO,LOW,legacy
+frontend/src/api/users.api.ts,API client service users.api,2 references,NO,LOW,used
+frontend/src/app/layouts/AppLayout.tsx,Frontend module AppLayout,5 references,NO,LOW,used
+frontend/src/app/layouts/AppSidebar.tsx,Frontend module AppSidebar,4 references,NO,LOW,used
+frontend/src/app/layouts/PublicLayout.tsx,Frontend module PublicLayout,7 references,NO,LOW,used
+frontend/src/app/pages/AppMessages.tsx,Frontend module AppMessages,4 references,NO,LOW,used
+frontend/src/app/providers/AppProviders.tsx,Frontend module AppProviders,4 references,NO,LOW,used
+frontend/src/app/router/AdminRoutes.tsx,Frontend module AdminRoutes,3 references,NO,HIGH,used
+frontend/src/app/router/AppRouter.tsx,Frontend module AppRouter,3 references,NO,HIGH,used
+frontend/src/App.tsx,Frontend module App,6 references,NO,LOW,used
+frontend/src/components/admin/support/AdminSupportActions.tsx,UI component AdminSupportActions,3 references,NO,HIGH,used
+frontend/src/components/admin/support/AdminSupportAssignment.tsx,UI component AdminSupportAssignment,3 references,NO,HIGH,used
+frontend/src/components/admin/support/AdminSupportFilters.tsx,UI component AdminSupportFilters,5 references,NO,HIGH,used
+frontend/src/components/admin/support/AdminSupportInternalNote.tsx,UI component AdminSupportInternalNote,3 references,NO,HIGH,used
+frontend/src/components/admin/support/AdminSupportStats.tsx,UI component AdminSupportStats,6 references,NO,HIGH,used
+frontend/src/components/admin/support/AdminSupportTable.tsx,UI component AdminSupportTable,3 references,NO,HIGH,used
+frontend/src/components/attachments/AttachmentRenderer.tsx,UI component AttachmentRenderer,4 references,NO,LOW,used
+frontend/src/components/AuthRegister/Auth.tsx,UI component Auth,7 references,NO,HIGH,used
+frontend/src/components/AuthRegister/Modal.tsx,Modal dialog Modal,16 references,NO,LOW,used
+frontend/src/components/AuthRegister/Register.tsx,UI component Register,4 references,NO,LOW,used
+frontend/src/components/avatar/AvatarCropModal.tsx,Modal dialog AvatarCropModal,3 references,NO,LOW,used
+frontend/src/components/avatar/AvatarUploader.tsx,UI component AvatarUploader,3 references,NO,LOW,used
+frontend/src/components/BottomNav.tsx,UI component BottomNav,3 references,NO,LOW,used
+frontend/src/components/chat/ChatEmptyState.tsx,UI component ChatEmptyState,7 references,NO,LOW,used
+frontend/src/components/chat/ChatWindow.tsx,UI component ChatWindow,6 references,YES,LOW,used
+frontend/src/components/chat/ConversationItem.tsx,UI component ConversationItem,3 references,NO,LOW,used
+frontend/src/components/chat/ConversationList.tsx,UI component ConversationList,6 references,YES,LOW,used
+frontend/src/components/chat/MessageBubble.tsx,UI component MessageBubble,3 references,NO,LOW,used
+frontend/src/components/chat/MessageInput.tsx,UI component MessageInput,3 references,YES,LOW,used
+frontend/src/components/chat/MessageList.tsx,UI component MessageList,3 references,YES,LOW,used
+frontend/src/components/chat/UnreadBadge.tsx,UI component UnreadBadge,3 references,NO,LOW,used
+frontend/src/components/ContactAuthSheet.tsx,UI component ContactAuthSheet,6 references,NO,HIGH,used
+frontend/src/components/CookieBanner.tsx,UI component CookieBanner,3 references,NO,LOW,used
+frontend/src/components/DashboardLayout.tsx,UI component DashboardLayout,7 references,NO,LOW,used
+frontend/src/components/ErrorBoundary.tsx,UI component ErrorBoundary,12 references,NO,LOW,used
+frontend/src/components/HomeSection/Category.tsx,UI component Category,7 references,NO,LOW,used
+frontend/src/components/HomeSection/Footer.tsx,UI component Footer,4 references,NO,LOW,used
+frontend/src/components/HomeSection/ForTutors.tsx,UI component ForTutors,3 references,NO,LOW,used
+frontend/src/components/HomeSection/HeroSection.tsx,UI component HeroSection,1 references,NO,LOW,used
+frontend/src/components/HomeSection/HowItWorks.tsx,UI component HowItWorks,3 references,NO,LOW,used
+frontend/src/components/HomeSection/MarketplaceHero.tsx,UI component MarketplaceHero,3 references,NO,LOW,used
+frontend/src/components/HomeSection/PopTutor.tsx,UI component PopTutor,3 references,NO,LOW,used
+frontend/src/components/HomeSection/SubjectGrid.tsx,UI component SubjectGrid,3 references,NO,LOW,used
+frontend/src/components/LocationPicker.tsx,UI component LocationPicker,0 references,NO,LOW,dead
+frontend/src/components/messages/NewTicketModal.tsx,Modal dialog NewTicketModal,0 references,NO,LOW,dead
+frontend/src/components/Navbar.tsx,UI component Navbar,2 references,NO,LOW,used
+frontend/src/components/pageTitleContext.tsx,UI component pageTitleContext,20 references,NO,LOW,used
+frontend/src/components/photo/PhotoCropModal.tsx,Modal dialog PhotoCropModal,6 references,NO,LOW,used
+frontend/src/components/photo/PhotoDropzone.tsx,UI component PhotoDropzone,8 references,NO,LOW,used
+frontend/src/components/Profile.tsx,UI component Profile,6 references,NO,LOW,used
+frontend/src/components/ProtectedRoute.tsx,UI component ProtectedRoute,8 references,NO,HIGH,used
+frontend/src/components/ReconsentBanner.tsx,UI component ReconsentBanner,3 references,NO,LOW,used
+frontend/src/components/RestoreContactIntent.tsx,UI component RestoreContactIntent,4 references,NO,LOW,used
+frontend/src/components/ResumeEditMenu.tsx,UI component ResumeEditMenu,3 references,NO,LOW,used
+frontend/src/components/ResumeExpiryTimer.tsx,UI component ResumeExpiryTimer,10 references,YES,LOW,used
+frontend/src/components/ResumeSharePanel.tsx,UI component ResumeSharePanel,3 references,NO,LOW,used
+frontend/src/components/ResumeStatusCard.tsx,UI component ResumeStatusCard,3 references,NO,LOW,used
+frontend/src/components/routes/AuthPage.tsx,Page component AuthPage,8 references,NO,HIGH,used
+frontend/src/components/routes/CourseEditRedirect.tsx,UI component CourseEditRedirect,0 references,NO,LOW,dead
+frontend/src/components/routes/Login.tsx,UI component Login,9 references,NO,LOW,used
+frontend/src/components/routes/RegisterPage.tsx,Page component RegisterPage,3 references,NO,MEDIUM,used
+frontend/src/components/routes/RoleRedirect.tsx,UI component RoleRedirect,1 references,NO,LOW,used
+frontend/src/components/routes/SupportTicketRedirect.tsx,UI component SupportTicketRedirect,0 references,NO,LOW,dead
+frontend/src/components/SeoManager.tsx,UI component SeoManager,4 references,NO,LOW,used
+frontend/src/components/SeoNoindex.tsx,UI component SeoNoindex,4 references,NO,LOW,used
+frontend/src/components/Sidebar.tsx,UI component Sidebar,5 references,NO,LOW,used
+frontend/src/components/support/SupportFilterBar.tsx,UI component SupportFilterBar,3 references,NO,LOW,used
+frontend/src/components/support/SupportMessage.tsx,UI component SupportMessage,6 references,NO,LOW,used
+frontend/src/components/support/SupportMessageInput.tsx,UI component SupportMessageInput,6 references,NO,LOW,used
+frontend/src/components/support/SupportTicketCard.tsx,UI component SupportTicketCard,3 references,NO,LOW,used
+frontend/src/components/support/SupportTicketCategory.tsx,UI component SupportTicketCategory,12 references,NO,LOW,used
+frontend/src/components/support/SupportTicketHeader.tsx,UI component SupportTicketHeader,3 references,NO,LOW,used
+frontend/src/components/support/SupportTicketPriority.tsx,UI component SupportTicketPriority,12 references,NO,LOW,used
+frontend/src/components/support/SupportTicketStatus.tsx,UI component SupportTicketStatus,12 references,NO,LOW,used
+frontend/src/components/support/SupportUnreadBadge.tsx,UI component SupportUnreadBadge,0 references,NO,LOW,dead
+frontend/src/components/ui/Avatar.tsx,UI component Avatar,11 references,NO,LOW,used
+frontend/src/components/ui/CalendarPicker.tsx,UI component CalendarPicker,0 references,NO,LOW,dead
+frontend/src/components/ui/ConfirmDialog.tsx,UI component ConfirmDialog,0 references,NO,LOW,dead
+frontend/src/components/ui/ConfirmModal.tsx,Modal dialog ConfirmModal,21 references,NO,LOW,used
+frontend/src/components/ui/CustomSelect.tsx,UI component CustomSelect,11 references,YES,LOW,used
+frontend/src/components/ui/DateTimePicker.tsx,UI component DateTimePicker,0 references,NO,LOW,dead
+frontend/src/components/ui/Form.tsx,UI component Form,0 references,NO,MEDIUM,dead
+frontend/src/components/ui/LoadingState.tsx,UI component LoadingState,0 references,NO,LOW,dead
+frontend/src/components/ui/MetricCard.tsx,UI component MetricCard,3 references,NO,LOW,used
+frontend/src/components/ui/OtpInput.tsx,UI component OtpInput,6 references,NO,LOW,used
+frontend/src/components/ui/Overlay.tsx,UI component Overlay,1 references,NO,LOW,used
+frontend/src/components/ui/PageHeader.tsx,Page component PageHeader,0 references,NO,MEDIUM,dead
+frontend/src/components/ui/Pagination.tsx,UI component Pagination,6 references,NO,LOW,used
+frontend/src/components/ui/Primitives.tsx,UI component Primitives,27 references,NO,LOW,used
+frontend/src/components/ui/ReasonModal.tsx,Modal dialog ReasonModal,3 references,NO,LOW,used
+frontend/src/components/ui/ResendCodeButton.tsx,UI component ResendCodeButton,6 references,NO,LOW,used
+frontend/src/components/ui/ReviewModal.tsx,Modal dialog ReviewModal,0 references,NO,LOW,dead
+frontend/src/components/ui/Skeletons.tsx,UI component Skeletons,0 references,NO,LOW,dead
+frontend/src/components/ui/StatusBadge.tsx,UI component StatusBadge,0 references,NO,LOW,dead
+frontend/src/components/ui/SubjectIcon.tsx,UI component SubjectIcon,3 references,YES,LOW,used
+frontend/src/components/ui/Tabs.tsx,UI component Tabs,1 references,NO,LOW,used
+frontend/src/components/ui/ThemeSwitch.tsx,UI component ThemeSwitch,8 references,NO,LOW,used
+frontend/src/components/ui/Timeline.tsx,UI component Timeline,0 references,NO,LOW,dead
+frontend/src/components/ui/Toast.tsx,UI component Toast,23 references,NO,LOW,used
+frontend/src/components/ui/VerifiedBadge.tsx,UI component VerifiedBadge,0 references,NO,LOW,dead
+frontend/src/config/navigation.ts,Frontend module navigation,26 references,YES,LOW,used
+frontend/src/constants/booking.ts,Frontend module booking,18 references,NO,LOW,used
+frontend/src/constants/cities.ts,Frontend module cities,14 references,NO,LOW,used
+frontend/src/constants/course.ts,Frontend module course,40 references,NO,LOW,used
+frontend/src/constants/enums.ts,Frontend module enums,4 references,NO,LOW,used
+frontend/src/constants/roles.ts,Frontend module roles,20 references,YES,LOW,used
+frontend/src/constants/support.ts,Frontend module support,461 references,NO,LOW,used
+frontend/src/constants/tutorTypes.ts,Frontend module tutorTypes,4 references,NO,LOW,used
+frontend/src/context/ThemeContext.tsx,Frontend module ThemeContext,2 references,NO,LOW,used
+frontend/src/features/chat/hooks/useChatWebSocket.ts,React custom hook useChatWebSocket,3 references,NO,LOW,used
+frontend/src/features/chat/hooks/useConversations.ts,React custom hook useConversations,6 references,NO,LOW,used
+frontend/src/features/chat/hooks/useMessages.ts,React custom hook useMessages,6 references,NO,LOW,used
+frontend/src/features/chat/hooks/useUnreadCount.ts,React custom hook useUnreadCount,9 references,NO,LOW,used
+frontend/src/features/dashboard/hooks/useDashboardResume.ts,React custom hook useDashboardResume,9 references,NO,LOW,used
+frontend/src/features/search/hooks/useTutorSearch.ts,React custom hook useTutorSearch,6 references,NO,LOW,used
+frontend/src/features/subjects/api/subjectApi.ts,API client service subjectApi,9 references,NO,MEDIUM,used
+frontend/src/features/tutors/api/tutorApi.ts,API client service tutorApi,8 references,NO,MEDIUM,used
+frontend/src/features/tutors/components/TutorCard.tsx,UI component TutorCard,4 references,NO,LOW,used
+frontend/src/features/tutors/components/TutorFilters.tsx,UI component TutorFilters,8 references,NO,LOW,used
+frontend/src/features/tutors/components/TutorProfileMarketplace.tsx,UI component TutorProfileMarketplace,1 references,NO,LOW,used
+frontend/src/features/tutors/components/TutorResumeCard.tsx,UI component TutorResumeCard,15 references,NO,LOW,used
+frontend/src/hooks/support/useAdminSupport.ts,React custom hook useAdminSupport,3 references,NO,HIGH,used
+frontend/src/hooks/support/useSupportChat.ts,React custom hook useSupportChat,6 references,NO,LOW,used
+frontend/src/hooks/support/useSupportTicket.ts,React custom hook useSupportTicket,6 references,NO,LOW,used
+frontend/src/hooks/support/useSupportTickets.ts,React custom hook useSupportTickets,3 references,NO,LOW,used
+frontend/src/hooks/support/useSupportUnread.ts,React custom hook useSupportUnread,0 references,NO,LOW,dead
+frontend/src/hooks/useContactTutor.ts,React custom hook useContactTutor,6 references,NO,LOW,used
+frontend/src/hooks/useCountdown.ts,React custom hook useCountdown,3 references,YES,LOW,used
+frontend/src/hooks/useFavorites.ts,React custom hook useFavorites,4 references,NO,LOW,used
+frontend/src/hooks/useSeoSettings.ts,React custom hook useSeoSettings,3 references,NO,LOW,used
+frontend/src/hooks/useTheme.ts,React custom hook useTheme,9 references,NO,LOW,used
+frontend/src/hooks/useTutorAvailability.ts,React custom hook useTutorAvailability,0 references,NO,LOW,dead
+frontend/src/i18n.ts,Frontend module i18n,36 references,NO,LOW,used
+frontend/src/jsx-globals.d.ts,Frontend module jsx-globals.d,0 references,NO,LOW,dead
+frontend/src/layouts/AdminLayout.tsx,Frontend module AdminLayout,3 references,NO,HIGH,used
+frontend/src/layouts/UserDashboardLayout.tsx,Frontend module UserDashboardLayout,2 references,NO,LOW,used
+frontend/src/locales/kg/index.ts,Frontend module index,25 references,NO,LOW,used
+frontend/src/locales/ru/index.ts,Frontend module index,25 references,NO,LOW,used
+frontend/src/main.tsx,Frontend module main,39 references,NO,LOW,used
+frontend/src/pages/PgAdmin.tsx,Page component PgAdmin,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminLegal.tsx,Page component PgAdminLegal,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminMetrics.tsx,Page component PgAdminMetrics,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminReports.tsx,Page component PgAdminReports,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminRequests.tsx,Page component PgAdminRequests,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminReviews.tsx,Page component PgAdminReviews,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminSeo.tsx,Page component PgAdminSeo,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminSupport.tsx,Page component PgAdminSupport,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminSupportTicket.tsx,Page component PgAdminSupportTicket,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminTelegram.tsx,Page component PgAdminTelegram,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminTutors.tsx,Page component PgAdminTutors,3 references,NO,HIGH,used
+frontend/src/pages/PgAdminUsers.tsx,Page component PgAdminUsers,3 references,NO,HIGH,used
+frontend/src/pages/PgBecomeTutor.tsx,Page component PgBecomeTutor,5 references,NO,MEDIUM,duplicate
+frontend/src/pages/PgDashboardResume.tsx,Page component PgDashboardResume,3 references,NO,MEDIUM,used
+frontend/src/pages/PgFavorites.tsx,Page component PgFavorites,3 references,NO,MEDIUM,used
+frontend/src/pages/PgForbidden.tsx,Page component PgForbidden,3 references,NO,MEDIUM,used
+frontend/src/pages/PgForgotPassword.tsx,Page component PgForgotPassword,3 references,NO,MEDIUM,used
+frontend/src/pages/PgLegal.tsx,Page component PgLegal,3 references,NO,MEDIUM,used
+frontend/src/pages/PgMain.tsx,Page component PgMain,9 references,NO,MEDIUM,used
+frontend/src/pages/PgMarketplaceChat.tsx,Page component PgMarketplaceChat,0 references,NO,MEDIUM,dead
+frontend/src/pages/PgNotFound.tsx,Page component PgNotFound,3 references,NO,MEDIUM,used
+frontend/src/pages/PgNotifications.tsx,Page component PgNotifications,0 references,NO,MEDIUM,dead
+frontend/src/pages/PgOAuthCallback.tsx,Page component PgOAuthCallback,4 references,NO,HIGH,used
+frontend/src/pages/PgProfile.tsx,Page component PgProfile,6 references,NO,MEDIUM,used
+frontend/src/pages/PgResetPassword.tsx,Page component PgResetPassword,3 references,NO,MEDIUM,used
+frontend/src/pages/PgResumeEditor.tsx,Page component PgResumeEditor,5 references,NO,MEDIUM,used
+frontend/src/pages/PgResumePreview.tsx,Page component PgResumePreview,3 references,NO,MEDIUM,used
+frontend/src/pages/PgSettings.tsx,Page component PgSettings,6 references,NO,MEDIUM,used
+frontend/src/pages/PgShare.tsx,Page component PgShare,3 references,NO,MEDIUM,used
+frontend/src/pages/PgSupport.tsx,Page component PgSupport,3 references,NO,MEDIUM,used
+frontend/src/pages/PgSupportNew.tsx,Page component PgSupportNew,3 references,NO,MEDIUM,used
+frontend/src/pages/PgSupportTicket.tsx,Page component PgSupportTicket,3 references,NO,MEDIUM,used
+frontend/src/pages/PgTutors.tsx,Page component PgTutors,6 references,NO,MEDIUM,used
+frontend/src/pages/PgUserDashboard.tsx,Page component PgUserDashboard,3 references,NO,MEDIUM,used
+frontend/src/pages/PgVerifyEmail.tsx,Page component PgVerifyEmail,3 references,NO,MEDIUM,used
+frontend/src/store/authIntentStore.ts,Zustand state store authIntentStore,4 references,NO,MEDIUM,used
+frontend/src/store/authStore.ts,Zustand state store authStore,36 references,NO,MEDIUM,used
+frontend/src/store/uiStore.ts,Zustand state store uiStore,9 references,YES,MEDIUM,used
+frontend/src/types/api.ts,TypeScript type definitions api,423 references,NO,LOW,used
+frontend/src/types/schedule.ts,TypeScript type definitions schedule,27 references,NO,LOW,used
+frontend/src/utils/analytics.ts,Frontend module analytics,8 references,NO,LOW,used
+frontend/src/utils/apiHelpers.ts,Frontend module apiHelpers,7 references,NO,LOW,used
+frontend/src/utils/avatarPlaceholder.ts,Frontend module avatarPlaceholder,1 references,NO,LOW,used
+frontend/src/utils/calendar.ts,Frontend module calendar,33 references,NO,LOW,used
+frontend/src/utils/date.ts,Frontend module date,73 references,NO,LOW,used
+frontend/src/utils/errorMessage.ts,Frontend module errorMessage,0 references,NO,LOW,dead
+frontend/src/utils/maskEmail.ts,Frontend module maskEmail,3 references,NO,LOW,used
+frontend/src/utils/mediaUrl.ts,Frontend module mediaUrl,3 references,NO,LOW,used
+frontend/src/utils/normalize.ts,Frontend module normalize,6 references,YES,LOW,used
+frontend/src/utils/resumeStatus.ts,Frontend module resumeStatus,2 references,NO,LOW,used
+frontend/src/utils/seo.ts,Frontend module seo,57 references,NO,LOW,used
+frontend/src/utils/slots.ts,Frontend module slots,2 references,NO,LOW,used
+frontend/src/utils/slug.ts,Frontend module slug,100 references,NO,LOW,used
+frontend/src/utils/statusLabels.ts,Frontend module statusLabels,0 references,NO,LOW,dead
+frontend/src/utils/timezone.ts,Frontend module timezone,29 references,NO,LOW,used
+frontend/src/utils/validation.ts,Frontend module validation,13 references,YES,LOW,used
+frontend/src/vite-env.d.ts,Frontend module vite-env.d,0 references,NO,LOW,used

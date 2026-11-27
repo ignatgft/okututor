@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class SearchController {
 
     private final TutorSearchService tutorSearchService;
+    private final com.okututor.backend.common.ratelimit.RateLimitService rateLimitService;
 
-    public SearchController(TutorSearchService tutorSearchService) {
+    public SearchController(TutorSearchService tutorSearchService,
+                            com.okututor.backend.common.ratelimit.RateLimitService rateLimitService) {
         this.tutorSearchService = tutorSearchService;
+        this.rateLimitService = rateLimitService;
     }
-
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.okututor.backend.common.ratelimit.RateLimitService rateLimitService;
 
     @GetMapping("/tutors")
     public PageResponse<com.okututor.backend.tutor.dto.TutorProfileResponse> searchTutors(

@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import Navbar from "../components/Navbar";
 import TutorResumeCard from "../features/tutors/components/TutorResumeCard";
 import TutorFilters from "../features/tutors/components/TutorFilters";
 import { useTutorSearch } from "../features/search/hooks/useTutorSearch";
@@ -10,6 +9,15 @@ import Pagination from "../components/ui/Pagination";
 import { Spinner, ErrorState, EmptyState } from "../components/ui/Primitives";
 import { trackEvent } from "../utils/analytics";
 import { MARKETPLACE_SUBJECTS, MARKETPLACE_CITIES } from "../constants/cities";
+import { tutorTypeLabel } from "../constants/tutorTypes";
+
+const LEVEL_LABEL_KEYS: Record<string, string> = {
+  school: "search.level_school",
+  university: "search.level_university",
+  beginner: "search.level_beginner",
+  advanced: "search.level_advanced",
+  ort: "search.level_ort",
+};
 
 export default function PgTutors() {
   const { t } = useTranslation();
@@ -24,15 +32,30 @@ export default function PgTutors() {
     Boolean(filters.subject || filters.city || filters.price_min || filters.price_max || filters.format || filters.tutor_type || filters.level || searchQuery.trim())
   , [filters, searchQuery]);
 
-  const getSubjectLabel = (v: string) => MARKETPLACE_SUBJECTS.find((s) => s.value === v)?.labelRu ?? v;
-  const getCityLabel = (v: string) => MARKETPLACE_CITIES.find((c) => c.value === v)?.labelRu ?? v;
+  const getSubjectLabel = (v: string) => {
+    const s = MARKETPLACE_SUBJECTS.find((x) => x.value === v);
+    return s ? (t(s.labelKey, s.labelRu) as string) : v;
+  };
+  const getCityLabel = (v: string) => {
+    const c = MARKETPLACE_CITIES.find((x) => x.value === v);
+    return c ? (t(c.labelKey, c.labelRu) as string) : v;
+  };
+  const getFormatLabel = (v: string) => {
+    if (v === "online") return t("search.online", "Онлайн") as string;
+    if (v === "offline") return t("search.offline", "Офлайн") as string;
+    return v;
+  };
+  const getLevelLabel = (v: string) => {
+    const key = LEVEL_LABEL_KEYS[v];
+    return key ? (t(key, v) as string) : v;
+  };
   const activeChips: { label: string; onClear: () => void }[] = [];
-  if (filters.subject) activeChips.push({ label: `Предмет: ${getSubjectLabel(filters.subject)}`, onClear: () => handlers.applyFilters({ subject: "" }) });
-  if (filters.city) activeChips.push({ label: `Город: ${getCityLabel(filters.city)}`, onClear: () => handlers.applyFilters({ city: "" }) });
-  if (filters.format) activeChips.push({ label: `Формат: ${filters.format}`, onClear: () => handlers.applyFilters({ format: "" }) });
-  if (filters.tutor_type) activeChips.push({ label: `Тип: ${filters.tutor_type}`, onClear: () => handlers.applyFilters({ tutor_type: "" }) });
-  if (filters.level) activeChips.push({ label: `Уровень: ${filters.level}`, onClear: () => handlers.applyFilters({ level: "" }) });
-  if (searchQuery.trim()) activeChips.push({ label: `Поиск: ${searchQuery.trim()}`, onClear: () => handlers.setSearchQuery("") });
+  if (filters.subject) activeChips.push({ label: t("search.chip_subject", "Предмет: {{value}}", { value: getSubjectLabel(filters.subject) }) as string, onClear: () => handlers.applyFilters({ subject: "" }) });
+  if (filters.city) activeChips.push({ label: t("search.chip_city", "Город: {{value}}", { value: getCityLabel(filters.city) }) as string, onClear: () => handlers.applyFilters({ city: "" }) });
+  if (filters.format) activeChips.push({ label: t("search.chip_format", "Формат: {{value}}", { value: getFormatLabel(filters.format) }) as string, onClear: () => handlers.applyFilters({ format: "" }) });
+  if (filters.tutor_type) activeChips.push({ label: t("search.chip_type", "Тип: {{value}}", { value: tutorTypeLabel(filters.tutor_type, (k, fb) => t(k, fb) as string) || filters.tutor_type }) as string, onClear: () => handlers.applyFilters({ tutor_type: "" }) });
+  if (filters.level) activeChips.push({ label: t("search.chip_level", "Уровень: {{value}}", { value: getLevelLabel(filters.level) }) as string, onClear: () => handlers.applyFilters({ level: "" }) });
+  if (searchQuery.trim()) activeChips.push({ label: t("search.chip_query", "Поиск: {{value}}", { value: searchQuery.trim() }) as string, onClear: () => handlers.setSearchQuery("") });
 
   const resetAll = () => {
     handlers.setSearchQuery("");
@@ -44,7 +67,7 @@ export default function PgTutors() {
   const isApp = location.pathname.startsWith("/app");
   return (
     <>
-      <main id="main-content" className="search-page-container" style={{ paddingTop: isApp ? 0 : "var(--header-height, 64px)" }}>
+      <main id="main-content" className="search-page-container" style={{ paddingTop: 16 }}>
         <section className="search-hero" style={{ paddingBottom: 8 }}>
           <h1>{t("marketplace.list_title", "Репетиторы в Кыргызстане")}</h1>
           <p>{t("marketplace.list_subtitle", "Найдите преподавателя по предмету, городу, формату и типу репетитора")}</p>

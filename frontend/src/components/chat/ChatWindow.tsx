@@ -51,7 +51,7 @@ function normalizeAvatar(url?: string | null): string | null {
 
 function ChatHeader({ conversation, onBack, isOnline, isTyping }: { conversation: ChatConversation; onBack?: () => void; isOnline?: boolean; isTyping?: boolean }): JSX.Element {
   const { t } = useTranslation();
-  const name = (conversation.counterpart_name as string | null) || t("chat.counterpart", "Собеседник") as string;
+  const name = (conversation.counterpart_name as string | null) || (t("messages.counterpart", "Собеседник") as string);
   const avatarUrl = normalizeAvatar((conversation.counterpart_avatar as string | null) || (conversation.other_participant_avatar_url as string | null) || null);
   const slug = (conversation.counterpart_slug as string | null) || (conversation.tutorProfileSlug as string | null) || (conversation.other_participant_slug as string | null) || null;
   const profileId = (conversation.tutorProfileId as string | null) || null;

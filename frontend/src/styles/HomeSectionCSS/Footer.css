@@ -67,13 +67,30 @@
 .social-icon img {
   width: 20px;
   height: 20px;
-  opacity: 0.7;
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .social-icon {
+  background: var(--color-surface, #242426);
+  border-color: var(--color-border, #3a3a3c);
+}
+
+[data-theme="dark"] .social-icon img {
+  filter: brightness(0) invert(0.85);
+  opacity: 1;
 }
 
 .copyright {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   margin-bottom: 0;
+}
+
+/* Mobile: ensure content and footer are not hidden behind BottomNav */
+@media (max-width: 767px) {
+  .footer {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 24px);
+  }
 }
 
 /* ≥768px — tablet+: larger padding */

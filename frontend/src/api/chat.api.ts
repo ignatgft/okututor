@@ -238,4 +238,48 @@ export const chatApi = {
       type: "DIRECT",
     }) as Promise<HttpResult<ChatConversation>>;
   },
+
+  createOrGetDirect(participantId: string): Promise<HttpResult<DirectConversationResponse>> {
+    return apiClient.post<DirectConversationResponse>("/api/v1/conversations/direct", { participantId });
+  },
+
+  createOrGetDirectByTutorId(tutorId: string): Promise<HttpResult<DirectConversationResponse>> {
+    return apiClient.post<DirectConversationResponse>("/api/v1/conversations/direct", { participantId: tutorId });
+  },
 };
+
+export interface DirectConversationResponse {
+  id: string;
+  requestId: string;
+  type: string;
+  participant: { id: string; name: string; avatarUrl: string };
+  created: boolean;
+  requestCreated: boolean;
+}
+
+export const conversationApi = {
+  createOrGetDirect: (participantId: string) =>
+    apiClient.post<DirectConversationResponse>("/api/v1/conversations/direct", { participantId }),
+  createOrGetDirectByTutorId: (tutorId: string) =>
+    apiClient.post<DirectConversationResponse>("/api/v1/conversations/direct", { participantId: tutorId }),
+  list: (page = 0, size = 20) =>
+    apiClient.get(`/api/v1/conversations?page=${page}&size=${size}`),
+  get: (id: string) => apiClient.get(`/api/v1/conversations/${id}`),
+};
+
+/**
+ * Одноразовый WS-тикет (POST /api/v1/ws/ticket, TTL 60с).
+ * Используется вместо сырого JWT в query — тикет не даёт доступа к API,
+ * действует один раз и не светит долгоживущий токен в логах прокси.
+ */
+export async function getWsTicket(): Promise<string | null> {
+  try {
+    const res = await apiClient.post<Record<string, unknown>>("/api/v1/ws/ticket", {});
+    if (!res.response.ok || !res.data) return null;
+    const t = res.data["ticket"];
+    return typeof t === "string" && t ? t : null;
+  } catch {
+    return null;
+  }
+}
+

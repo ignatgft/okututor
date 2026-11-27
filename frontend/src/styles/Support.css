@@ -6,6 +6,13 @@
   padding: var(--space-4) var(--space-3);
 }
 
+.support-page-sub {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
 .support-header-row {
   display: flex;
   align-items: stretch;
@@ -27,9 +34,18 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   padding-bottom: var(--space-1);
+  padding-right: var(--space-1);
+  scroll-padding-inline: var(--space-3);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.support-filter-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .support-filter-btn {
+  flex-shrink: 0;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);

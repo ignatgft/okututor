@@ -1,15 +1,11 @@
+export { chatApi, conversationApi, getWsTicket } from "./chat.api";
 export { messagesApi, notificationsApi, loadUnifiedConversations, loadSupportThread, sendSupportMessage } from "./messages.api";
 export { supportApi, adminSupportApi } from "./support.api";
 export { adminApi } from "./admin.api";
 export { reviewsApi } from "./reviews.api";
-export { coursesApi } from "./courses.api";
-export { lessonsApi } from "./lessons.api";
 export { tutorsApi } from "./tutors.api";
-export { studentsApi } from "./students.api";
-export { enrollmentsApi } from "./enrollments.api";
 export { usersApi } from "./users.api";
-export { authApi } from "./auth.api";
-export { login, register, getCurrentUser, logout, buildGoogleOAuthUrl } from "./auth";
+export { authApi, login, register, getCurrentUser, logout, buildGoogleOAuthUrl, EMAIL_ERROR_CODES } from "./auth";
 export { apiClient } from "./http";
 export { endpoints } from "./endpoints";
 export { ApiRequestError, normalizeApiError, API_ERROR_CODES } from "./client/errorMapper";

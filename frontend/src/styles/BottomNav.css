@@ -1,31 +1,45 @@
-/* Bottom Navigation — Mobile-first
-   base:     hidden (desktop/tablet)
-   <768px:   visible (mobile only)
-*/
-
+/* Bottom navigation — Mobile-first, visible only <900px */
 .bottom-nav {
   display: none;
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
-  z-index: var(--z-header);
-  box-shadow: 0 -1px 3px rgba(16, 23, 39, 0.06);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  /* prevent content from showing through on iOS */
-  background-clip: padding-box;
+  bottom: 0;
+  z-index: 50;
+  background: var(--bg-surface);
+  border-top: 0;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 30px -12px rgba(36, 24, 74, 0.2);
+  grid-template-columns: repeat(5, 1fr);
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .bottom-nav {
+  background: var(--bg-surface);
+  box-shadow: 0 -10px 30px -12px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 899px) {
+  .bottom-nav {
+    display: grid;
+  }
+  body.has-bottom-nav {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 900px) {
+  .bottom-nav {
+    display: none !important;
+  }
+  body.has-bottom-nav {
+    padding-bottom: 0;
+  }
 }
 
 .bottom-nav-container {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  max-width: 100%;
-  margin: 0 auto;
-  height: var(--bottom-nav-height);
-  padding: 0 var(--space-2);
+  display: contents;
 }
 
 .bottom-nav-item {
@@ -33,31 +47,32 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1 1 0;
-  height: 100%;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-text-muted);
-  padding: var(--space-2) 0;
-  transition: color var(--transition-fast);
-  gap: var(--space-1);
-  border-radius: 0;
-  min-height: var(--touch-target);
-  min-width: 0;
+  text-decoration: none;
+  font-family: inherit;
+  transition: color 0.15s ease;
+  min-height: 48px;
+  padding: 4px 0;
   -webkit-tap-highlight-color: transparent;
 }
 
+.bottom-nav-item:hover,
 .bottom-nav-item:active {
-  background: none;
-}
-
-.bottom-nav-item:hover {
-  transform: none;
+  color: var(--text-primary);
 }
 
 .bottom-nav-item.active {
-  color: var(--color-primary);
+  color: var(--accent);
+}
+
+[data-theme="dark"] .bottom-nav-item.active {
+  color: var(--accent);
 }
 
 .bottom-nav-icon-wrap {
@@ -65,113 +80,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 32px;
-  border-radius: var(--radius-lg);
-}
-
-.bottom-nav-item.active .bottom-nav-indicator {
-  position: absolute;
-  inset: 0;
-  background-color: var(--color-primary-light);
-  border-radius: var(--radius-lg);
-  z-index: -1;
+  width: 24px;
+  height: 24px;
 }
 
 .bottom-nav-icon {
-  font-size: 18px;
-  color: inherit;
-  position: relative;
-  z-index: 1;
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .bottom-nav-label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  line-height: 1.2;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
   text-align: center;
-  color: inherit;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-}
-
-/* Mobile only — show BottomNav */
-@media (max-width: 767px) {
-  .bottom-nav {
-    display: block;
-    /* ensure it sits above everything */
-    z-index: 100;
-  }
-  /* keep page content above the bar (safe-area aware) */
-  body {
-    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
-  }
-  /* when dashboard layout is used, avoid double padding */
-  .dashboard-layout.has-bottom-nav .dashboard-main {
-    padding-bottom: 0;
-  }
-  /* 6 items (with Резюме) need tighter spacing */
-  .bottom-nav-item {
-    padding: 4px 0;
-    gap: 2px;
-  }
-  .bottom-nav-icon-wrap {
-    width: 40px;
-    height: 28px;
-  }
-  .bottom-nav-label {
-    font-size: 10px;
-    letter-spacing: -0.1px;
-  }
-  .bottom-nav-container {
-    padding: 0 2px;
-    gap: 1px;
-  }
-}
-
-/* Very small screens (<380px) — iPhone SE */
-@media (max-width: 380px) {
-  .bottom-nav-label {
-    font-size: 11px;
-    letter-spacing: -0.2px;
-  }
-
-  .bottom-nav-icon {
-    font-size: 17px;
-  }
-
-  .bottom-nav-container {
-    padding: 0 var(--space-1);
-  }
-
-  .bottom-nav-item {
-    min-width: 0;
-    flex: 1 1 0;
-    padding: var(--space-1) 0;
-  }
-}
-
-/* Dark theme — unified with Sidebar: soft bg + blue active */
-[data-theme="dark"] .bottom-nav {
-  background: #000000;
-  border-top-color: #1a1a1a;
-  box-shadow: 0 -1px 0 #1a1a1a;
-}
-
-[data-theme="dark"] .bottom-nav-item {
-  color: #a1a1aa;
-}
-
-[data-theme="dark"] .bottom-nav-item.active {
-  color: #60a5fa;
-}
-
-[data-theme="dark"] .bottom-nav-item.active .bottom-nav-indicator {
-  background: #0f172a;
-}
-
-[data-theme="dark"] .bottom-nav-label {
-  color: inherit;
 }
