@@ -1,104 +1,71 @@
-# OkuTutor — Платформа репетиторов Кыргызстана
+# OkuTutor — Antigravity Engineering Kit
 
-Бесплатный маркетплейс резюме преподавателей и репетиторов в Кыргызстане (Free MVP, без платных услуг и подписок).
+Версия комплекта: 1.0  
+Дата подготовки: 2026-11-27  
+Репозиторий, для которого подготовлен комплект: `ignatgft/okututor`  
+Проверенная ветка: `master`
 
----
+## Назначение
 
-## 🛠 Технологический стек
+Комплект задаёт инженерный процесс для Antigravity: сначала аудит и фактическая карта репозитория, затем декомпозиция задач, ограниченная параллельная работа субагентов, интеграция и проверка. Он также содержит стартовую MVP-карту страниц и функций, сформированную по проверенным маршрутам и ключевым исходникам, а не только по старому описанию продукта.
 
-- **Backend:** Java 21, Spring Boot 3.5.4, Spring Security 6, Spring Data JPA, Flyway (61 миграция), Jackson, Micrometer, Actuator
-- **Frontend:** React 19, TypeScript, Vite, TanStack Query v5, Zustand, React Router 6, i18next (ru, en, kg), Lucide React
-- **Инфраструктура:** PostgreSQL 16, Redis 7, Mailpit (SMTP-тестирование), Nginx (Reverse proxy), Docker Compose
-- **Мониторинг:** Prometheus v2.53.0, Grafana 11.2.0, OpenTelemetry, структурированные JSON-логи
+**Это пакет документации и инструкций. Он не меняет исходный код приложения, не создаёт деплой и не подтверждает, что все перечисленные пользовательские сценарии уже работают end-to-end.**
 
----
+## С чего начать
 
-## 🚀 Быстрый старт (Docker Compose)
+1. Распакуй содержимое архива в корень локального репозитория `okututor` так, чтобы `AGENTS.md` оказался в корне проекта.
+2. Открой именно корень монорепозитория в Antigravity, а не папку `frontend` или `backend` отдельно.
+3. Убедись, что `git status` не содержит неизвестных изменений. Ничего не сбрасывай и не перезаписывай.
+4. Открой `START_HERE_PROMPT.md` и запусти аудит по его инструкции.
+5. Попроси главного агента обновить `docs/REPOSITORY_AUDIT.md`, `docs/MVP_FUNCTIONAL_MAP.md` и `docs/PROJECT_FACTS.md` на основе локального кода. В этот первый проход запрещено менять бизнес-код.
+6. После принятия аудита переходи к задачам из `docs/MVP_RELEASE_GATES.md`.
 
-Все 7 сервисов поднимаются единой командой из корня репозитория:
+## Структура
 
-```bash
-# 1. Скопировать шаблон переменных окружения
-cp .env.example .env
+```text
+AGENTS.md                         # главные правила для любого агента
+START_HERE_PROMPT.md              # стартовый запрос на аудит репозитория
+PROJECT_CONTEXT.md                # известные факты и границы достоверности
+GIT_WORKFLOW.md                    # ветки, PR и правила параллельной работы
 
-# 2. Запустить все сервисы в фоновом режиме
-docker compose up -d --build
+docs/
+  MVP_FUNCTIONAL_MAP.md            # целевая карта страниц, компонентов и MVP-сценариев
+  REPOSITORY_AUDIT.md              # аудит, проведённый при подготовке комплекта
+  PROJECT_FACTS.md                 # короткие подтверждённые технические факты
+  MVP_RELEASE_GATES.md             # критерии готовности к реальному запуску
+  API_CONTRACTS.md                 # проверенные API-точки и вопросы к контрактам
+  REFERENCE_FEATURE_MAP_ORIGINAL.md# исходная пользовательская карта как исторический input
+
+.agents/
+  rules/                            # правила по областям
+  agents/                           # custom subagents Antigravity
+  templates/                        # шаблоны задач и отчётов
+  workflows/                        # повторяемый процесс разработки
 ```
 
-### Доступные сервисы и порты:
+## Важное про субагентов Antigravity
 
-| Сервис | URL | Назначение |
-|---|---|---|
-| **Frontend** | [http://localhost:8081](http://localhost:8081) | Веб-интерфейс каталога, поиска и кабинета |
-| **Backend API** | [http://localhost:8080](http://localhost:8080) | REST API бэкенда |
-| **Swagger UI** | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) | OpenAPI документация |
-| **Actuator Health** | [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) | Healthcheck бэкенда |
-| **Mailpit Web UI** | [http://localhost:8025](http://localhost:8025) | Просмотр писем и кодов верификации email |
-| **Prometheus** | [http://localhost:9090](http://localhost:9090) | Сбор метрик и алерты |
-| **Grafana** | [http://localhost:3000](http://localhost:3000) | Дашборды мониторинга (логин: `admin`, пароль: `admin`) |
-| **PostgreSQL** | `localhost:5432` | База данных (`okututor` / `okututor_dev_password`) |
-| **Redis** | `localhost:6379` | Кэш и сессии токенов |
+Файлы `.agents/agents/*.md` используют YAML frontmatter Antigravity: `name`, `description`, `model`, `mainAgent`, `subagent`, `commandExecutionPolicy`. Antigravity автоматически обнаруживает custom subagents в `.agents/agents/` в workspace root. Каждый субагент стартует с отдельным контекстом, поэтому ему нужно передавать пути, правила, критерии приёмки и ожидаемый формат отчёта. См. официальную документацию: [Custom subagents](https://antigravity.google/docs/subagents).
 
-Проверить статус здоровья контейнеров:
-```bash
-docker compose ps
-```
+Не указывай в frontmatter произвольные имена инструментов. При необходимости ограничения toolset сначала сверяй актуальные названия с документацией и интерфейсом установленной версии Antigravity. В этом комплекте списки `tools` намеренно не заданы, чтобы не блокировать агента ошибочно названным инструментом.
 
----
+## Рекомендуемые режимы
 
-## 🧪 Запуск тестов
+- Один небольшой баг в одном модуле: один агент.
+- Исследование репозитория по независимым областям: `/swarm` или несколько `invoke_subagent`.
+- Повторяемая однотипная проверка по многим файлам: `/run-workflow`.
+- Многоэтапная миграция или крупная продуктовая задача: `/teamwork`.
+- Сложная ошибка, которую нужно независимо оспорить и перепроверить: `/boost`.
 
-### 1. Автоматизированный сквозной Smoke-сценарий (10 стадий)
-Скрипт проверяет полный цикл: регистрация → чтение кода из Mailpit → верификация → логин → создание резюме → модерация админом → публикация на 30 дней → проверка поиска → админ-метрики:
+Для первичного MVP-аудита предпочтительна параллельная read-only проверка через `/swarm`: frontend/routes, backend/API/data, security, infrastructure/CI, product/MVP. Главный агент сводит отчёты и устраняет противоречия.
 
-```bash
-powershell -ExecutionPolicy Bypass -File scripts/smoke_scenario.ps1
-```
+## Приоритет источников истины
 
-### 2. Backend Unit & Regression тесты
-```bash
-cd backend
-mvn test
-```
+1. Фактический код текущего checkout и его тесты.
+2. Схема БД и миграции, реально присутствующие в checkout.
+3. Конфигурации сборки, Docker, CI/CD и окружений.
+4. Актуальные продуктовые решения, подтверждённые владельцем.
+5. Документы в `docs/`, включая историческую карту.
+6. Предыдущие чаты и предположения модели.
 
-### 3. Frontend тесты (Vitest)
-```bash
-cd frontend
-npm test
-```
-
----
-
-## 📂 Структура репозитория
-
-```
-okututor/
-├── backend/            # Spring Boot приложение
-├── frontend/           # React SPA приложение
-├── monitoring/         # Конфигурация Prometheus, Grafana и правила алертов
-├── docs/               # Документация проекта
-│   ├── audit/          # Итоговый отчёт аудита и инвентарь файлов
-│   ├── adr/            # Архитектурные решения (ADR)
-│   ├── API.md          # REST API справочник
-│   ├── ARCHITECTURE.md # Архитектура системы
-│   ├── CONTRIBUTING.md # Регламент разработки и ветвления
-│   ├── RUNBOOK.md      # Инструкции по эксплуатации и инцидентам
-│   ├── LEGAL_COMPLIANCE.md # Чек-лист по персональным данным и cookies
-│   └── PATTERNS_AND_REUSE.md # Архитектурные паттерны проекта
-├── scripts/            # Вспомогательные скрипты аудита и тестирования
-├── docker-compose.yml  # Единый файл оркестрации
-└── .env.example        # Шаблон переменных окружения
-```
-
----
-
-## 📖 Документация
-
-- [Итоговый отчёт аудита 2026](file:///docs/audit/AUDIT_REPORT.md)
-- [Инвентарь файлов проекта](file:///docs/audit/FILE_INVENTORY.csv)
-- [REST API Reference](file:///docs/API.md)
-- [Архитектура OkuTutor](file:///docs/ARCHITECTURE.md)
-- [Регламент разработки и ветвления](file:///docs/CONTRIBUTING.md)
-- [ADR-001: Жизненный цикл резюме и TutorProfile](file:///docs/adr/ADR-001-resume-tutorprofile-lifecycle.md)
-- [ADR-002: Apple Space Gray палитра и CustomSelect](file:///docs/adr/ADR-002-apple-space-gray-and-accessible-ui.md)
-- [Runbook по устранению сбоев](file:///docs/RUNBOOK.md)
+Если код и документ расходятся, не «исправляй» код автоматически. Зафиксируй расхождение, выясни целевое поведение и предложи решение.
