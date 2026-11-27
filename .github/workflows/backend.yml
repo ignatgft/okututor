@@ -76,12 +76,7 @@ jobs:
           push: false
           tags: okututor-backend:ci
       - name: Trivy scan (fs)
-        uses: aquasecurity/trivy-action@v0.28.0
-        with:
-          scan-type: fs
-          scan-ref: backend
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
+        run: docker run --rm -v ${{ github.workspace }}:/app aquasec/trivy:latest fs /app/backend --severity HIGH,CRITICAL --ignore-unfixed
 
   deploy:
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
