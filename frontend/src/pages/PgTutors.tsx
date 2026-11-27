@@ -64,7 +64,6 @@ export default function PgTutors() {
 
   const qs = location.search || "";
 
-  const isApp = location.pathname.startsWith("/app");
   return (
     <>
       <main id="main-content" className="search-page-container" style={{ paddingTop: 16 }}>
