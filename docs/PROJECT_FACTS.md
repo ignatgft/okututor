@@ -12,7 +12,7 @@
 - **Монорепозиторий:** `backend/` (Spring Boot) + `frontend/` (React SPA) + `monitoring/` + `ops/`.
 - **Корневой `docker-compose.yml`:** Поднимает 7 сервисов: `postgres:16-alpine`, `redis:7-alpine`, `mailpit`, `backend` (8080), `frontend` (80/5173), `prometheus`, `grafana`.
 - **Frontend Docker:** `frontend/Dockerfile` **присутствует**. Многоэтапная сборка: `node:20-alpine` (сборка через Vite) -> `nginx:alpine` (раздача статики и reverse-proxy `/api` на бэкенд). Локальный тест сборки `docker build -t okututor-frontend:test ./frontend` прошел успешно (0 errors).
-- **Backend Docker:** `backend/Dockerfile` **присутствует**. Многоэтапная сборка: `maven:3.9-eclipse-temurin-21` -> `eclipse-temurin:21-jre` с OTEL Java-агентом `2.14.0`. Локальный тест сборки `docker build -t okututor-backend:test ./backend` и тесты в Docker builder прошли успешно (`mvn test`: 186 tests run, 0 failures, 0 errors, BUILD SUCCESS).
+- **Backend Docker:** `backend/Dockerfile` **присутствует**. Многоэтапная сборка: `maven:3.9-eclipse-temurin-21` -> `eclipse-temurin:21-jre` с OTEL Java-агентом `2.14.0`. Локальный тест сборки `docker build -t okututor-backend:test ./backend` и тесты в Docker builder прошли успешно (`mvn test`: 211 tests run, 0 failures, 0 errors, BUILD SUCCESS).
 
 ---
 
@@ -25,14 +25,18 @@
   - Миграция `V48__favorites.sql` создала таблицу `favorites`.
   - Миграция `V49__resume_expiry.sql` добавила поля жизненного цикла `expires_at`, `last_active_at`, `hidden_at` и составные индексы `(status, expires_at)`.
 - **Контроллеры:** 31 контроллер (242 эндпоинта). Жизненный цикл анкет (`submit`, `renew`, `hide`, `restore`, `photo`) полностью реализован в `TutorProfileController.java`.
-- **Заявки:** `TutorRequestController.java` поддерживает раздельные эндпоинты `/me` (исходящие) и `/tutors/me/requests` (входящие). Generic эндпоинт `/tutor-requests` отдает входящие заявки, только если исходящих 0 (зафиксировано в P1 бэклога).
+- **Заявки:** `TutorRequestController.java` поддерживает явный параметр `direction=incoming|outgoing`, а также эндпоинты `/me` (исходящие) и `/tutors/me/requests` (входящие). Generic эндпоинт `/tutor-requests` фильтрует заявки строго по направлению с дефолтным приоритетом исходящих.
+- **Безопасность медиа и IP:**
+  - `MediaFileController.java`: для приватных файлов (`messages/**`, `support/**`, `chat/**`, `private/**`) выставляется `Cache-Control: private, no-store, must-revalidate` и `Pragma: no-cache` (включая 304 Not Modified). Публичные файлы (`users/**`, `courses/**`, `tutors/**`) сохраняют `public, max-age=31536000, immutable`.
+  - Доступ к приватным вложениям разрешён владельцу, участникам обращения/диалога (получателям) и администраторам. Отсутствие метаданных — fail-closed (403 Forbidden).
+  - `ClientIpResolver.java`: исключено сопоставление по префиксу `startsWith`. Реализовано строгое сопоставление IP и CIDR-подсетей через `IpAddressMatcher`, строгая валидация синтаксиса IPv4/IPv6 и обратный обход цепочки `X-Forwarded-For`.
 
 ---
 
 ## 3. Frontend стек и архитектура
 
-- **Стек:** React 19.0.0, TypeScript 5.9.3, Vite 6.2.0, React Router DOM 7.3.0, TanStack Query 5.102.8, Zustand 5.0.0, i18next 25.1.2.
-- **Тесты:** `vitest run` — **33 тест-файла, 173 теста пройдено успешно** (100% pass).
+- **Стек:** React 19.0.0, TypeScript 5.9.3, Vite ^7.3.6 (Vite 7), React Router DOM 7.3.0, TanStack Query 5.102.8, Zustand 5.0.0, i18next 25.1.2.
+- **Тесты:** `vitest run` — **35 тест-файлов, 180 тестов пройдено успешно** (100% pass).
 - **Сборка:** `npm run build` (Vite) собирает production bundle за 2.52 сек.
 - **Маршрутизация (`AppRouter.tsx`):**
   - Защищенные маршруты личного кабинета консолидированы под `/app/*` (`/app/dashboard`, `/app/resumes`, `/app/resumes/new`, `/app/resumes/edit`, `/app/resumes/preview`, `/app/favorites`, `/app/messages`, `/app/profile`, `/app/settings`).
