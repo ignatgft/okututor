@@ -68,9 +68,9 @@ public class TutorRequestService {
             User student = userRepository.findById(studentUserId).orElse(null);
             r.setStudentUser(student);
         }
-        String cleanName = org.jsoup.Jsoup.clean(req.studentName().trim(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false));
-        String cleanContact = org.jsoup.Jsoup.clean(req.studentContact().trim(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false));
-        String cleanMessage = req.message() == null ? null : org.jsoup.Jsoup.clean(req.message().trim(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false));
+        String cleanName = org.jsoup.Jsoup.clean(req.studentName(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
+        String cleanContact = org.jsoup.Jsoup.clean(req.studentContact(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
+        String cleanMessage = req.message() == null ? null : org.jsoup.Jsoup.clean(req.message(), "", org.jsoup.safety.Safelist.none(), new org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)).trim();
         r.setStudentName(cleanName);
         r.setStudentContact(cleanContact);
         r.setMessage(cleanMessage);
