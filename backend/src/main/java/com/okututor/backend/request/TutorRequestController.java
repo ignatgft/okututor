@@ -2,6 +2,7 @@ package com.okututor.backend.request;
 
 import com.okututor.backend.common.error.ApiException;
 import com.okututor.backend.common.ratelimit.RateLimitService;
+import com.okututor.backend.common.web.ClientIpResolver;
 import com.okututor.backend.request.dto.TutorRequestCreateRequest;
 import com.okututor.backend.request.dto.TutorRequestResponse;
 import com.okututor.backend.security.UserPrincipal;
@@ -24,17 +25,20 @@ public class TutorRequestController {
 
     private final TutorRequestService service;
     private final RateLimitService rateLimitService;
+    private final ClientIpResolver clientIpResolver;
 
-    public TutorRequestController(TutorRequestService service, RateLimitService rateLimitService) {
+    public TutorRequestController(TutorRequestService service, RateLimitService rateLimitService, ClientIpResolver clientIpResolver) {
         this.service = service;
         this.rateLimitService = rateLimitService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @PostMapping("/tutor-requests")
     public TutorRequestResponse create(@RequestBody @Valid TutorRequestCreateRequest body,
                                        @AuthenticationPrincipal UserPrincipal principal,
                                        jakarta.servlet.http.HttpServletRequest request) {
-        String ip = request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
+        String ip = clientIpResolver != null ? clientIpResolver.resolve(request) :
+                (request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown");
         try { rateLimitService.checkTutorRequest(ip); } catch (com.okututor.backend.common.error.ApiException e) { throw e; } catch (Exception ignored) { throw com.okututor.backend.common.error.ApiException.rateLimited("Too many requests. Please slow down."); }
         if (principal != null) {
             try { rateLimitService.checkTutorRequestByUser(principal.id().toString()); } catch (com.okututor.backend.common.error.ApiException e) { throw e; } catch (Exception ignored) { throw com.okututor.backend.common.error.ApiException.rateLimited("Too many requests. Please slow down."); }
@@ -42,16 +46,23 @@ public class TutorRequestController {
         return service.create(body, principal == null ? null : principal.id());
     }
 
-    // Spec: GET /api/v1/tutor-requests (auth required, returns own requests — student → student, tutor → incoming)
+    // Spec: GET /api/v1/tutor-requests (auth required; supports direction=incoming|outgoing; prioritizes tutor leads if user has tutor profile/leads)
     @GetMapping("/tutor-requests")
     public Page<TutorRequestResponse> list(@AuthenticationPrincipal UserPrincipal principal,
+                                           @RequestParam(required = false) String direction,
                                            @RequestParam(defaultValue = "0") int page,
                                            @RequestParam(defaultValue = "20") int size) {
         if (principal == null) throw ApiException.unauthorized("Authentication required");
-        // try student first, if has student requests return them; else tutor incoming; prioritize student
-        var studentPage = service.forStudent(principal.id(), page, size);
-        if (studentPage.getTotalElements() > 0) return studentPage;
-        return service.forTutor(principal.id(), page, size);
+        if ("incoming".equalsIgnoreCase(direction) || "tutor".equalsIgnoreCase(direction)) {
+            return service.forTutor(principal.id(), page, size);
+        }
+        if ("outgoing".equalsIgnoreCase(direction) || "student".equalsIgnoreCase(direction)) {
+            return service.forStudent(principal.id(), page, size);
+        }
+        // If direction not specified: prioritize incoming tutor leads if any exist, else outgoing student requests
+        var tutorPage = service.forTutor(principal.id(), page, size);
+        if (tutorPage.getTotalElements() > 0) return tutorPage;
+        return service.forStudent(principal.id(), page, size);
     }
 
     @GetMapping("/tutor-requests/me")

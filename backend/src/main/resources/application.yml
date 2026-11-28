@@ -168,6 +168,8 @@ app:
     api-secret: ${LIVEKIT_API_SECRET:devsecret-change-me-012345678901234}
     ws-url: ${LIVEKIT_WS_URL:ws://localhost:7880}
     token-ttl-minutes: 30
+  telegram:
+    alert-secret: ${TG_ALERT_SECRET:}
   mail:
     enabled: ${APP_MAIL_ENABLED:false}
     from: ${MAIL_FROM:Okututor <no-reply@okututor.local>}

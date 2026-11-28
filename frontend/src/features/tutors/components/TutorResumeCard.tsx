@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, MapPin, Briefcase, CreditCard, Monitor, User, GraduationCap, Trophy, Heart, Share2 } from "lucide-react";
 import { Avatar } from "../../../components/ui/Avatar";
-import { subjectSlug, tutorSlug } from "../../../utils/slug";
+import { tutorSlug } from "../../../utils/slug";
 import useContactTutor from "../../../hooks/useContactTutor";
 import ContactAuthSheet from "../../../components/ContactAuthSheet";
 import { useFavoriteIds, useToggleFavorite } from "../../../hooks/useFavorites";
@@ -84,17 +84,13 @@ function TutorResumeCardInner({ tutor, onContact }: Props) {
   const slug = tutorSlug(tutor);
   const id = String(tutor["id"] ?? "");
   const hrefSlug = slug || id;
-  const sSlug = (() => {
-    const raw = String(get(tutor, ["subjects", "subject", "subjectsList"]) ?? "").split(",")[0].trim();
-    return raw ? subjectSlug(raw) : "other";
-  })();
-  const href = `/repetitor/${sSlug}/${hrefSlug}`;
+  const href = `/tutor/${hrefSlug}`;
 
   const firstNameRaw = get(tutor, ["firstName", "first_name", "firstNameRaw"]);
   const lastNameRaw = get(tutor, ["lastName", "last_name"]);
   const fallbackName = `${String(firstNameRaw ?? "")} ${String(lastNameRaw ?? "")}`.trim();
   const fullName = String((get(tutor, ["full_name", "fullName", "name", "fullName"]) as string | null) ?? (fallbackName || t("tutor_profile.not_found", "Репетитор")));
-  const isVerified = Boolean(get(tutor, ["is_verified", "isVerified", "verified"]) ?? tutor["verified"] ?? true);
+  const isVerified = Boolean(get(tutor, ["is_verified", "isVerified", "verified"]) ?? tutor["verified"] ?? false);
   // subjects: array or csv
   const subjectsRaw = get(tutor, ["subjects"]);
   const subjects: string[] = Array.isArray(subjectsRaw)
@@ -119,9 +115,18 @@ function TutorResumeCardInner({ tutor, onContact }: Props) {
   // rating
   const rating = Number(get(tutor, ["rating", "average_rating", "averageRating"]) ?? 0);
   const reviewsCount = Number(get(tutor, ["reviews_count", "reviewsCount", "reviews_count"]) ?? 0);
-  const exp = String(get(tutor, ["experience_years", "experienceYears", "experience"]) ?? "5");
+  const expRaw = get(tutor, ["experience_years", "experienceYears", "experience"]);
+  const exp = expRaw != null && String(expRaw).trim() !== "" ? String(expRaw).trim() : null;
+  const expLabel = (() => {
+    if (!exp) return "Не указан";
+    const n = Number(exp);
+    if (isNaN(n)) return exp;
+    if (n % 10 === 1 && n % 100 !== 11) return `${n} год`;
+    if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return `${n} года`;
+    return `${n} лет`;
+  })();
   const priceFrom = get(tutor, ["price_per_hour", "priceFrom", "price_from", "price", "hourly_rate"]);
-  const priceNum = typeof priceFrom === "number" ? priceFrom : priceFrom ? Number(priceFrom) : 800;
+  const priceNum = typeof priceFrom === "number" ? priceFrom : (priceFrom != null && !isNaN(Number(priceFrom)) && Number(priceFrom) > 0) ? Number(priceFrom) : null;
   const currency = String(get(tutor, ["currency"]) ?? "KGS");
   const online = Boolean(tutor["online"]);
   const offline = Boolean(tutor["offline"]);
@@ -452,8 +457,8 @@ function TutorResumeCardInner({ tutor, onContact }: Props) {
         `}</style>
         <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "8px 16px", borderRight: "1px solid transparent" }}>
         {[
-          { Icon: Briefcase, label: "Опыт:", value: `${exp} лет` },
-          { Icon: CreditCard, label: "Ставка:", value: `${priceNum}${priceToNum && priceToNum !== priceNum ? `–${priceToNum}` : ""} ${currency}/час` },
+          { Icon: Briefcase, label: "Опыт:", value: expLabel },
+          { Icon: CreditCard, label: "Ставка:", value: priceNum != null ? `${priceNum}${priceToNum && priceToNum !== priceNum ? `–${priceToNum}` : ""} ${currency}/час` : "По договоренности" },
           { Icon: Monitor, label: "Формат:", value: format },
         ].map((row) => (
           <div

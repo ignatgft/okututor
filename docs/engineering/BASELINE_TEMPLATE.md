@@ -1,0 +1,21 @@
+# Local runtime baseline
+
+- Date/time:
+- Commit SHA:
+- Branch:
+- Git status before/after:
+- OS/runtime versions:
+- Docker available/version:
+- Java/Maven:
+- Node/npm:
+- Disposable test DB:
+- Active Spring profile:
+- Frontend start command/result:
+- Backend start command/result:
+- Flyway status/result:
+- Actuator health:
+- Frontend lint/test/build:
+- Backend verify:
+- Browser availability:
+- Known environment blockers:
+- Required secret names only (never values):

@@ -1,10 +1,13 @@
 package com.okututor.backend.legal;
 
+import com.okututor.backend.common.error.ApiException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,20 +17,41 @@ public class TgAlertWebhookController {
     private static final Logger log = LoggerFactory.getLogger(TgAlertWebhookController.class);
     private final TgHealthBotService botService;
 
+    @Value("${app.telegram.alert-secret:${TG_ALERT_SECRET:}}")
+    private String alertSecret;
+
     public TgAlertWebhookController(TgHealthBotService botService) { this.botService = botService; }
 
-    // Alertmanager webhook — без auth, но проверяется что запрос из внутренней сети (Dokploy okututor network)
+    // Alertmanager webhook — защищен секретным токеном (X-Alert-Secret или Authorization: Bearer).
+    // По соображениям безопасности секрет НЕ принимается через URL query parameter во избежание утечки в логи.
     @PostMapping("/alert")
-    public Map<String, Object> alert(@RequestBody(required = false) Map<String, Object> payload,
-                                     @RequestParam(required = false) String severity) {
-        log.info("TG alert webhook severity={} payload={}", severity, payload);
+    public Map<String, Object> alert(@RequestHeader(value = "X-Alert-Secret", required = false) String secretHeader,
+                                     @RequestHeader(value = "Authorization", required = false) String authHeader,
+                                     @RequestBody(required = false) Map<String, Object> payload,
+                                     @RequestParam(required = false) String severity,
+                                     HttpServletRequest request) {
+        String bearer = (authHeader != null && authHeader.startsWith("Bearer ")) ? authHeader.substring(7).trim() : null;
+        String providedSecret = secretHeader != null && !secretHeader.isBlank() ? secretHeader.trim() :
+                (bearer != null && !bearer.isBlank() ? bearer : null);
+
+        if (alertSecret == null || alertSecret.isBlank()) {
+            log.error("TG alert webhook invoked but app.telegram.alert-secret is not configured. Failing closed.");
+            throw ApiException.forbidden("Alert webhook is disabled: secret not configured");
+        }
+
+        if (providedSecret == null || !alertSecret.equals(providedSecret)) {
+            log.warn("Unauthorized attempt to access TG alert webhook from IP={}", request.getRemoteAddr());
+            throw ApiException.unauthorized("Invalid or missing alert secret");
+        }
+
+        log.info("TG alert webhook received: severity={}", severity != null ? severity : "auto");
         try {
             String sev = severity != null ? severity.toUpperCase() : deriveSeverity(payload);
             String html = formatAlert(payload, sev);
             // нормализуем для broadcast (CRITICAL / WARNING / INFO)
             String normalized = normalizeSeverity(sev);
             botService.broadcast(html, normalized);
-        } catch (Exception e) { log.warn("TG alert handling failed", e); }
+        } catch (Exception e) { log.warn("TG alert handling failed: {}", e.getMessage()); }
         return Map.of("status", "ok");
     }
 

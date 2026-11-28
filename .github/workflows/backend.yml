@@ -2,14 +2,17 @@ name: Backend CI
 
 on:
   push:
+    branches: [main, master, develop]
     paths:
       - 'backend/**'
       - 'monitoring/**'
       - '.github/workflows/backend.yml'
   pull_request:
+    branches: [main, master, develop]
     paths:
       - 'backend/**'
       - 'monitoring/**'
+      - '.github/workflows/backend.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,7 +48,7 @@ jobs:
           cache: 'maven'
       - name: Run tests
         working-directory: backend
-        run: ./mvnw test -B -DfailIfNoTests=false
+        run: mvn test -B -DfailIfNoTests=false
         env:
           DATABASE_URL: jdbc:postgresql://localhost:5432/okututor_test
           DATABASE_USERNAME: okututor
@@ -65,7 +68,7 @@ jobs:
           cache: 'maven'
       - name: Build
         working-directory: backend
-        run: ./mvnw package -DskipTests -B
+        run: mvn package -DskipTests -B
       - name: Docker build (smoke)
         uses: docker/build-push-action@v6
         with:
@@ -73,15 +76,18 @@ jobs:
           push: false
           tags: okututor-backend:ci
       - name: Trivy scan (fs)
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          scan-type: fs
-          scan-ref: backend
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
+        run: |
+          if [ ! -d "${HOME}/.m2/repository" ] || [ -z "$(ls -A "${HOME}/.m2/repository")" ]; then
+            echo "Maven cache directory ${HOME}/.m2/repository is missing or empty" >&2
+            exit 1
+          fi
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -v "${HOME}/.m2:/root/.m2:ro" \
+            aquasec/trivy:latest fs /app/backend --severity HIGH,CRITICAL --ignore-unfixed
 
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     steps:

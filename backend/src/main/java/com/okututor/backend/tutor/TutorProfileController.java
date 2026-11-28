@@ -41,8 +41,9 @@ public class TutorProfileController {
     private final FavoriteRepository favoriteRepository;
     private final MediaService mediaService;
     private final UserService userService;
+    private final com.okututor.backend.common.web.ClientIpResolver clientIpResolver;
 
-    public TutorProfileController(TutorProfileService service, TutorProfileRepository repository, TutorSearchService tutorSearchService, RateLimitService rateLimitService, FavoriteRepository favoriteRepository, MediaService mediaService, UserService userService) {
+    public TutorProfileController(TutorProfileService service, TutorProfileRepository repository, TutorSearchService tutorSearchService, RateLimitService rateLimitService, FavoriteRepository favoriteRepository, MediaService mediaService, UserService userService, com.okututor.backend.common.web.ClientIpResolver clientIpResolver) {
         this.service = service;
         this.repository = repository;
         this.tutorSearchService = tutorSearchService;
@@ -50,6 +51,7 @@ public class TutorProfileController {
         this.favoriteRepository = favoriteRepository;
         this.mediaService = mediaService;
         this.userService = userService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     // Public listing — supports both legacy filters and spec search params (q, subject, level, city, district, language, sort, min/maxPrice)
@@ -81,7 +83,8 @@ public class TutorProfileController {
                                                @RequestParam(defaultValue = "20") int size) {
         // rate limiting public listing 100/min per IP
         try {
-            String ip = request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For").split(",")[0].trim() : request.getRemoteAddr();
+            String ip = clientIpResolver != null ? clientIpResolver.resolve(request) :
+                    (request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For").split(",")[0].trim() : request.getRemoteAddr());
             rateLimitService.checkPublicListing(ip);
         } catch (Exception ignored) {}
         // unify aliases

@@ -53,7 +53,7 @@ function ApplicationDrawer({ application, onClose, onModerated }: { application:
     const a = application;
     const userId = String(a["user_id"] || a["userId"] || (a["user"] as Record<string, unknown>)?.["id"] || a["id"] || "");
     if (!userId) {
-      navigate("/conversations");
+      navigate("/app/messages");
       return;
     }
     setChatLoading(true);
@@ -63,15 +63,15 @@ function ApplicationDrawer({ application, onClose, onModerated }: { application:
       const { response, data } = await apiClient.post("/api/v1/conversations/direct", { participantId: userId });
       if (response.ok && data && (data as Record<string, unknown>)["id"]) {
         const convId = String((data as Record<string, unknown>)["id"]);
-        navigate(`/conversations/${convId}`);
+        navigate(`/app/messages/${convId}`);
         onClose();
       } else {
         // Fallback to conversations list filtered by user
-        navigate(`/conversations?userId=${userId}`);
+        navigate(`/app/messages?userId=${userId}`);
         onClose();
       }
     } catch {
-      navigate("/conversations");
+      navigate("/app/messages");
       onClose();
     } finally {
       setChatLoading(false);
@@ -303,27 +303,29 @@ export default function PgAdminTutors() {
     if (!approveTarget) return;
     setActionLoading(true);
     try {
-      await adminApi.approveTutor(approveTarget.id);
+      const id = String(approveTarget["id"] ?? "");
+      await adminApi.approveTutor(id);
       toast.success(t("admin.tutor_approved", "Tutor approved successfully"));
       setApproveTarget(null);
       await load();
     } catch (e) {
-      toast.error(e.message || t("errors.default", "Something went wrong."));
+      toast.error((e as Error).message || t("errors.default", "Something went wrong."));
     } finally {
       setActionLoading(false);
     }
   };
 
-  const reject = async (reason) => {
+  const reject = async (reason: string) => {
     if (!rejectTarget) return;
     setActionLoading(true);
     try {
-      await adminApi.rejectTutor(rejectTarget.id, reason);
+      const id = String(rejectTarget["id"] ?? "");
+      await adminApi.rejectTutor(id, reason);
       toast.success(t("admin.tutor_rejected", "Tutor application rejected"));
       setRejectTarget(null);
       await load();
     } catch (e) {
-      toast.error(e.message || t("errors.default", "Something went wrong."));
+      toast.error((e as Error).message || t("errors.default", "Something went wrong."));
     } finally {
       setActionLoading(false);
     }
